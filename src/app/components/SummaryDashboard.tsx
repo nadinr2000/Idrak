@@ -111,10 +111,10 @@ export function SummaryDashboard({ viewMode, onNavigateToFloors, onNavigateToInc
   }
 
   return (
-    <div className="flex-1 overflow-auto p-6">
+    <div className="flex-1 overflow-auto p-6 bg-gray-50">
       <div className="max-w-[2000px] mx-auto">
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+        <div className="grid grid-cols-5 gap-4 mb-4">
           {/* Incidents Metric with Breakdown - FIRST */}
           <MetricCardDetailed
             title={t.activeIncidents}
@@ -179,7 +179,7 @@ export function SummaryDashboard({ viewMode, onNavigateToFloors, onNavigateToInc
         </div>
 
         {/* Analytics & Trends Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           {/* Incidents Trend Chart with Dropdown */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -330,7 +330,7 @@ export function SummaryDashboard({ viewMode, onNavigateToFloors, onNavigateToInc
         </div>
 
         {/* AI Suggestions and Energy Consumption Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-2 gap-6 mb-6">
           {/* AI Suggestions Chart */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">

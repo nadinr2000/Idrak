@@ -131,9 +131,9 @@ export function ThresholdsView() {
       </div>
 
       <div className="flex gap-3 mt-6">
-        <button className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2">
+        <button className="bg-blue-500 text-white px-6 py-2.5 rounded-lg hover:bg-blue-600 transition-colors font-medium flex items-center gap-2">
           <Save className="size-5" />
-          Save All Thresholds
+          Save Thresholds
         </button>
         <button className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
           Reset to Defaults

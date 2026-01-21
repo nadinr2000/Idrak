@@ -344,7 +344,7 @@ export function IncidentDetailView({ incidentId, onSensorClick, onBack }: Incide
                       onClick={() => setSelectedFloorView(floorId)}
                       className={`px-3 py-1.5 rounded-lg font-medium text-xs transition-all ${
                         selectedFloorView === floorId
-                          ? 'bg-blue-600 text-white shadow-md'
+                          ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >

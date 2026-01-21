@@ -37,6 +37,8 @@ import { ArchitecturalViewModal } from './components/ArchitecturalViewModal';
 import { NewFloorSetupView } from './components/NewFloorSetupView';
 import { FloorSetupListView } from './components/FloorSetupListView';
 import { EquipmentDashboard } from './components/EquipmentDashboard';
+import { LandingPage } from './components/LandingPage';
+import { LoadingScreen } from './components/LoadingScreen';
 import { Language } from './translations';
 
 // IDRAK Building Management System - Main Application Entry Point  
@@ -85,6 +87,8 @@ export interface AffectedSensor {
 }
 
 export default function App() {
+  const [showLandingPage, setShowLandingPage] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<MainSection>('dashboard');
   const [currentView, setCurrentView] = useState<ViewLevel>('summary');
@@ -559,116 +563,135 @@ export default function App() {
 
   return (
     <div className="h-screen flex flex-col bg-[#f8fafc]">
-      {/* Demo Control Bar - Always visible at the top */}
-      <DemoControlBar 
-        language={language}
-        emergencyMode={emergencyMode}
-        onToggleEmergency={(mode) => {
-          setEmergencyMode(mode);
-          if (mode) {
-            // When switching to Emergency mode, activate emergency dashboard
-            setCurrentSection('dashboard');
-            setCurrentView('emergency');
-          } else {
-            // When switching to Normal mode, stop simulation and return to summary
-            setSimulationState(null);
-            if (currentView === 'emergency') {
-              setCurrentView('summary');
-            }
-          }
-        }}
-      />
-      
-      {/* Emergency Bar - Shows below demo bar when simulation is active */}
-      {emergencyMode && simulationState && (
-        <EmergencyBar
-          scenarioName={simulationState.drillName}
+      {/* Show landing page first */}
+      {showLandingPage ? (
+        <LandingPage 
           language={language}
-          isRunning={simulationState.isRunning}
-          isPaused={simulationState.isPaused}
-          currentTime={simulationState.currentTime}
-          speed={simulationState.speed}
-          onTogglePause={() => {
-            setSimulationState(prev => prev ? { ...prev, isPaused: !prev.isPaused } : null);
-          }}
-          onChangeSpeed={() => {
-            setSimulationState(prev => {
-              if (!prev) return null;
-              const newSpeed = (prev.speed === 1 ? 2 : prev.speed === 2 ? 4 : 1) as 1 | 2 | 4;
-              return { ...prev, speed: newSpeed };
-            });
-          }}
-          onTimeChange={(seconds: number) => {
-            setSimulationState(prev => prev ? { ...prev, currentTime: seconds } : null);
-          }}
-          onClose={() => {
-            setEmergencyMode(false);
-            handleSimulationStateChange(null);
+          onEnter={() => {
+            setIsLoading(true);
+            // Simulate loading time
+            setTimeout(() => {
+              setIsLoading(false);
+              setShowLandingPage(false);
+            }, 2500);
           }}
         />
-      )}
-      
-      <TopBar 
-        onMenuClick={() => setSidebarOpen(!sidebarOpen)} 
-        language={language}
-        onLanguageChange={setLanguage}
-        emergencyMode={emergencyMode}
-      />
-      
-      <div className="flex flex-1 overflow-hidden">
-        {!emergencyMode && (
-          <Sidebar
-            isOpen={sidebarOpen}
-            currentSection={currentSection}
-            onSectionChange={handleSectionChange}
-            onToggle={() => setSidebarOpen(!sidebarOpen)}
+      ) : isLoading ? (
+        <LoadingScreen language={language} />
+      ) : (
+        <>
+          {/* Demo Control Bar - Always visible at the top */}
+          <DemoControlBar 
             language={language}
+            emergencyMode={emergencyMode}
+            onToggleEmergency={(mode) => {
+              setEmergencyMode(mode);
+              if (mode) {
+                // When switching to Emergency mode, activate emergency dashboard
+                setCurrentSection('dashboard');
+                setCurrentView('emergency');
+              } else {
+                // When switching to Normal mode, stop simulation and return to summary
+                setSimulationState(null);
+                if (currentView === 'emergency') {
+                  setCurrentView('summary');
+                }
+              }
+            }}
           />
-        )}
-        
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {currentSection === 'dashboard' && (
-            <>
-              {!emergencyMode && (
-                <ViewToggle 
-                  viewMode={viewMode} 
-                  onViewModeChange={setViewMode} 
-                  language={language}
-                  emergencyMode={emergencyMode}
-                  onOpenArchitecturalView={() => setArchitecturalViewOpen(true)}
-                />
-              )}
-              {emergencyMode ? (
-                <EmergencyHeader language={language} onOpenArchitecturalView={() => setArchitecturalViewOpen(true)} />
-              ) : (
-                <Navigation
-                  currentView={currentView}
-                  selectedFloor={selectedFloor}
-                  selectedRoom={selectedRoom}
-                  selectedIncident={selectedIncident}
-                  selectedSensor={selectedSensor}
-                  onNavigate={handleNavigate}
-                  language={language}
-                  emergencyMode={emergencyMode}
-                  viewMode={viewMode}
-                />
-              )}
-            </>
+          
+          {/* Emergency Bar - Shows below demo bar when simulation is active */}
+          {emergencyMode && simulationState && (
+            <EmergencyBar
+              scenarioName={simulationState.drillName}
+              language={language}
+              isRunning={simulationState.isRunning}
+              isPaused={simulationState.isPaused}
+              currentTime={simulationState.currentTime}
+              speed={simulationState.speed}
+              onTogglePause={() => {
+                setSimulationState(prev => prev ? { ...prev, isPaused: !prev.isPaused } : null);
+              }}
+              onChangeSpeed={() => {
+                setSimulationState(prev => {
+                  if (!prev) return null;
+                  const newSpeed = (prev.speed === 1 ? 2 : prev.speed === 2 ? 4 : 1) as 1 | 2 | 4;
+                  return { ...prev, speed: newSpeed };
+                });
+              }}
+              onTimeChange={(seconds: number) => {
+                setSimulationState(prev => prev ? { ...prev, currentTime: seconds } : null);
+              }}
+              onClose={() => {
+                setEmergencyMode(false);
+                handleSimulationStateChange(null);
+              }}
+            />
           )}
           
-          <div className="flex-1 overflow-auto">
-            {renderContent()}
+          <TopBar 
+            onMenuClick={() => setSidebarOpen(!sidebarOpen)} 
+            language={language}
+            onLanguageChange={setLanguage}
+            emergencyMode={emergencyMode}
+          />
+          
+          <div className="flex flex-1 overflow-hidden">
+            {!emergencyMode && (
+              <Sidebar
+                isOpen={sidebarOpen}
+                currentSection={currentSection}
+                onSectionChange={handleSectionChange}
+                onToggle={() => setSidebarOpen(!sidebarOpen)}
+                language={language}
+              />
+            )}
+            
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {currentSection === 'dashboard' && (
+                <>
+                  {!emergencyMode && (
+                    <ViewToggle 
+                      viewMode={viewMode} 
+                      onViewModeChange={setViewMode} 
+                      language={language}
+                      emergencyMode={emergencyMode}
+                      onOpenArchitecturalView={() => setArchitecturalViewOpen(true)}
+                    />
+                  )}
+                  {emergencyMode ? (
+                    <EmergencyHeader language={language} onOpenArchitecturalView={() => setArchitecturalViewOpen(true)} />
+                  ) : (
+                    <Navigation
+                      currentView={currentView}
+                      selectedFloor={selectedFloor}
+                      selectedRoom={selectedRoom}
+                      selectedIncident={selectedIncident}
+                      selectedSensor={selectedSensor}
+                      onNavigate={handleNavigate}
+                      language={language}
+                      emergencyMode={emergencyMode}
+                      viewMode={viewMode}
+                    />
+                  )}
+                </>
+              )}
+              
+              <div className="flex-1 overflow-auto">
+                {renderContent()}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Architectural View Modal */}
-      <ArchitecturalViewModal
-        isOpen={architecturalViewOpen}
-        onClose={() => setArchitecturalViewOpen(false)}
-        language={language}
-        emergencyMode={emergencyMode}
-      />
+          {/* Architectural View Modal */}
+          <ArchitecturalViewModal
+            isOpen={architecturalViewOpen}
+            onClose={() => setArchitecturalViewOpen(false)}
+            language={language}
+            emergencyMode={emergencyMode}
+          />
+        </>
+      )}
     </div>
   );
 }

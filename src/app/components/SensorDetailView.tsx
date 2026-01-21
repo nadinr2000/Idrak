@@ -157,7 +157,7 @@ export function SensorDetailView({ sensorId }: SensorDetailViewProps) {
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+            <button className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium">
               Run Diagnostics
             </button>
           </div>
@@ -210,7 +210,7 @@ export function SensorDetailView({ sensorId }: SensorDetailViewProps) {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900">Maintenance Log</h3>
-            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            <button className="text-sm text-blue-500 hover:text-blue-600 font-medium">
               Schedule Maintenance
             </button>
           </div>

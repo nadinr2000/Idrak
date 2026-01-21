@@ -9,7 +9,7 @@ export function AutomationRulesView() {
           <h2 className="text-2xl font-semibold text-gray-900">Automation Rules</h2>
           <p className="text-gray-600 mt-1">Manage rule-based and AI-powered automation actions</p>
         </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2">
+        <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium flex items-center gap-2">
           <Plus className="size-5" />
           Create New Rule
         </button>

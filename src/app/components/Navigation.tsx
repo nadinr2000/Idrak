@@ -145,7 +145,7 @@ export function Navigation({ currentView, selectedFloor, selectedRoom, selectedI
                   disabled={!isClickable}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${
                     isActive && !isClickable
-                      ? 'bg-blue-50 text-blue-700 font-medium cursor-default'
+                      ? 'bg-blue-50 text-blue-700 font-medium cursor-default border border-blue-200'
                       : isClickable
                       ? 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                       : 'text-gray-600 cursor-default'

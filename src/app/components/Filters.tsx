@@ -130,9 +130,9 @@ export function Filters({
                 <button
                   key={option.value}
                   onClick={() => applyQuickTimeFilter(option.value)}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     quickTimeFilter === option.value
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-blue-500 text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                   }`}
                 >
@@ -192,7 +192,7 @@ export function Filters({
           <Filter className="size-5" />
           <span>Advanced Filters</span>
           {activeFilterCount > 0 && (
-            <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+            <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
               {activeFilterCount}
             </span>
           )}

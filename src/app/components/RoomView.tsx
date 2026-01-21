@@ -193,11 +193,11 @@ export function RoomView({ roomId, viewMode, onIncidentClick, onSensorClick }: R
                   Predict 90% chance of complete failure within 6 hours without intervention.
                 </p>
                 <div className="mt-3 flex items-center gap-2">
-                  <button className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                  <button className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors font-medium">
                     Approve Auto-Fix
                   </button>
-                  <button className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors">
-                    Manual Override
+                  <button className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors">
+                    Dismiss
                   </button>
                 </div>
               </div>

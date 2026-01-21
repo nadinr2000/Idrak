@@ -206,7 +206,7 @@ function NavItem({ item, isActive, isCollapsed, onClick, language }: any) {
     return (
       <button
         onClick={onClick}
-        className={`w-full p-2 rounded-lg transition-colors flex items-center justify-center ${
+        className={`w-full p-2 rounded-lg transition-all ${
           isActive
             ? 'bg-blue-50 text-blue-600'
             : 'text-gray-700 hover:bg-gray-100'
@@ -225,9 +225,9 @@ function NavItem({ item, isActive, isCollapsed, onClick, language }: any) {
     return (
       <button
         onClick={onClick}
-        className={`w-full p-3 rounded-lg transition-colors flex items-start gap-3 ${
+        className={`w-full p-3 rounded-lg transition-all ${
           isActive
-            ? 'bg-blue-50 text-blue-600 border border-blue-200'
+            ? 'bg-blue-50 text-blue-700 border border-blue-200'
             : 'text-gray-700 hover:bg-gray-100'
         }`}
       >

@@ -32,7 +32,7 @@ export const translations = {
     automation: 'Automation Rules',
     alarms: 'Alarms',
     tacticalThreatDrills: 'Tactical Threat Drills',
-    layoutTests: 'Test Floor Setup',
+    layoutTests: 'New Floor Setup',
     
     // Sidebar Descriptions
     dashboardsDesc: 'Monitor system status',

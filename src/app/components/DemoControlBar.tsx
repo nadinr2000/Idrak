@@ -14,7 +14,7 @@ export function DemoControlBar({ language, emergencyMode, onToggleEmergency }: D
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="size-4 bg-blue-500 rounded flex items-center justify-center">
+            <div className="size-4 bg-gradient-to-br from-blue-500 to-cyan-500 rounded flex items-center justify-center shadow-sm shadow-blue-500/30">
               <svg className="size-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -33,12 +33,12 @@ export function DemoControlBar({ language, emergencyMode, onToggleEmergency }: D
           <span className="text-xs text-blue-700 font-medium">
             {language === 'en' ? 'Demo Mode:' : 'وضع التجربة:'}
           </span>
-          <div className="flex items-center gap-1.5 bg-white rounded-md p-0.5 shadow-sm border border-blue-100">
+          <div className="flex items-center gap-1.5 bg-white rounded-md p-0.5 shadow-sm border border-gray-200">
             <button
               onClick={() => onToggleEmergency(false)}
               className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all ${
                 !emergencyMode
-                  ? 'bg-green-500 text-white shadow-sm'
+                  ? 'bg-green-500 text-white'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
@@ -49,11 +49,11 @@ export function DemoControlBar({ language, emergencyMode, onToggleEmergency }: D
               onClick={() => onToggleEmergency(true)}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
                 emergencyMode
-                  ? 'bg-blue-100 text-red-600'
+                  ? 'bg-red-600 text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <div className={`size-2 rounded-full ${emergencyMode ? 'bg-red-500' : 'bg-red-500'}`}></div>
+              <div className={`size-2 rounded-full ${emergencyMode ? 'bg-white' : 'bg-red-500'}`}></div>
               {language === 'en' ? 'Emergency' : 'الطوارئ'}
             </button>
           </div>
