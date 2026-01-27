@@ -5,7 +5,7 @@ import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 import { RoomDetailPanel } from './RoomDetailPanel';
 import { SensorDetailPanel } from './SensorDetailPanel';
 import { IncidentDetailView } from './IncidentDetailView';
-import '/assets/2bd4b6f097123f4b32ec93c2fea878ea09aebff1.png'
+import floorPlanImage from '@/assets/BG.png'
 //2bd4b6f097123f4b32ec93c2fea878ea09aebff1.png';
 
 // FloorPlanView - Room details with incident tracking
