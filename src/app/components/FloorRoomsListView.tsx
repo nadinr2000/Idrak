@@ -1,20 +1,101 @@
-import { DoorOpen, Thermometer, Droplets, Users, AlertTriangle, CheckCircle2, Activity, Search, Filter } from 'lucide-react';
+import { DoorOpen, Thermometer, Droplets, Users, AlertTriangle, CheckCircle2, Activity, Search, Filter, ChevronLeft, Building2 } from 'lucide-react';
 import { rooms as allRooms, floors } from '../data/mockData';
 import { getRoomsByFloor, allFloorPlanRooms } from '../data/roomsData';
 import { useState } from 'react';
+import { Language, translations } from '../translations';
 
 interface FloorRoomsListViewProps {
-  floorId: string;
-  onRoomClick: (roomId: string) => void;
+  floorId?: string;
+  onRoomClick?: (roomId: string) => void;
+  onFloorClick?: (floorId: string) => void;
+  onBack?: () => void;
+  language?: Language;
 }
 
 type RoomStatus = 'all' | 'operational' | 'warning' | 'critical';
 type SortBy = 'name' | 'temperature' | 'occupancy' | 'type';
 
-export function FloorRoomsListView({ floorId, onRoomClick }: FloorRoomsListViewProps) {
+export function FloorRoomsListView({ floorId, onRoomClick, onFloorClick, onBack, language = 'en' }: FloorRoomsListViewProps) {
   const [statusFilter, setStatusFilter] = useState<RoomStatus>('all');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [searchQuery, setSearchQuery] = useState('');
+  const t = translations[language];
+
+  // If no floorId, show all floors list
+  if (!floorId && onFloorClick) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex-1 overflow-auto p-6">
+          <div className="max-w-[1600px] mx-auto">
+            {/* Header with back button */}
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="mb-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ChevronLeft className="size-5" />
+                <span>{language === 'ar' ? 'رجوع' : 'Back'}</span>
+              </button>
+            )}
+            
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {language === 'ar' ? 'جميع الطوابق' : 'All Floors'}
+              </h2>
+              <p className="text-gray-600">
+                {language === 'ar' ? 'اختر طابقًا لعرض الغرف' : 'Select a floor to view rooms'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {floors.map((floor) => {
+                const floorRooms = allFloorPlanRooms.filter(r => r.floorId === floor.id);
+                const operationalCount = floorRooms.filter(r => r.status === 'operational').length;
+                
+                return (
+                  <button
+                    key={floor.id}
+                    onClick={() => onFloorClick(floor.id)}
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-blue-300 transition-all text-left group"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-3 rounded-lg bg-blue-50 group-hover:scale-110 transition-transform">
+                          <Building2 className="size-6 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                            {floor.name}
+                          </h3>
+                          <p className="text-sm text-gray-500">{floorRooms.length} {language === 'ar' ? 'غرف' : 'rooms'}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-600 mb-1">{language === 'ar' ? 'إجمالي الغرف' : 'Total Rooms'}</p>
+                        <p className="text-lg font-bold text-gray-900">{floorRooms.length}</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-600 mb-1">{language === 'ar' ? 'جاهز' : 'Operational'}</p>
+                        <p className="text-lg font-bold text-green-600">{operationalCount}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Otherwise show rooms for specific floor
+  if (!floorId || !onRoomClick) {
+    return null;
+  }
 
   // Get current floor info
   const currentFloor = floors.find(f => f.id === floorId);
@@ -64,7 +145,17 @@ export function FloorRoomsListView({ floorId, onRoomClick }: FloorRoomsListViewP
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-[1600px] mx-auto">
-          {/* Header */}
+          {/* Header with back button */}
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="mb-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ChevronLeft className="size-5" />
+              <span>{language === 'ar' ? 'رجوع' : 'Back'}</span>
+            </button>
+          )}
+          
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentFloor?.name || floorId}</h2>
             <p className="text-gray-600">Room overview and status monitoring</p>

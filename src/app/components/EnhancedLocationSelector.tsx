@@ -1,7 +1,7 @@
-import { X, MapPin, Activity, Radio, Building2, Layers, CheckCircle, Clock, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Building2, MapPin, Layers, Activity, X, Info } from 'lucide-react';
 import { Language, translations } from '../translations';
-import { useState } from 'react';
-import floorPlanImage from 'figma:asset/a1d7c50be4149c7263d7de092815c8c8d9377172.png';
+import floorPlanImage from 'figma:asset/74de286e0cae8bea131a1f8f26e3fa7e73d9f96a.png';
 
 interface Sensor {
   id: string;
@@ -358,7 +358,7 @@ export function EnhancedLocationSelector({ language, onSelect, onClose, emergenc
 
   const getStatusBadge = (status: 'draft' | 'active' | 'tested') => {
     const statusConfig = {
-      draft: { icon: FileText, color: 'bg-gray-100 text-gray-700 border-gray-300', label: 'Draft' },
+      draft: { icon: Info, color: 'bg-gray-100 text-gray-700 border-gray-300', label: 'Draft' },
       active: { icon: CheckCircle, color: 'bg-green-100 text-green-700 border-green-300', label: 'Active' },
       tested: { icon: CheckCircle, color: 'bg-blue-100 text-blue-700 border-blue-300', label: 'Tested' },
     };

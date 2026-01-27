@@ -37,12 +37,6 @@ export function Sidebar({ isOpen, currentSection, onSectionChange, onToggle, lan
 
   const buildingItems = [
     {
-      section: 'facility-floors' as MainSection,
-      icon: Building2,
-      label: language === 'en' ? 'Floors' : 'الطوابق',
-      description: language === 'en' ? 'Manage floor assets' : 'إدارة أصول الطوابق',
-    },
-    {
       section: 'facility-rooms' as MainSection,
       icon: DoorOpen,
       label: language === 'en' ? 'Rooms' : 'الغرف',

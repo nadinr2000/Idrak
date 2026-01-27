@@ -151,6 +151,10 @@ export default function App() {
   useEffect(() => {
     if (emergencyMode && currentSection === 'dashboard') {
       setCurrentView('emergency');
+      // In emergency mode, also set a default floor for quick access
+      if (!selectedFloor) {
+        setSelectedFloor('floor-a-2'); // Default to Operations Level (Floor 2)
+      }
     } else if (!emergencyMode && currentView === 'emergency') {
       // When emergency mode ends, return to summary
       setCurrentView('summary');
@@ -456,12 +460,17 @@ export default function App() {
       );
     }
     if (currentView === 'emergency') {
-      // Check if architectural view is selected
+      // In emergency mode, go directly to floor view (Operations Level)
       if (viewMode === 'architectural') {
         return (
-          <BuildingDiagram3D
-            onFloorClick={navigateToFloor}
-            language={language}
+          <FloorPlanView
+            floorId={'floor-a-2'} // Operations Level where emergency is happening
+            onRoomClick={navigateToRoom}
+            onIncidentClick={navigateToIncident}
+            onBack={() => {
+              // In emergency mode, back should go to emergency dashboard
+              setCurrentView('summary');
+            }}
             emergencyMode={emergencyMode}
           />
         );
@@ -497,6 +506,7 @@ export default function App() {
           onSensorClick={navigateToSensor}
           onNavigateToSummary={() => setCurrentView('summary')}
           onNavigateToBuildings={() => setCurrentView('floors')}
+          onNavigateToIncidents={() => setCurrentView('incidents')}
         />
       );
     }
@@ -637,32 +647,15 @@ export default function App() {
           />
           
           <div className="flex flex-1 overflow-hidden">
-            {!emergencyMode && (
-              <Sidebar
-                isOpen={sidebarOpen}
-                currentSection={currentSection}
-                onSectionChange={handleSectionChange}
-                onToggle={() => setSidebarOpen(!sidebarOpen)}
-                language={language}
-              />
-            )}
+            <Sidebar
+              isOpen={sidebarOpen}
+              currentSection={currentSection}
+              onSectionChange={handleSectionChange}
+              onToggle={() => setSidebarOpen(!sidebarOpen)}
+              language={language}
+            />
             
             <div className="flex-1 flex flex-col overflow-hidden">
-              {currentSection === 'dashboard' && (
-                <>
-                  <SummaryDashboard
-                    language={language}
-                    emergencyMode={emergencyMode}
-                    onNavigateToFloors={() => setCurrentView('floors')}
-                    onNavigateToIncidents={() => setCurrentView('incidents')}
-                    onNavigateToSensors={() => setCurrentView('sensors')}
-                    onFloorClick={navigateToFloor}
-                    onIncidentClick={navigateToIncident}
-                    viewMode={viewMode}
-                  />
-                </>
-              )}
-              
               <div className="flex-1 overflow-auto">
                 {renderContent()}
               </div>

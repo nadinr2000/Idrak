@@ -1,6 +1,12 @@
-import { AlertCircle, Thermometer, Activity, Shield, ArrowLeft, X, ChevronRight, CheckCircle, Brain, TrendingUp, Sparkles, ZoomIn, ZoomOut, Maximize2, Wind, Radio, Lock, Eye, Zap, Droplets, Building2, Clock, AlertTriangle, MapPin } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { AlertCircle, Thermometer, Activity, Shield, ArrowLeft, X, ChevronRight, CheckCircle, Brain, TrendingUp, Sparkles, ZoomIn, ZoomOut, RotateCcw, Wind, Radio, Lock, Eye, Zap, Droplets, Building2, Clock, AlertTriangle, MapPin } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { incidents } from '../data/mockData';
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { RoomDetailPanel } from './RoomDetailPanel';
+import { SensorDetailPanel } from './SensorDetailPanel';
+import { IncidentDetailView } from './IncidentDetailView';
+import '/assets/2bd4b6f097123f4b32ec93c2fea878ea09aebff1.png'
+//2bd4b6f097123f4b32ec93c2fea878ea09aebff1.png';
 
 // FloorPlanView - Room details with incident tracking
 
@@ -44,21 +50,36 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
+  const [selectedIncident, setSelectedIncident] = useState<string | null>(null);
   const [hoveredSensor, setHoveredSensor] = useState<string | null>(null);
-  const [leftPanelWidth, setLeftPanelWidth] = useState(600);
+  const [hoveredFloorSensor, setHoveredFloorSensor] = useState<{ id: string; name: string; status: string; value: string; type: string } | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [leftPanelWidth, setLeftPanelWidth] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Initialize panel width to 50% of available space
+  useEffect(() => {
+    if (leftPanelWidth === null && containerRef.current) {
+      const containerWidth = containerRef.current.offsetWidth;
+      setLeftPanelWidth(containerWidth / 2);
+    }
+  }, [leftPanelWidth]);
 
   // Handle dragging for resizing panels
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
-        const newWidth = e.clientX;
-        if (newWidth >= 400 && newWidth <= 900) {
+      if (isDragging && containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const newWidth = e.clientX - containerRect.left;
+        const minWidth = 400;
+        const maxWidth = containerRect.width - 400;
+        if (newWidth >= minWidth && newWidth <= maxWidth) {
           setLeftPanelWidth(newWidth);
         }
       }
@@ -118,7 +139,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
   // Zoom functions
   const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 0.25, 3));
+    setZoom(prev => Math.min(prev + 0.25, 5));
   };
 
   const handleZoomOut = () => {
@@ -135,12 +156,12 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom(prev => Math.max(0.5, Math.min(3, prev + delta)));
+    setZoom(prev => Math.max(0.5, Math.min(5, prev + delta)));
   };
 
   // Start panning
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoom > 1) {
+    if (zoom >= 1) {
       setIsPanning(true);
       setPanStart({ x: e.clientX, y: e.clientY });
     }
@@ -155,17 +176,27 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
         { id: 'S-F2-R1-03', name: 'Radiological Detector', type: 'chemical', subType: 'R', status: 'operational', value: 'Normal', x: 50, y: 10, lastUpdate: '1s ago' },
         { id: 'S-F2-R1-04', name: 'Diff Pressure', type: 'pressure', subType: 'DP', status: 'operational', value: '+8 Pa', x: 50, y: 90, lastUpdate: '3s ago' },
       ],
-      'F2-R6': [ // Sector B - Lab (CRITICAL - Has incident)
+      'F2-R6': hasIncident ? [ // Sector B - Lab (CRITICAL - ONLY in emergency mode)
         { id: 'S-F2-R6-01', name: 'Chemical Detector A', type: 'chemical', subType: 'C', status: 'critical', value: 'AGENT DETECTED', x: 25, y: 30, lastUpdate: '1s ago' },
         { id: 'S-F2-R6-02', name: 'Biological Detector', type: 'chemical', subType: 'B', status: 'critical', value: 'ALERT', x: 75, y: 30, lastUpdate: '1s ago' },
         { id: 'S-F2-R6-03', name: 'CO Sensor', type: 'air-quality', subType: 'CO', status: 'warning', value: '12 ppm', x: 50, y: 70, lastUpdate: '2s ago' },
         { id: 'S-F2-R6-04', name: 'Air Pressure Monitor', type: 'pressure', subType: 'DP', status: 'warning', value: '-12 Pa', x: 85, y: 85, lastUpdate: '2s ago' },
         { id: 'S-F2-R6-05', name: 'Radiological Monitor', type: 'chemical', subType: 'R', status: 'operational', value: 'Normal', x: 15, y: 85, lastUpdate: '3s ago' },
+      ] : [ // Normal operations - all clear
+        { id: 'S-F2-R6-01', name: 'Chemical Detector A', type: 'chemical', subType: 'C', status: 'operational', value: 'Clear', x: 25, y: 30, lastUpdate: '1s ago' },
+        { id: 'S-F2-R6-02', name: 'Biological Detector', type: 'chemical', subType: 'B', status: 'operational', value: 'Clear', x: 75, y: 30, lastUpdate: '1s ago' },
+        { id: 'S-F2-R6-03', name: 'CO Sensor', type: 'air-quality', subType: 'CO', status: 'operational', value: '2 ppm', x: 50, y: 70, lastUpdate: '2s ago' },
+        { id: 'S-F2-R6-04', name: 'Air Pressure Monitor', type: 'pressure', subType: 'DP', status: 'operational', value: '+5 Pa', x: 85, y: 85, lastUpdate: '2s ago' },
+        { id: 'S-F2-R6-05', name: 'Radiological Monitor', type: 'chemical', subType: 'R', status: 'operational', value: 'Normal', x: 15, y: 85, lastUpdate: '3s ago' },
       ],
-      'F2-R7': [ // Sector B - Equipment (WARNING)
+      'F2-R7': hasIncident ? [ // Sector B - Equipment (WARNING - ONLY in emergency mode)
         { id: 'S-F2-R7-01', name: 'Chemical Detector', type: 'chemical', subType: 'C', status: 'warning', value: 'Trace Detected', x: 30, y: 40, lastUpdate: '2s ago' },
         { id: 'S-F2-R7-02', name: 'CO2 Monitor', type: 'air-quality', subType: 'CO2', status: 'warning', value: '850 ppm', x: 70, y: 60, lastUpdate: '2s ago' },
         { id: 'S-F2-R7-03', name: 'O2 Sensor', type: 'air-quality', subType: 'O2', status: 'warning', value: '19.2%', x: 50, y: 80, lastUpdate: '3s ago' },
+      ] : [ // Normal operations
+        { id: 'S-F2-R7-01', name: 'Chemical Detector', type: 'chemical', subType: 'C', status: 'operational', value: 'Clear', x: 30, y: 40, lastUpdate: '2s ago' },
+        { id: 'S-F2-R7-02', name: 'CO2 Monitor', type: 'air-quality', subType: 'CO2', status: 'operational', value: '420 ppm', x: 70, y: 60, lastUpdate: '2s ago' },
+        { id: 'S-F2-R7-03', name: 'O2 Sensor', type: 'air-quality', subType: 'O2', status: 'operational', value: '20.9%', x: 50, y: 80, lastUpdate: '3s ago' },
       ],
       'F2-R10': [ // Medical Bay
         { id: 'S-F2-R10-01', name: 'O2 Monitor', type: 'air-quality', subType: 'O2', status: 'operational', value: '21.0%', x: 30, y: 30, lastUpdate: '2s ago' },
@@ -206,8 +237,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
     { id: 'F2-R5', name: 'Sector A - Storage 2', type: 'Storage', x: 470, y: 170, width: 105, height: 80, status: 'operational', temp: 20 },
     
     // Top far right - Sector B (INCIDENT AREA - status changes based on emergency mode)
-    { id: 'F2-R6', name: 'Sector B - Lab', type: 'Laboratory', x: 595, y: 60, width: 255, height: 110, status: 'warning', temp: 28, hasIncident: false, sensors: getSensorsForRoom('F2-R6', true) },
-    { id: 'F2-R7', name: 'Sector B - Equipment', type: 'Equipment', x: 595, y: 180, width: 165, height: 100, status: 'warning', temp: 25, hasIncident: false, sensors: getSensorsForRoom('F2-R7', true) },
+    { id: 'F2-R6', name: 'Sector B - Lab', type: 'Laboratory', x: 595, y: 60, width: 255, height: 110, status: 'operational', temp: 22, hasIncident: false, sensors: getSensorsForRoom('F2-R6', false) },
+    { id: 'F2-R7', name: 'Sector B - Equipment', type: 'Equipment', x: 595, y: 180, width: 165, height: 100, status: 'operational', temp: 21, hasIncident: false, sensors: getSensorsForRoom('F2-R7', false) },
     { id: 'F2-R8', name: 'Storage Closet', type: 'Storage', x: 770, y: 180, width: 80, height: 100, status: 'operational', temp: 21 },
     
     // Main corridor (wider central hallway)
@@ -225,7 +256,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
     
     // Bottom right - Supply and utilities (irregular layout)
     { id: 'F2-R16', name: 'Supply Room', type: 'Storage', x: 610, y: 340, width: 125, height: 85, status: 'operational', temp: 19 },
-    { id: 'F2-R17', name: 'Utility Room', type: 'Utilities', x: 745, y: 340, width: 105, height: 85, status: 'operational', temp: 24 },
+    { id: 'F2-R17', name: 'Utility Room', type: 'Utilities', x: 745, y: 340, width: 105, height: 85, status: 'warning', temp: 26 }, // Temperature warning - normal operations
     { id: 'F2-R18', name: 'Generator Room', type: 'Power', x: 610, y: 435, width: 135, height: 75, status: 'operational', temp: 26 },
     { id: 'F2-R19', name: 'Maintenance', type: 'Workshop', x: 755, y: 435, width: 95, height: 75, status: 'operational', temp: 22 },
   ];
@@ -293,649 +324,952 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
     }
   };
 
-  const handleSensorClick = (sensor: Sensor) => {
+  const handleSensorClick = (sensor: any) => {
     setSelectedSensor(sensor);
+    // Find which room this sensor belongs to
+    const room = rooms.find(r => 
+      r.sensors?.some(s => s.id === sensor.id)
+    );
+    if (room) {
+      setSelectedRoom(room.id);
+    }
   };
 
   const selectedRoomData = adjustedRooms.find(r => r.id === selectedRoom);
 
+  // Helper function to generate historical data for sensors
+  const generateSensorHistory = (sensor: Sensor) => {
+    const hours = 24;
+    const data = [];
+    
+    for (let i = hours; i >= 0; i--) {
+      const timestamp = `${i}h`;
+      let value = 0;
+      
+      if (sensor.subType === 'CO2') {
+        const base = sensor.status === 'warning' ? 850 : 420;
+        value = base + (Math.random() * 50 - 25);
+      } else if (sensor.subType === 'O2') {
+        const base = sensor.status === 'warning' ? 19.2 : 20.9;
+        value = base + (Math.random() * 0.5 - 0.25);
+      } else if (sensor.subType === 'CO') {
+        const base = sensor.status === 'warning' ? 12 : 2;
+        value = base + (Math.random() * 3 - 1.5);
+      } else if (sensor.subType === 'DP') {
+        const base = sensor.status === 'warning' ? -12 : 8;
+        value = base + (Math.random() * 4 - 2);
+      }
+      
+      data.push({ time: timestamp, value: Math.max(0, value) });
+    }
+    
+    return data.reverse();
+  };
+
+  // Helper function to generate temperature history for rooms
+  const generateTemperatureHistory = (room: Room) => {
+    const hours = 24;
+    const data = [];
+    
+    for (let i = hours; i >= 0; i--) {
+      const timestamp = `${i}h`;
+      const base = room.temp || 21;
+      const value = base + (Math.random() * 2 - 1);
+      
+      data.push({ time: timestamp, temp: value });
+    }
+    
+    return data.reverse();
+  };
+
   return (
-    <div className="h-full bg-gray-50 flex">
+    <div ref={containerRef} className="h-full bg-gray-50 flex">
       {/* Left Panel - Floor Plan */}
       <div 
         className="flex-shrink-0 bg-white overflow-auto"
-        style={{ width: `${leftPanelWidth}px` }}
+        style={{ width: leftPanelWidth ? `${leftPanelWidth}px` : '50%' }}
       >
         <div className="p-6 pb-0">
-          {/* Legend */}
-          <div className="mb-3 pb-3 border-b border-gray-200">
-            <div className="border border-gray-300 rounded-lg bg-white px-3 py-2">
-              <div className="flex items-center justify-between gap-4">
-                {/* Differential Pressure */}
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-6 h-5 bg-orange-500 border border-gray-700 rounded flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-white">DP</span>
-                  </div>
-                  <span className="text-[9px] font-medium text-gray-700 text-center leading-tight">Differential<br/>Pressure</span>
-                </div>
-
-                {/* CBRN Detectors */}
-                <div className="flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-0.5">
-                    <div className="w-5 h-5 bg-purple-700 border border-gray-700 rounded flex items-center justify-center">
-                      <span className="text-[8px] font-bold text-white">R</span>
-                    </div>
-                    <div className="w-5 h-5 bg-teal-600 border border-gray-700 rounded flex items-center justify-center">
-                      <span className="text-[8px] font-bold text-white">B</span>
-                    </div>
-                    <div className="w-5 h-5 bg-yellow-600 border border-gray-700 rounded flex items-center justify-center">
-                      <span className="text-[8px] font-bold text-white">C</span>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-[9px] font-medium text-gray-700">CBRN Detectors</div>
-                    <div className="text-[7px] text-gray-500">Radiological · Biological · Chemical</div>
-                  </div>
-                </div>
-
-                {/* CO2 Sensors */}
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-6 h-6 bg-green-600 border-2 border-gray-700 rounded-full flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-white">CO₂</span>
-                  </div>
-                  <span className="text-[9px] font-medium text-gray-700">CO₂ Sensors</span>
-                </div>
-
-                {/* CO Sensors */}
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-6 h-6 bg-green-600 border-2 border-gray-700 rounded-full flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-white">CO</span>
-                  </div>
-                  <span className="text-[9px] font-medium text-gray-700">CO Sensors</span>
-                </div>
-
-                {/* O2 Sensors */}
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-6 h-6 bg-green-600 border-2 border-gray-700 rounded-full flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-white">O₂</span>
-                  </div>
-                  <span className="text-[9px] font-medium text-gray-700">O₂ Sensors</span>
-                </div>
-
-                {/* Door Status */}
-                <div className="flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-1">
-                    <div className="px-2 py-0.5 bg-red-600 text-white text-[8px] font-bold rounded border border-gray-700">
-                      OFF
-                    </div>
-                    <span className="text-[9px] font-medium">/</span>
-                    <div className="px-2 py-0.5 bg-green-600 text-white text-[8px] font-bold rounded border border-gray-700">
-                      ON
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-medium text-gray-700">Door Status</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-
-        </div>
-
-        {/* Zoom Controls */}
-        <div className="flex items-center justify-end gap-1.5 px-6 pb-4 mb-2 bg-white">
-          <button
-            onClick={handleZoomOut}
-            className="p-1.5 bg-white border border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded transition-colors"
-            title="Zoom Out"
-          >
-            <ZoomOut className="w-4 h-4 text-gray-700" />
-          </button>
-          <div className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded font-semibold text-xs text-gray-700 min-w-[50px] text-center">
-            {Math.round(zoom * 100)}%
-          </div>
-          <button
-            onClick={handleZoomIn}
-            className="p-1.5 bg-white border border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded transition-colors"
-            title="Zoom In"
-          >
-            <ZoomIn className="w-4 h-4 text-gray-700" />
-          </button>
-          <button
-            onClick={handleResetZoom}
-            className="p-1.5 bg-white border border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded transition-colors"
-            title="Reset Zoom"
-          >
-            <Maximize2 className="w-4 h-4 text-gray-700" />
-          </button>
+          {/* Legend removed from here - now overlaid on image */}
         </div>
 
         {/* SVG Floor Plan - Full Width */}
         <div 
-          className="w-full overflow-hidden px-6 pb-6"
-          style={{ cursor: zoom > 1 ? 'grab' : 'default' }}
+          className="w-full overflow-hidden px-6 pb-6 relative flex items-center justify-center"
+          style={{ cursor: zoom >= 1 ? 'grab' : 'default', minHeight: '600px', backgroundColor: emergencyMode ? '#fefafa' : '#fbfefb' }}
           onWheel={handleWheel}
           onMouseDown={handleMouseDown}
         >
-          <svg 
-            viewBox="0 0 920 570" 
-            className="w-full h-auto"
+          {/* Legend - Top Left Overlay */}
+          <div className="absolute top-4 left-4 z-10 bg-white rounded shadow-lg border border-gray-900" style={{ fontSize: '8px' }}>
+            <table className="border-collapse">
+              <tbody>
+                {/* Differential Pressure */}
+                <tr className="border-b border-gray-900">
+                  <td className="border-r border-gray-900 p-0.5 text-center">
+                    <div className="w-3 h-2.5 bg-orange-500 border border-gray-900 rounded flex items-center justify-center mx-auto">
+                      <span className="text-[6px] font-bold text-white leading-none">DP</span>
+                    </div>
+                  </td>
+                  <td className="p-0.5 px-1">
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">Differential Pressure</span>
+                  </td>
+                </tr>
+                
+                {/* CBRN Detectors */}
+                <tr className="border-b border-gray-900">
+                  <td className="border-r border-gray-900 p-0.5 text-center">
+                    <div className="flex items-center justify-center gap-0.5">
+                      <div className="w-2.5 h-2.5 bg-purple-700 border border-gray-900 rounded flex items-center justify-center">
+                        <span className="text-[6px] font-bold text-black leading-none">R</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-teal-600 border border-gray-900 rounded flex items-center justify-center">
+                        <span className="text-[6px] font-bold text-black leading-none">B</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-yellow-600 border border-gray-900 rounded flex items-center justify-center">
+                        <span className="text-[6px] font-bold text-black leading-none">C</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-0.5 px-1">
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">CBRN Detectors</span>
+                  </td>
+                </tr>
+                
+                {/* CO2 Sensors */}
+                <tr className="border-b border-gray-900">
+                  <td className="border-r border-gray-900 p-0.5 text-center">
+                    <div className="w-4 h-4 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center mx-auto">
+                      <span className="text-[6px] font-bold text-white leading-none">CO₂</span>
+                    </div>
+                  </td>
+                  <td className="p-0.5 px-1">
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">CO₂ Sensors</span>
+                  </td>
+                </tr>
+                
+                {/* CO Sensors */}
+                <tr className="border-b border-gray-900">
+                  <td className="border-r border-gray-900 p-0.5 text-center">
+                    <div className="w-4 h-4 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center mx-auto">
+                      <span className="text-[6px] font-bold text-white leading-none">CO</span>
+                    </div>
+                  </td>
+                  <td className="p-0.5 px-1">
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">CO Sensors</span>
+                  </td>
+                </tr>
+                
+                {/* O2 Sensors */}
+                <tr className="border-b border-gray-900">
+                  <td className="border-r border-gray-900 p-0.5 text-center">
+                    <div className="w-4 h-4 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center mx-auto">
+                      <span className="text-[6px] font-bold text-white leading-none">O₂</span>
+                    </div>
+                  </td>
+                  <td className="p-0.5 px-1">
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">O₂ Sensors</span>
+                  </td>
+                </tr>
+                
+                {/* Door Status */}
+                <tr>
+                  <td className="border-r border-gray-900 p-0.5 text-center">
+                    <div className="flex items-center justify-center gap-0.5">
+                      <div className="px-0.5 py-0.5 bg-red-600 text-white text-[6px] font-bold rounded border border-gray-900 leading-none">
+                        OFF
+                      </div>
+                      <div className="px-0.5 py-0.5 bg-green-600 text-white text-[6px] font-bold rounded border border-gray-900 leading-none">
+                        ON
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-0.5 px-1">
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">Door Status</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Zoom Controls - Top Right */}
+          <div className="absolute top-8 right-8 z-10 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1.5 border border-gray-300">
+            <button
+              onClick={handleZoomOut}
+              className="p-1.5 bg-white border border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded transition-colors"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-4 h-4 text-gray-700" />
+            </button>
+            <div className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded font-semibold text-xs text-gray-700 min-w-[50px] text-center">
+              {Math.round(zoom * 100)}%
+            </div>
+            <button
+              onClick={handleZoomIn}
+              className="p-1.5 bg-white border border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded transition-colors"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-4 h-4 text-gray-700" />
+            </button>
+            <button
+              onClick={handleResetZoom}
+              className="p-1.5 bg-white border border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded transition-colors"
+              title="Reset Zoom"
+            >
+              <RotateCcw className="w-4 h-4 text-gray-700" />
+            </button>
+          </div>
+
+          {/* Detailed Floor Plan Image */}
+          <div
+            className="relative"
             style={{
-              transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
+              transform: `translate(${panX}px, ${panY}px) scale(${zoom}) rotate(-90deg)`,
               transformOrigin: 'center center',
-              transition: isPanning ? 'none' : 'transform 0.1s ease-out'
+              transition: isPanning ? 'none' : 'transform 0.1s ease-out',
             }}
           >
-            {/* Background */}
-            <rect x="0" y="0" width="920" height="570" fill="#f8fafc" />
-            
-            {/* Grid pattern */}
-            <defs>
-              <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" strokeWidth="0.5"/>
-              </pattern>
-            </defs>
-            <rect width="920" height="570" fill="url(#grid)" />
-
-            {/* Irregular outer walls */}
-            <path
-              d="M 40 80 
-                 L 40 50 
-                 L 280 50 
-                 L 280 40 
-                 L 520 40 
-                 L 520 50 
-                 L 720 50 
-                 L 750 60 
-                 L 870 60 
-                 L 870 240 
-                 L 880 240 
-                 L 880 380 
-                 L 870 380 
-                 L 870 530 
-                 L 860 540 
-                 L 720 540 
-                 L 700 550 
-                 L 480 550 
-                 L 480 540 
-                 L 280 540 
-                 L 280 530 
-                 L 60 530 
-                 L 50 520 
-                 L 40 520 
-                 L 40 340 
-                 L 30 340 
-                 L 30 240 
-                 L 40 240 
-                 Z"
-              fill="none"
-              stroke={emergencyMode ? "#ef4444" : "#10b981"}
-              strokeWidth="8"
-              strokeLinejoin="miter"
+            <img 
+              src={floorPlanImage}
+              alt="Floor Plan"
+              className="h-auto"
+              style={{ 
+                width: `${leftPanelWidth - 100}px`, 
+                height: 'auto', 
+                display: 'block' 
+              }}
             />
-
-            {/* Draw all rooms */}
-            {adjustedRooms.map((room) => {
-              const isHovered = hoveredRoom === room.id;
-              const isSelected = selectedRoom === room.id;
-              const isHallway = room.type === 'Hallway';
-              
-              let fillColor = '#ffffff';
-              if (isHallway) {
-                fillColor = '#e5e7eb';
-              } else if (room.status === 'critical') {
-                fillColor = '#fecaca';
-              } else if (room.status === 'warning') {
-                fillColor = '#fde68a';
-              }
-
-              let strokeColor = '#374151';
-              let strokeWidth = 1;
-              if (room.status === 'critical') {
-                strokeColor = '#dc2626';
-                strokeWidth = 2.5;
-              } else if (room.status === 'warning') {
-                strokeColor = '#f97316';
-                strokeWidth = 2.5;
-              } else if (isSelected) {
-                strokeColor = '#3b82f6';
-                strokeWidth = 2;
-              } else if (isHovered) {
-                strokeColor = '#6366f1';
-                strokeWidth = 1.5;
-              }
-
-              return (
-                <g key={room.id}>
-                  {/* Glow for alert rooms */}
-                  {(room.status === 'critical' || room.status === 'warning') && (
-                    <rect
-                      x={room.x - 4}
-                      y={room.y - 4}
-                      width={room.width + 8}
-                      height={room.height + 8}
-                      fill="none"
-                      stroke={room.status === 'critical' ? '#dc2626' : '#f97316'}
-                      strokeWidth="8"
-                      opacity="0.5"
-                      className="pointer-events-none"
-                    />
-                  )}
-
-                  {/* Room fill */}
-                  <rect
-                    x={room.x}
-                    y={room.y}
-                    width={room.width}
-                    height={room.height}
-                    fill={fillColor}
-                    stroke={strokeColor}
-                    strokeWidth={strokeWidth}
-                    className="cursor-pointer transition-all"
-                    onMouseEnter={() => setHoveredRoom(room.id)}
-                    onMouseLeave={() => setHoveredRoom(null)}
-                    onClick={() => handleRoomClick(room)}
-                    style={{ 
-                      opacity: isHovered || isSelected ? 0.95 : 0.9,
-                    }}
-                  />
-
-                  {/* Sensor icons */}
-                  {room.sensors && room.sensors.map((sensor, idx) => {
-                    const sensorX = room.x + (room.width * sensor.x / 100);
-                    const sensorY = room.y + (room.height * sensor.y / 100);
-                    const isHoveredSensor = hoveredSensor === sensor.id;
-                    
-                    // Render icons based on subType (legend icons)
-                    let icon = null;
-                    
-                    if (sensor.subType === 'DP') {
-                      // Differential Pressure - Orange square
-                      icon = (
-                        <g>
-                          <rect
-                            x={sensorX - 8}
-                            y={sensorY - 7}
-                            width="16"
-                            height="14"
-                            fill="#f97316"
-                            stroke="#374151"
-                            strokeWidth={isHoveredSensor ? "2" : "1"}
-                            rx="2"
-                            className="cursor-pointer"
-                            onMouseEnter={() => setHoveredSensor(sensor.id)}
-                            onMouseLeave={() => setHoveredSensor(null)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedSensor(sensor);
-                            }}
-                          />
-                          <text
-                            x={sensorX}
-                            y={sensorY + 3}
-                            textAnchor="middle"
-                            fill="white"
-                            fontSize="8"
-                            fontWeight="bold"
-                            className="pointer-events-none"
-                          >
-                            DP
-                          </text>
-                        </g>
-                      );
-                    } else if (sensor.subType === 'R') {
-                      // Radiological - Purple square
-                      icon = (
-                        <g>
-                          <rect
-                            x={sensorX - 7}
-                            y={sensorY - 7}
-                            width="14"
-                            height="14"
-                            fill="#7c3aed"
-                            stroke="#374151"
-                            strokeWidth={isHoveredSensor ? "2" : "1"}
-                            rx="2"
-                            className="cursor-pointer"
-                            onMouseEnter={() => setHoveredSensor(sensor.id)}
-                            onMouseLeave={() => setHoveredSensor(null)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedSensor(sensor);
-                            }}
-                          />
-                          <text
-                            x={sensorX}
-                            y={sensorY + 3}
-                            textAnchor="middle"
-                            fill="white"
-                            fontSize="8"
-                            fontWeight="bold"
-                            className="pointer-events-none"
-                          >
-                            R
-                          </text>
-                        </g>
-                      );
-                    } else if (sensor.subType === 'B') {
-                      // Biological - Teal square
-                      icon = (
-                        <g>
-                          <rect
-                            x={sensorX - 7}
-                            y={sensorY - 7}
-                            width="14"
-                            height="14"
-                            fill="#0d9488"
-                            stroke="#374151"
-                            strokeWidth={isHoveredSensor ? "2" : "1"}
-                            rx="2"
-                            className="cursor-pointer"
-                            onMouseEnter={() => setHoveredSensor(sensor.id)}
-                            onMouseLeave={() => setHoveredSensor(null)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedSensor(sensor);
-                            }}
-                          />
-                          <text
-                            x={sensorX}
-                            y={sensorY + 3}
-                            textAnchor="middle"
-                            fill="white"
-                            fontSize="8"
-                            fontWeight="bold"
-                            className="pointer-events-none"
-                          >
-                            B
-                          </text>
-                        </g>
-                      );
-                    } else if (sensor.subType === 'C') {
-                      // Chemical - Yellow square
-                      icon = (
-                        <g>
-                          <rect
-                            x={sensorX - 7}
-                            y={sensorY - 7}
-                            width="14"
-                            height="14"
-                            fill="#ca8a04"
-                            stroke="#374151"
-                            strokeWidth={isHoveredSensor ? "2" : "1"}
-                            rx="2"
-                            className="cursor-pointer"
-                            onMouseEnter={() => setHoveredSensor(sensor.id)}
-                            onMouseLeave={() => setHoveredSensor(null)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedSensor(sensor);
-                            }}
-                          />
-                          <text
-                            x={sensorX}
-                            y={sensorY + 3}
-                            textAnchor="middle"
-                            fill="white"
-                            fontSize="8"
-                            fontWeight="bold"
-                            className="pointer-events-none"
-                          >
-                            C
-                          </text>
-                        </g>
-                      );
-                    } else if (sensor.subType === 'CO2') {
-                      // CO2 - Green circle
-                      icon = (
-                        <g>
-                          <circle
-                            cx={sensorX}
-                            cy={sensorY}
-                            r="9"
-                            fill="#16a34a"
-                            stroke="#374151"
-                            strokeWidth={isHoveredSensor ? "2.5" : "1.5"}
-                            className="cursor-pointer"
-                            onMouseEnter={() => setHoveredSensor(sensor.id)}
-                            onMouseLeave={() => setHoveredSensor(null)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedSensor(sensor);
-                            }}
-                          />
-                          <text
-                            x={sensorX}
-                            y={sensorY + 3}
-                            textAnchor="middle"
-                            fill="white"
-                            fontSize="7"
-                            fontWeight="bold"
-                            className="pointer-events-none"
-                          >
-                            CO₂
-                          </text>
-                        </g>
-                      );
-                    } else if (sensor.subType === 'CO') {
-                      // CO - Green circle
-                      icon = (
-                        <g>
-                          <circle
-                            cx={sensorX}
-                            cy={sensorY}
-                            r="9"
-                            fill="#16a34a"
-                            stroke="#374151"
-                            strokeWidth={isHoveredSensor ? "2.5" : "1.5"}
-                            className="cursor-pointer"
-                            onMouseEnter={() => setHoveredSensor(sensor.id)}
-                            onMouseLeave={() => setHoveredSensor(null)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedSensor(sensor);
-                            }}
-                          />
-                          <text
-                            x={sensorX}
-                            y={sensorY + 3}
-                            textAnchor="middle"
-                            fill="white"
-                            fontSize="7"
-                            fontWeight="bold"
-                            className="pointer-events-none"
-                          >
-                            CO
-                          </text>
-                        </g>
-                      );
-                    } else if (sensor.subType === 'O2') {
-                      // O2 - Green circle
-                      icon = (
-                        <g>
-                          <circle
-                            cx={sensorX}
-                            cy={sensorY}
-                            r="9"
-                            fill="#16a34a"
-                            stroke="#374151"
-                            strokeWidth={isHoveredSensor ? "2.5" : "1.5"}
-                            className="cursor-pointer"
-                            onMouseEnter={() => setHoveredSensor(sensor.id)}
-                            onMouseLeave={() => setHoveredSensor(null)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedSensor(sensor);
-                            }}
-                          />
-                          <text
-                            x={sensorX}
-                            y={sensorY + 3}
-                            textAnchor="middle"
-                            fill="white"
-                            fontSize="7"
-                            fontWeight="bold"
-                            className="pointer-events-none"
-                          >
-                            O₂
-                          </text>
-                        </g>
-                      );
-                    }
-                    
-                    return icon ? (
-                      <g key={sensor.id}>
-                        {icon}
-                      </g>
-                    ) : null;
-                  })}
-
-                  {/* Alert icon for critical/warning rooms */}
-                  {(room.status === 'critical' || room.status === 'warning') && (
-                    <g>
-                      {/* Background circle */}
-                      <circle 
-                        cx={room.x + room.width - 20} 
-                        cy={room.y + 20} 
-                        r="18" 
-                        fill={room.status === 'critical' ? '#dc2626' : '#f97316'}
-                        opacity="0.3"
-                      />
-                      {/* Solid circle */}
-                      <circle 
-                        cx={room.x + room.width - 20} 
-                        cy={room.y + 20} 
-                        r="14" 
-                        fill={room.status === 'critical' ? '#dc2626' : '#f97316'}
-                      />
-                      <text
-                        x={room.x + room.width - 20}
-                        y={room.y + 26}
-                        textAnchor="middle"
-                        className="pointer-events-none"
-                        fill="white"
-                        fontSize="18"
-                        fontWeight="bold"
-                      >
-                        ⚠
-                      </text>
-                    </g>
-                  )}
-                </g>
-              );
-            })}
-
-            {/* Interior walls */}
-            <g stroke="#2d3748" strokeWidth="2.5" fill="none" strokeLinecap="square">
-              {isFloor2 ? (
-                <>
-                  <line x1="60" y1="190" x2="300" y2="190" />
-                  <line x1="310" y1="140" x2="450" y2="140" />
-                  <line x1="310" y1="250" x2="450" y2="250" />
-                  <line x1="470" y1="155" x2="580" y2="155" />
-                  <line x1="600" y1="175" x2="850" y2="175" />
-                  <line x1="760" y1="185" x2="760" y2="280" />
-                  <line x1="300" y1="60" x2="300" y2="250" />
-                  <line x1="450" y1="60" x2="450" y2="250" />
-                  <line x1="580" y1="60" x2="580" y2="250" />
-                  <line x1="770" y1="60" x2="770" y2="185" />
-                  <line x1="60" y1="260" x2="850" y2="260" />
-                  <line x1="60" y1="325" x2="850" y2="325" />
-                  <line x1="60" y1="420" x2="250" y2="420" />
-                  <line x1="260" y1="420" x2="350" y2="420" />
-                  <line x1="360" y1="420" x2="515" y2="420" />
-                  <line x1="610" y1="425" x2="850" y2="425" />
-                  <line x1="250" y1="335" x2="250" y2="510" />
-                  <line x1="350" y1="335" x2="350" y2="510" />
-                  <line x1="515" y1="335" x2="515" y2="510" />
-                  <line x1="600" y1="335" x2="600" y2="510" />
-                  <line x1="740" y1="335" x2="740" y2="510" />
-                  <line x1="750" y1="425" x2="750" y2="510" />
-                </>
-              ) : (
-                <>
-                  <line x1="240" y1="60" x2="240" y2="170" />
-                  <line x1="350" y1="60" x2="350" y2="170" />
-                  <line x1="520" y1="60" x2="520" y2="230" />
-                  <line x1="670" y1="60" x2="670" y2="135" />
-                  <line x1="770" y1="145" x2="770" y2="230" />
-                  <line x1="520" y1="135" x2="850" y2="135" />
-                  <line x1="670" y1="230" x2="850" y2="230" />
-                  <line x1="60" y1="240" x2="850" y2="240" />
-                  <line x1="60" y1="310" x2="850" y2="310" />
-                  <line x1="280" y1="320" x2="280" y2="510" />
-                  <line x1="430" y1="320" x2="430" y2="510" />
-                  <line x1="620" y1="320" x2="620" y2="510" />
-                  <line x1="750" y1="320" x2="750" y2="415" />
-                  <line x1="280" y1="415" x2="430" y2="415" />
-                  <line x1="60" y1="430" x2="280" y2="430" />
-                  <line x1="630" y1="415" x2="750" y2="415" />
-                </>
-              )}
-            </g>
-
-            {/* Render all sensor tooltips at the end so they appear above everything */}
-            {adjustedRooms.map(room => 
-              room.sensors?.map(sensor => {
-                const sensorX = room.x + (room.width * sensor.x / 100);
-                const sensorY = room.y + (room.height * sensor.y / 100);
-                const isHoveredSensor = hoveredSensor === sensor.id;
-                
-                if (!isHoveredSensor) return null;
-                
-                return (
-                  <g key={`tooltip-${sensor.id}`}>
-                    {/* Shadow for depth */}
-                    <rect
-                      x={sensorX + 16}
-                      y={sensorY - 34}
-                      width="200"
-                      height="64"
-                      fill="rgba(0,0,0,0.1)"
-                      rx="8"
-                      className="pointer-events-none"
-                    />
-                    {/* Tooltip background */}
-                    <rect
-                      x={sensorX + 14}
-                      y={sensorY - 36}
-                      width="200"
-                      height="64"
-                      fill="white"
-                      stroke="#1f2937"
-                      strokeWidth="2.5"
-                      rx="8"
-                      className="pointer-events-none"
-                    />
-                    {/* Sensor name */}
-                    <text
-                      x={sensorX + 114}
-                      y={sensorY - 14}
-                      textAnchor="middle"
-                      fill="#1f2937"
-                      fontSize="14"
-                      fontWeight="bold"
-                      className="pointer-events-none"
+            
+            {/* Command Center Warning Icon - Show in normal mode */}
+            {!emergencyMode && (
+              <div 
+                className="absolute cursor-pointer" 
+                style={{ left: '55%', top: '49%', transform: 'rotate(90deg)' }}
+                onClick={() => {
+                  setSelectedIncident('inc-011');
+                  setSelectedSensor(null);
+                  setSelectedRoom(null);
+                }}
+                onMouseEnter={(e) => {
+                  setHoveredFloorSensor({
+                    id: 'command-center-warning',
+                    name: 'Command Center',
+                    status: 'warning',
+                    value: 'Warning Active',
+                    type: 'room'
+                  });
+                }}
+                onMouseLeave={() => setHoveredFloorSensor(null)}
+              >
+                <div className="relative">
+                  <AlertTriangle className="w-6 h-6 text-orange-500 fill-orange-100 drop-shadow-lg animate-pulse hover:scale-110 transition-transform" />
+                  
+                  {hoveredFloorSensor?.id === 'command-center-warning' && (
+                    <div 
+                      className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-orange-500 pointer-events-none"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${12 / zoom}px`,
+                        fontSize: `${11 / zoom}px`,
+                        padding: `${10 / zoom}px ${14 / zoom}px`,
+                        zIndex: 1000,
+                        minWidth: `${200 / zoom}px`
+                      }}
                     >
-                      {sensor.name}
-                    </text>
-                    {/* Sensor value */}
-                    <text
-                      x={sensorX + 114}
-                      y={sensorY + 8}
-                      textAnchor="middle"
-                      fill={sensor.status === 'critical' ? '#dc2626' : sensor.status === 'warning' ? '#f97316' : '#16a34a'}
-                      fontSize="16"
-                      fontWeight="700"
-                      className="pointer-events-none"
-                    >
-                      {sensor.value}
-                    </text>
-                  </g>
-                );
-              })
+                      <div style={{ fontWeight: 'bold', marginBottom: `${6 / zoom}px`, fontSize: `${12 / zoom}px` }}>⚠️ Command Center Alert</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${4 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${8 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#f97316',
+                          color: 'white'
+                        }}>
+                          WARNING
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db', marginBottom: `${4 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Type:</span> Equipment Alert
+                      </div>
+                      <div style={{ color: '#d1d5db', marginBottom: `${4 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Severity:</span> Medium
+                      </div>
+                      <div style={{ color: '#d1d5db', fontSize: `${10 / zoom}px`, marginTop: `${6 / zoom}px`, paddingTop: `${6 / zoom}px`, borderTop: '1px solid #374151' }}>
+                        Click to view details
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
-          </svg>
+            
+            {/* Red Alert Indicators - Only show in emergency mode */}
+            {emergencyMode && (
+              <>
+                {/* Alert 1 - Room Area 1 */}
+                <div 
+                  className="absolute cursor-pointer" 
+                  style={{ left: '67%', top: '46%', transform: 'rotate(90deg)' }}
+                  onClick={() => {
+                    setSelectedIncident('inc-011');
+                    setSelectedSensor(null);
+                    setSelectedRoom(null);
+                  }}
+                >
+                  <div className="relative">
+                    <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center animate-pulse shadow-lg border-2 border-white">
+                      <AlertCircle className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alert 2 - Room Area 2 (nearby) */}
+                <div 
+                  className="absolute cursor-pointer" 
+                  style={{ left: '72%', top: '49%', transform: 'rotate(90deg)' }}
+                  onClick={() => {
+                    setSelectedIncident('inc-011');
+                    setSelectedSensor(null);
+                    setSelectedRoom(null);
+                  }}
+                >
+                  <div className="relative">
+                    <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center animate-pulse shadow-lg border-2 border-white">
+                      <AlertCircle className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alert 3 - Room Area 3 (nearby) */}
+                <div 
+                  className="absolute cursor-pointer" 
+                  style={{ left: '76%', top: '46.5%', transform: 'rotate(90deg)' }}
+                  onClick={() => {
+                    setSelectedIncident('inc-011');
+                    setSelectedSensor(null);
+                    setSelectedRoom(null);
+                  }}
+                >
+                  <div className="relative">
+                    <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center animate-pulse shadow-lg border-2 border-white">
+                      <AlertCircle className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+            
+            {/* Sensor Overlays - rotated with image */}
+            {/* Top section - Sensors 3 */}
+            <div 
+              className="absolute" 
+              style={{ left: '65%', top: '48%', transform: 'rotate(90deg)' }}
+            >
+              <div className="flex flex-col items-center gap-px">
+                <div className="flex items-center gap-0">
+                  {/* CO₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-3-co2', 
+                      name: 'CO₂ Sensor 3', 
+                      status: 'operational', 
+                      value: '420 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO2-3', 
+                      name: 'CO₂ Sensor 3', 
+                      type: 'air-quality', 
+                      subType: 'CO2', 
+                      status: 'operational', 
+                      value: '420 ppm', 
+                      x: 65, 
+                      y: 48,
+                      lastUpdate: '2s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-3-co2' && (
+                      <div 
+                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* CO Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-3-co', 
+                      name: 'CO Sensor 3', 
+                      status: 'operational', 
+                      value: '2 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO-3', 
+                      name: 'CO Sensor 3', 
+                      type: 'air-quality', 
+                      subType: 'CO', 
+                      status: 'operational', 
+                      value: '2 ppm', 
+                      x: 65, 
+                      y: 48,
+                      lastUpdate: '2s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-3-co' && (
+                      <div 
+                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* O₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-3-o2', 
+                      name: 'O₂ Sensor 3', 
+                      status: 'operational', 
+                      value: '20.9%',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-O2-3', 
+                      name: 'O₂ Sensor 3', 
+                      type: 'air-quality', 
+                      subType: 'O2', 
+                      status: 'operational', 
+                      value: '20.9%', 
+                      x: 65, 
+                      y: 48,
+                      lastUpdate: '1s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>O₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-3-o2' && (
+                      <div 
+                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Sensors 3</span>
+              </div>
+            </div>
+            
+            {/* Bottom section - Sensors 2 */}
+            <div 
+              className="absolute" 
+              style={{ left: '80%', top: '48%', transform: 'rotate(90deg)' }}
+            >
+              <div className="flex flex-col items-center gap-px">
+                <div className="flex items-center gap-0">
+                  {/* CO₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-2-co2', 
+                      name: 'CO₂ Sensor 2', 
+                      status: 'operational', 
+                      value: '430 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO2-2', 
+                      name: 'CO₂ Sensor 2', 
+                      type: 'air-quality', 
+                      subType: 'CO2', 
+                      status: 'operational', 
+                      value: '430 ppm', 
+                      x: 80, 
+                      y: 48,
+                      lastUpdate: '3s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-2-co2' && (
+                      <div 
+                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* CO Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-2-co', 
+                      name: 'CO Sensor 2', 
+                      status: 'operational', 
+                      value: '1 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO-2', 
+                      name: 'CO Sensor 2', 
+                      type: 'air-quality', 
+                      subType: 'CO', 
+                      status: 'operational', 
+                      value: '1 ppm', 
+                      x: 80, 
+                      y: 48,
+                      lastUpdate: '4s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-2-co' && (
+                      <div 
+                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* O₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-2-o2', 
+                      name: 'O₂ Sensor 2', 
+                      status: 'operational', 
+                      value: '21.0%',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-O2-2', 
+                      name: 'O₂ Sensor 2', 
+                      type: 'air-quality', 
+                      subType: 'O2', 
+                      status: 'operational', 
+                      value: '21.0%', 
+                      x: 80, 
+                      y: 48,
+                      lastUpdate: '2s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>O₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-2-o2' && (
+                      <div 
+                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Sensors 2</span>
+              </div>
+            </div>
+
+            {/* Switch 3 - Left side corridor */}
+            <div 
+              className="absolute" 
+              style={{ left: '71.5%', top: '45.5%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'switch-3', 
+                  name: 'Switch 3 (Door Control)', 
+                  status: 'operational', 
+                  value: 'Door OPEN',
+                  type: 'door'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+            >
+              <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity relative">
+                <div className="flex flex-col gap-0">
+                  <div className="w-1 h-1 bg-red-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">OFF</span>
+                  </div>
+                  <div className="w-1 h-1 bg-green-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">ON</span>
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Switch 3</span>
+                
+                {/* Tooltip for Switch 3 */}
+                {hoveredFloorSensor?.id === 'switch-3' && (
+                  <div 
+                    className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* CBR Sensors - Below Switch 3 */}
+            <div 
+              className="absolute" 
+              style={{ left: '68%', top: '44%', transform: 'rotate(90deg)' }}
+            >
+              <div className="flex flex-col gap-0">
+                {/* R1 - Radiological Detector */}
+                <div 
+                  className="w-1 h-1 bg-purple-700 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbr-r1', 
+                    name: 'Radiological Detector (R1)', 
+                    status: 'operational', 
+                    value: 'Normal - No radiation detected',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-R1', 
+                    name: 'Radiological Detector (R1)', 
+                    type: 'chemical', 
+                    subType: 'R', 
+                    status: 'operational', 
+                    value: 'Normal', 
+                    x: 68, 
+                    y: 44,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">R1</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbr-r1' && (
+                    <div 
+                      className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* B1 - Biological Detector */}
+                <div 
+                  className="w-1 h-1 bg-teal-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbr-b1', 
+                    name: 'Biological Detector (B1)', 
+                    status: emergencyMode ? 'critical' : 'operational', 
+                    value: emergencyMode ? 'CRITICAL: Bio agents detected!' : 'Clear - No biological threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-B1', 
+                    name: 'Biological Detector (B1)', 
+                    type: 'chemical', 
+                    subType: 'B', 
+                    status: emergencyMode ? 'critical' : 'operational', 
+                    value: emergencyMode ? 'DETECTED' : 'Clear', 
+                    x: 68, 
+                    y: 44,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">B1</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbr-b1' && (
+                    <div 
+                      className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                         hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                        }}>
+                          {hoveredFloorSensor.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* C1 - Chemical Detector */}
+                <div 
+                  className="w-1 h-1 bg-yellow-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbr-c1', 
+                    name: 'Chemical Detector (C1)', 
+                    status: emergencyMode ? 'critical' : 'operational', 
+                    value: emergencyMode ? 'CRITICAL: Chemical agents detected!' : 'Clear - No chemical threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-C1', 
+                    name: 'Chemical Detector (C1)', 
+                    type: 'chemical', 
+                    subType: 'C', 
+                    status: emergencyMode ? 'critical' : 'operational', 
+                    value: emergencyMode ? 'DETECTED' : 'Clear', 
+                    x: 68, 
+                    y: 44,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">C1</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbr-c1' && (
+                    <div 
+                      className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                         hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                        }}>
+                          {hoveredFloorSensor.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -948,821 +1282,379 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
         <div className="absolute inset-y-0 -left-1 -right-1 group-hover:bg-blue-500/20" />
       </div>
 
-      {/* Right Panel - Details */}
-      <div className="flex-1 overflow-auto p-6">
+      {/* Right Panel - Facility Overview, Sensor Details, or Incident Details */}
+      <div className="flex-1 overflow-auto p-6 space-y-6">
+        {/* Show Sensor Details if a sensor is selected */}
         {selectedSensor ? (
-          // Sensor Details View
-          <div className="max-w-3xl">
-            {/* Sensor Header */}
-            <div className="flex items-start justify-between mb-6 pb-4 border-b-2 border-gray-300">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">{selectedSensor.name}</h2>
-                <p className="text-sm text-gray-600 mt-1">Sensor ID: {selectedSensor.id}</p>
-              </div>
-              <button 
-                onClick={() => setSelectedSensor(null)}
-                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-
-            {/* Sensor Status */}
-            <div className="mb-6">
-              <div className="grid grid-cols-4 gap-5">
-                {/* Type */}
-                <div>
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Type</p>
-                  <div className="flex items-center gap-2">
-                    {selectedSensor.subType === 'DP' && (
-                      <div className="w-6 h-5 bg-orange-500 border border-gray-700 rounded flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-white">DP</span>
-                      </div>
-                    )}
-                    {selectedSensor.subType === 'R' && (
-                      <div className="w-5 h-5 bg-purple-700 border border-gray-700 rounded flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-white">R</span>
-                      </div>
-                    )}
-                    {selectedSensor.subType === 'B' && (
-                      <div className="w-5 h-5 bg-teal-600 border border-gray-700 rounded flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-white">B</span>
-                      </div>
-                    )}
-                    {selectedSensor.subType === 'C' && (
-                      <div className="w-5 h-5 bg-yellow-600 border border-gray-700 rounded flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-white">C</span>
-                      </div>
-                    )}
-                    {(selectedSensor.subType === 'CO2' || selectedSensor.subType === 'CO' || selectedSensor.subType === 'O2') && (
-                      <div className="w-6 h-6 bg-green-600 border-2 border-gray-700 rounded-full flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-white">{selectedSensor.subType === 'CO2' ? 'CO₂' : selectedSensor.subType}</span>
-                      </div>
-                    )}
-                    <span className="text-sm font-semibold text-gray-900">{selectedSensor.subType}</span>
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div>
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Status</p>
-                  <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
-                    selectedSensor.status === 'operational' ? 'bg-green-100 text-green-800' :
-                    selectedSensor.status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {selectedSensor.status}
-                  </span>
-                </div>
-
-                {/* Current Value */}
-                <div>
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Reading</p>
-                  <p className={`text-lg font-bold ${
-                    selectedSensor.status === 'critical' ? 'text-red-600' :
-                    selectedSensor.status === 'warning' ? 'text-orange-600' :
-                    'text-green-600'
-                  }`}>
-                    {selectedSensor.value}
-                  </p>
-                </div>
-
-                {/* Last Update */}
-                <div>
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Last Update</p>
-                  <p className="text-sm font-semibold text-gray-700">{selectedSensor.lastUpdate}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Sensor Details Card */}
-            <div className="bg-white border-2 border-gray-300 rounded-lg p-5 mb-6">
-              <h3 className="text-sm font-bold text-gray-900 mb-4">Sensor Information</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-600">Sensor Category:</span>
-                  <span className="text-sm font-semibold text-gray-900 capitalize">{selectedSensor.type.replace('-', ' ')}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-600">Monitoring:</span>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {selectedSensor.subType === 'DP' && 'Differential Pressure'}
-                    {selectedSensor.subType === 'R' && 'Radiological Agents'}
-                    {selectedSensor.subType === 'B' && 'Biological Agents'}
-                    {selectedSensor.subType === 'C' && 'Chemical Agents'}
-                    {selectedSensor.subType === 'CO2' && 'Carbon Dioxide'}
-                    {selectedSensor.subType === 'CO' && 'Carbon Monoxide'}
-                    {selectedSensor.subType === 'O2' && 'Oxygen Levels'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-600">Alert Threshold:</span>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {selectedSensor.subType === 'DP' && '< -10 Pa or > +15 Pa'}
-                    {selectedSensor.subType === 'CO2' && '> 1000 ppm'}
-                    {selectedSensor.subType === 'CO' && '> 35 ppm'}
-                    {selectedSensor.subType === 'O2' && '< 19.5% or > 23%'}
-                    {(selectedSensor.subType === 'R' || selectedSensor.subType === 'B' || selectedSensor.subType === 'C') && 'Any Detection'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Recommendations */}
-            {selectedSensor.status !== 'operational' && (
-              <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-5">
-                <div className="flex items-start gap-3 mb-3">
-                  <Brain className="size-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h3 className="text-sm font-bold text-blue-900 mb-1">AI Recommendations</h3>
-                    <p className="text-xs text-blue-800">Based on current sensor readings and historical data</p>
-                  </div>
-                </div>
-                <ul className="space-y-2 ml-8">
-                  {selectedSensor.status === 'critical' && (
-                    <>
-                      <li className="text-xs text-blue-900">• <strong>Immediate evacuation</strong> of affected areas recommended</li>
-                      <li className="text-xs text-blue-900">• Activate emergency ventilation protocols</li>
-                      <li className="text-xs text-blue-900">• Deploy hazmat response team to location</li>
-                      <li className="text-xs text-blue-900">• Isolate contaminated zones using pressure differentials</li>
-                    </>
-                  )}
-                  {selectedSensor.status === 'warning' && (
-                    <>
-                      <li className="text-xs text-blue-900">• Monitor closely for escalation trends</li>
-                      <li className="text-xs text-blue-900">• Increase ventilation in affected area</li>
-                      <li className="text-xs text-blue-900">• Alert personnel to elevated risk levels</li>
-                      <li className="text-xs text-blue-900">• Prepare containment protocols</li>
-                    </>
-                  )}
-                </ul>
-              </div>
-            )}
-          </div>
-        ) : !selectedRoomData || selectedRoomData.type === 'Hallway' ? (
-          <div className="max-w-3xl">
-            {/* Bunker Header */}
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-lg font-bold text-gray-900">Bunker Alpha-7</h2>
-                {!emergencyMode && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-md border border-green-200 shadow-sm">
-                    <div className="size-1.5 rounded-full bg-green-600"></div>
-                    Operational
-                  </span>
-                )}
-                {emergencyMode && (
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-red-600 to-red-700 text-white text-xs font-bold rounded-md uppercase tracking-wide shadow-md border border-red-800">
-                    <AlertTriangle className="size-3" />
-                    <span>Under Attack</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                <MapPin className="size-3.5" />
-                <span>Sector 12, Underground Level 3</span>
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 mb-4">
-              {(isFloor2 && emergencyMode)
-                ? 'AI-powered analysis and predictions for the current emergency situation on this floor.'
-                : 'Click on any room in the floor plan to view detailed information, sensors, and device status.'}
-            </p>
-
-            <div className="space-y-4">
-              {/* Normal Statistics */}
-              {/* Key Metrics Grid */}
-              <div className="grid grid-cols-5 gap-4">
-                {/* Total Rooms */}
-                <div className="text-center">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Rooms</p>
-                  <p className="text-2xl font-bold text-gray-900">{adjustedRooms.filter(r => r.type !== 'Hallway').length}</p>
-                  <p className="text-[10px] text-gray-600 mt-0.5">Active</p>
-                </div>
-
-                {/* Total Devices */}
-                <div className="text-center">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Devices</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {adjustedRooms.reduce((total, room) => total + (room.sensors?.length || 0), 0)}
-                  </p>
-                  <p className="text-[10px] text-gray-600 mt-0.5">Sensors</p>
-                </div>
-
-                {/* Occupancy */}
-                <div className="text-center">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Occupancy</p>
-                  <p className="text-2xl font-bold text-blue-600">{isFloor2 ? '12' : '8'}</p>
-                  <p className="text-[10px] text-gray-600 mt-0.5">Personnel</p>
-                </div>
-
-                {/* Avg Temperature */}
-                <div className="text-center">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Avg Temp</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {Math.round(
-                      adjustedRooms.filter(r => r.temp).reduce((sum, r) => sum + (r.temp || 0), 0) / 
-                      adjustedRooms.filter(r => r.temp).length
-                    )}°C
-                  </p>
-                  <p className="text-[10px] text-gray-600 mt-0.5">Normal</p>
-                </div>
-
-                {/* Total Alerts */}
-                <div className="text-center">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Alerts</p>
-                  <p className={`text-2xl font-bold ${
-                    adjustedRooms.filter(r => r.status === 'critical' || r.status === 'warning').length > 0 
-                      ? 'text-red-600' 
-                      : 'text-green-600'
-                  }`}>
-                    {adjustedRooms.filter(r => r.status === 'critical' || r.status === 'warning').length}
-                  </p>
-                  <p className="text-[10px] text-gray-600 mt-0.5">
-                    {adjustedRooms.filter(r => r.status === 'critical' || r.status === 'warning').length === 0 ? 'Clear' : 'Active'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Status Breakdown */}
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-xs font-semibold text-gray-700 mb-2">Room Status Distribution</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                    <p className="text-[10px] text-green-700 font-medium mb-0.5">Operational</p>
-                    <p className="text-xl font-bold text-green-800">
-                      {adjustedRooms.filter(r => r.status === 'operational' && r.type !== 'Hallway').length}
-                    </p>
-                  </div>
-                  <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
-                    <p className="text-[10px] text-yellow-700 font-medium mb-0.5">Warning</p>
-                    <p className="text-xl font-bold text-yellow-800">
-                      {adjustedRooms.filter(r => r.status === 'warning').length}
-                    </p>
-                  </div>
-                  <div className="bg-red-50 rounded-lg p-3 border border-red-200">
-                    <p className="text-[10px] text-red-700 font-medium mb-0.5">Critical</p>
-                    <p className="text-xl font-bold text-red-800">
-                      {adjustedRooms.filter(r => r.status === 'critical').length}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Temperature Range */}
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-xs font-semibold text-gray-700 mb-2">Temperature Range</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <p className="text-[10px] text-gray-500 mb-0.5">Minimum</p>
-                    <p className="text-lg font-bold text-blue-600">
-                      {Math.min(...adjustedRooms.filter(r => r.temp).map(r => r.temp || 0))}°C
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-gray-500 mb-0.5">Average</p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {Math.round(
-                        adjustedRooms.filter(r => r.temp).reduce((sum, r) => sum + (r.temp || 0), 0) / 
-                        adjustedRooms.filter(r => r.temp).length
-                      )}°C
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-gray-500 mb-0.5">Maximum</p>
-                    <p className="text-lg font-bold text-orange-600">
-                      {Math.max(...adjustedRooms.filter(r => r.temp).map(r => r.temp || 0))}°C
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Life Support Systems Card */}
-              <div className="pt-4 border-t border-gray-200">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <Wind className="size-4 text-blue-600" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-gray-900">Life Support Systems</h3>
+          <SensorDetailPanel 
+            sensor={selectedSensor} 
+            onBack={() => setSelectedSensor(null)}
+            generateSensorHistory={generateSensorHistory}
+            emergencyMode={emergencyMode}
+          />
+        ) : selectedIncident ? (
+          /* Simple Incident Details Panel */
+          <>
+            {(() => {
+              const incident = incidents.find(i => i.id === selectedIncident);
+              if (!incident) return null;
+              
+              const timeAgo = Math.floor((Date.now() - incident.timestamp.getTime()) / 60000);
+              
+              return (
+                <div className="bg-white rounded-lg border border-gray-200">
+                  {/* Header */}
+                  <div className="p-6 border-b border-gray-200">
+                    <button
+                      onClick={() => setSelectedIncident(null)}
+                      className="text-blue-600 hover:text-blue-700 mb-4 flex items-center gap-2 text-sm font-medium"
+                    >
+                      ← Back to Overview
+                    </button>
+                    <div className="flex items-start justify-between mb-3">
+                      <h2 className="text-2xl font-bold text-gray-900">{incident.title}</h2>
+                      <span className={`px-3 py-1 rounded-lg text-sm font-bold ${
+                        incident.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                        incident.severity === 'high' ? 'bg-orange-100 text-orange-800' :
+                        incident.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {incident.severity?.toUpperCase()}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="size-2 rounded-full bg-green-500 animate-pulse" />
-                      <span className="text-xs font-medium text-green-600">All Normal</span>
-                    </div>
+                    <p className="text-gray-600">{incident.location}</p>
                   </div>
 
-                  {/* Environmental Parameters Grid */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
-                      <div className="text-[10px] font-medium text-gray-500 mb-1">O₂</div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-gray-900">20.9</span>
-                        <span className="text-[10px] text-gray-500">%</span>
-                      </div>
-                      <div className="mt-1.5 h-1 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-green-500 rounded-full" style={{ width: '85%' }} />
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
-                      <div className="text-[10px] font-medium text-gray-500 mb-1">CO₂</div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-gray-900">420</span>
-                        <span className="text-[10px] text-gray-500">ppm</span>
-                      </div>
-                      <div className="mt-1.5 h-1 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-green-500 rounded-full" style={{ width: '42%' }} />
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
-                      <div className="text-[10px] font-medium text-gray-500 mb-1">Pressure</div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-gray-900">0.05</span>
-                        <span className="text-[10px] text-gray-500">inH₂O</span>
-                      </div>
-                      <div className="mt-1.5 h-1 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-green-500 rounded-full" style={{ width: '50%' }} />
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
-                      <div className="text-[10px] font-medium text-gray-500 mb-1">Humidity</div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-gray-900">45</span>
-                        <span className="text-[10px] text-gray-500">%</span>
-                      </div>
-                      <div className="mt-1.5 h-1 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-green-500 rounded-full" style={{ width: '45%' }} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Critical Systems Status */}
-                  <div className="border-t border-gray-200 pt-3">
-                    <div className="text-[10px] font-semibold text-gray-600 mb-2">CRITICAL SYSTEMS</div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Wind className="size-3 text-gray-400" />
-                          <span className="text-xs text-gray-700">Filtration System</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-medium text-gray-500">98%</span>
-                          <div className="size-2 rounded-full bg-green-500" />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Wind className="size-3 text-gray-400" />
-                          <span className="text-xs text-gray-700">CO₂ Scrubbers</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-medium text-gray-500">Active</span>
-                          <div className="size-2 rounded-full bg-green-500" />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Lock className="size-3 text-gray-400" />
-                          <span className="text-xs text-gray-700">Blast Doors</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-medium text-gray-500">Sealed</span>
-                          <div className="size-2 rounded-full bg-green-500" />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Zap className="size-3 text-gray-400" />
-                          <span className="text-xs text-gray-700">Power Systems</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-medium text-gray-500">100%</span>
-                          <div className="size-2 rounded-full bg-green-500" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* CBRNe Detection & Resources Card */}
-              <div className="pt-4 border-t border-gray-200">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <Shield className="size-4 text-blue-600" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-gray-900">CBRNe Detection & Resources</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="size-2 rounded-full bg-green-500" />
-                      <span className="text-xs font-medium text-green-600">Secure</span>
-                    </div>
-                  </div>
-
-                  {/* CBRNe Detector Status */}
-                  <div className="mb-4">
-                    <div className="text-[10px] font-semibold text-gray-600 mb-2">THREAT DETECTION SYSTEMS</div>
-                    {/* Combined CBRN Detectors */}
-                    <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-200 mb-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            <div className="size-4 bg-purple-600 text-white text-[8px] font-bold rounded flex items-center justify-center">R</div>
-                            <div className="size-4 bg-green-600 text-white text-[8px] font-bold rounded flex items-center justify-center">B</div>
-                            <div className="size-4 bg-yellow-600 text-white text-[8px] font-bold rounded flex items-center justify-center">C</div>
-                          </div>
-                          <span className="text-xs font-medium text-gray-700">CBRN Detectors</span>
-                        </div>
-                        <div className="size-2 rounded-full bg-green-500" />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="text-[10px] text-gray-500">
-                          <span className="font-medium">Radiological</span> · <span className="font-medium">Biological</span> · <span className="font-medium">Chemical</span>
-                        </div>
-                        <div className="text-base font-bold text-gray-900">35/35</div>
-                      </div>
-                      <div className="text-[10px] text-gray-500 mt-1">Online</div>
-                    </div>
-                    {/* Nuclear Detectors */}
-                    <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-1.5">
-                          <Radio className="size-3 text-gray-500" />
-                          <span className="text-xs font-medium text-gray-700">Nuclear</span>
-                        </div>
-                        <div className="size-2 rounded-full bg-green-500" />
-                      </div>
-                      <div className="text-base font-bold text-gray-900">8/8</div>
-                      <div className="text-[10px] text-gray-500">Online</div>
-                    </div>
-                  </div>
-
-                  {/* Resource Levels */}
-                  <div className="border-t border-gray-200 pt-3">
-                    <div className="text-[10px] font-semibold text-gray-600 mb-2">RESOURCE STATUS</div>
-                    <div className="space-y-2.5">
+                  {/* Key Details */}
+                  <div className="p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <Droplets className="size-3 text-gray-400" />
-                            <span className="text-xs text-gray-700">Water Supply</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-gray-500">50,000 gal</span>
-                            <span className="text-xs font-bold text-gray-900">87%</span>
-                          </div>
-                        </div>
-                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500 rounded-full" style={{ width: '87%' }} />
-                        </div>
+                        <div className="text-xs text-gray-500 uppercase mb-1">Room</div>
+                        <div className="text-gray-900 font-semibold">{incident.location.split(' - ')[1] || 'N/A'}</div>
                       </div>
                       <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <Zap className="size-3 text-gray-400" />
-                            <span className="text-xs text-gray-700">Power Reserve</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-gray-500">72 hrs</span>
-                            <span className="text-xs font-bold text-gray-900">92%</span>
-                          </div>
-                        </div>
-                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500 rounded-full" style={{ width: '92%' }} />
-                        </div>
+                        <div className="text-xs text-gray-500 uppercase mb-1">Sensor</div>
+                        <div className="text-gray-900 font-semibold">{incident.sensorId || 'Multiple'}</div>
                       </div>
                       <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <Wind className="size-3 text-gray-400" />
-                            <span className="text-xs text-gray-700">O₂ Reserves</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-gray-500">30 days</span>
-                            <span className="text-xs font-bold text-gray-900">78%</span>
-                          </div>
-                        </div>
-                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-yellow-500 rounded-full" style={{ width: '78%' }} />
-                        </div>
+                        <div className="text-xs text-gray-500 uppercase mb-1">Time</div>
+                        <div className="text-gray-900 font-semibold">{timeAgo} minutes ago</div>
                       </div>
                       <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="size-3 text-gray-400" />
-                            <span className="text-xs text-gray-700">Food Supply</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-gray-500">90 days</span>
-                            <span className="text-xs font-bold text-gray-900">95%</span>
-                          </div>
-                        </div>
-                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500 rounded-full" style={{ width: '95%' }} />
+                        <div className="text-xs text-gray-500 uppercase mb-1">Status</div>
+                        <div className={`font-semibold ${
+                          incident.status === 'active' ? 'text-red-600' :
+                          incident.status === 'resolved' ? 'text-green-600' :
+                          'text-gray-600'
+                        }`}>
+                          {incident.status?.toUpperCase()}
                         </div>
                       </div>
                     </div>
+
+                    {/* Recommended Action */}
+                    {incident.suggestedAction && (
+                      <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-blue-500 rounded-lg mt-0.5">
+                            <AlertTriangle className="size-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-bold text-gray-900 mb-2">Recommended Action</h3>
+                            <p className="text-gray-700 mb-3">{incident.suggestedAction}</p>
+                            <button
+                              onClick={() => {
+                                // Execute the action - in a real system this would trigger automation
+                                alert('Executing action: ' + incident.suggestedAction);
+                              }}
+                              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm"
+                            >
+                              Execute Action
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* AI Prediction if available */}
+                    {incident.aiPrediction && (
+                      <div className="mt-4 bg-purple-50 rounded-lg p-4 border border-purple-200">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-purple-500 rounded-lg mt-0.5">
+                            <Brain className="size-5 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-gray-900 mb-2">AI Analysis</h3>
+                            <p className="text-gray-700 text-sm">{incident.aiPrediction}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-
-              {/* Recent Incidents Section */}
-              <div className="pt-4 border-t border-gray-200">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 bg-red-50 rounded-lg">
-                        <AlertTriangle className="size-4 text-red-600" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-gray-900">Recent Incidents</h3>
+              );
+            })()}
+          </>
+        ) : (
+          <>
+            {emergencyMode ? (
+              /* Emergency Mode - Three Section Overview */
+              <>
+                {/* Bunker Header */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h2 className="text-lg font-bold text-gray-900">Bunker Alpha-7</h2>
+                    <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-red-600">
+                      <div className="w-2 h-2 rounded-full bg-red-200 animate-pulse" />
+                      <span className="text-xs font-bold text-white uppercase">Under Attack</span>
                     </div>
-                    <span className="text-xs text-gray-500">{incidents.filter(i => i.status === 'active').length} Active</span>
                   </div>
-                  
-                  <div className="space-y-2">
-                    {incidents.slice(0, 3).map(incident => {
-                      const severityColors = {
-                        critical: 'bg-red-500',
-                        high: 'bg-orange-500',
-                        medium: 'bg-yellow-500',
-                        low: 'bg-blue-500',
-                      };
-                      
-                      return (
-                        <button
-                          key={incident.id}
-                          onClick={() => onIncidentClick(incident.id)}
-                          className="w-full bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors text-left"
-                        >
-                          <div className="flex items-start gap-2">
-                            <div className={`size-2 rounded-full mt-1.5 flex-shrink-0 ${severityColors[incident.severity]}`} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-gray-900 mb-0.5 truncate">{incident.title}</p>
-                              <p className="text-[10px] text-gray-600 truncate">{incident.location}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Clock className="size-3 text-gray-400" />
-                                <span className="text-[10px] text-gray-500">
-                                  {Math.floor((Date.now() - incident.timestamp.getTime()) / 60000)}m ago
-                                </span>
-                                {incident.matchedRule && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">
-                                    Rule Matched
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  {incidents.length === 0 && (
-                    <div className="text-center py-4">
-                      <CheckCircle className="size-6 text-green-500 mx-auto mb-2" />
-                      <p className="text-xs text-gray-500">No active incidents</p>
-                    </div>
-                  )}
+                  <p className="text-xs text-gray-600">Mountain Range Sector, Grid Reference: 42°N 71°W</p>
                 </div>
-              </div>
 
-              {/* Emergency Floor Insights for Floor 2 - ONLY IN EMERGENCY MODE */}
-              {(isFloor2 && emergencyMode) && (
-                <div className="space-y-6">
-                  {/* Section 1: Threat Details */}
-                  <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="bg-red-600 rounded-full p-2">
-                        <AlertCircle className="size-6 text-white" />
+                {/* AI ASSESSMENT Section */}
+                <div className="bg-red-50 rounded-lg border-2 border-red-400 shadow-lg overflow-hidden">
+                  <div className="p-4">
+                    {/* Top Header - Title with Icon */}
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
+                        <AlertCircle className="size-5 text-white" />
                       </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-red-900">Chemical Attack - Sector B</h3>
-                        <p className="text-sm text-red-700">Chlorine Gas Release • HAZMAT Level 4</p>
+                      <div className="flex-1">
+                        <h2 className="text-base font-bold text-red-900">Chemical Attack - Sector B</h2>
+                        <p className="text-xs text-red-700">Chlorine Gas Release • HAZMAT Level 4</p>
                       </div>
                     </div>
 
-                    {/* AI Assessment */}
+                    {/* AI Assessment Header */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <Brain className="size-4 text-purple-600" />
+                      <h3 className="font-bold text-gray-900 uppercase text-xs">AI ASSESSMENT</h3>
+                    </div>
+
+                    {/* Agent Type Section */}
+                    <div className="space-y-1.5 mb-4">
+                      <div className="flex items-start justify-between">
+                        <span className="text-xs text-gray-700">Agent Type:</span>
+                        <span className="text-xs font-bold text-red-900 text-right">Chlorine Gas (Cl₂)</span>
+                      </div>
+                      <div className="flex items-start justify-between">
+                        <span className="text-xs text-gray-700">Concentration:</span>
+                        <span className="text-xs font-bold text-red-900 text-right">15.7 ppm (IDLH exceeded)</span>
+                      </div>
+                      <div className="flex items-start justify-between">
+                        <span className="text-xs text-gray-700">Source Location:</span>
+                        <span className="text-xs font-bold text-red-900 text-right">Sector B - Lab (F2-R6)</span>
+                      </div>
+                      <div className="flex items-start justify-between">
+                        <span className="text-xs text-gray-700">Leak Source:</span>
+                        <span className="text-xs font-bold text-red-900 text-right">Storage cylinder valve failure</span>
+                      </div>
+                    </div>
+
+                    {/* SPREADING ANALYSIS Section */}
                     <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Brain className="size-4 text-purple-600" />
-                        <h4 className="text-sm font-bold text-gray-900">AI ASSESSMENT</h4>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">Agent Type:</span>
-                          <span className="font-bold text-red-900">Chlorine Gas (Cl₂)</span>
+                      <h4 className="font-bold text-gray-900 mb-2 text-xs uppercase">SPREADING ANALYSIS</h4>
+                      <div className="space-y-1.5">
+                        <div className="flex items-start justify-between">
+                          <span className="text-xs text-gray-700">Current Spread:</span>
+                          <span className="text-xs font-bold text-orange-600 text-right">2 rooms (Sector B only)</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">Concentration:</span>
-                          <span className="font-bold text-red-900">15.7 ppm (IDLH exceeded)</span>
+                        <div className="flex items-start justify-between">
+                          <span className="text-xs text-gray-700">Contamination Vector:</span>
+                          <span className="text-xs font-bold text-orange-600 text-right">HVAC system (active)</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">Source Location:</span>
-                          <span className="font-bold text-red-900">Sector B - Lab (F2-R6)</span>
+                        <div className="flex items-start justify-between">
+                          <span className="text-xs text-gray-700">Predicted Spread:</span>
+                          <span className="text-xs font-bold text-red-600 text-right">Full floor in 8-12 min</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">Leak Source:</span>
-                          <span className="font-bold text-red-900">Storage cylinder valve failure</span>
+                        <div className="flex items-start justify-between">
+                          <span className="text-xs text-gray-700">Containment Status:</span>
+                          <span className="text-xs font-bold text-red-600 text-right">Not Contained</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Spreading & Impact */}
-                    <div className="mb-4">
-                      <h4 className="text-sm font-bold text-gray-900 mb-2">SPREADING ANALYSIS</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">Current Spread:</span>
-                          <span className="font-bold text-orange-600">2 rooms (Sector B only)</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">Contamination Vector:</span>
-                          <span className="font-bold text-orange-600">HVAC system (active)</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">Predicted Spread:</span>
-                          <span className="font-bold text-red-600">Full floor in 8-12 min</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">Containment Status:</span>
-                          <span className="font-bold text-red-600">Not Contained</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Personnel Impact */}
+                    {/* PERSONNEL IMPACT Section */}
                     <div>
-                      <h4 className="text-sm font-bold text-gray-900 mb-2">PERSONNEL IMPACT</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">At Risk:</span>
-                          <span className="font-bold text-red-900">12 personnel</span>
+                      <h4 className="font-bold text-gray-900 mb-2 text-xs uppercase">PERSONNEL IMPACT</h4>
+                      <div className="space-y-1.5">
+                        <div className="flex items-start justify-between">
+                          <span className="text-xs text-gray-700">At Risk:</span>
+                          <span className="text-xs font-bold text-red-900 text-right">12 personnel</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">In Contaminated Zone:</span>
-                          <span className="font-bold text-red-900">5 personnel (Sector B)</span>
+                        <div className="flex items-start justify-between">
+                          <span className="text-xs text-gray-700">In Contaminated Zone:</span>
+                          <span className="text-xs font-bold text-red-900 text-right">5 personnel (Sector B)</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">Adjacent Areas:</span>
-                          <span className="font-bold text-orange-600">7 personnel</span>
+                        <div className="flex items-start justify-between">
+                          <span className="text-xs text-gray-700">Adjacent Areas:</span>
+                          <span className="text-xs font-bold text-orange-600 text-right">7 personnel</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">Survival Rate (with evac):</span>
-                          <span className="font-bold text-green-600">98%</span>
+                        <div className="flex items-start justify-between">
+                          <span className="text-xs text-gray-700">Survival Rate (with evac):</span>
+                          <span className="text-xs font-bold text-green-600 text-right">98%</span>
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Section 2: Recommended Actions */}
-                  <div className="bg-purple-50 border-2 border-purple-500 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Brain className="size-5 text-purple-600" />
-                      <h3 className="text-base font-bold text-purple-900">AI RECOMMENDED ACTIONS</h3>
-                    </div>
-                    <p className="text-xs text-purple-700 mb-4">
+                {/* AI RECOMMENDED ACTIONS Section */}
+                <div className="bg-white rounded-lg border border-purple-200 shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-3 flex items-center gap-2 border-b border-purple-300">
+                    <Brain className="size-4 text-white" />
+                    <h3 className="font-bold text-white text-sm">AI RECOMMENDED ACTIONS</h3>
+                  </div>
+
+                  <div className="p-4">
+                    <p className="text-xs text-purple-700 mb-4 font-medium">
                       Based on analysis of 47 historical chemical incidents
                     </p>
 
                     <div className="space-y-3 mb-4">
                       {/* Action 1 */}
-                      <div className="bg-white border-2 border-red-500 rounded-lg p-3">
+                      <div className="bg-red-50 border-2 border-red-600 rounded-lg p-3">
                         <div className="flex items-start gap-2 mb-2">
-                          <div className="flex items-center justify-center size-6 bg-red-600 text-white rounded-full font-bold text-sm flex-shrink-0">1</div>
+                          <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white font-bold text-xs">1</span>
+                          </div>
                           <div className="flex-1">
-                            <h4 className="text-sm font-bold text-gray-900">IMMEDIATE EVACUATION</h4>
-                            <p className="text-xs text-gray-700 mt-1">
+                            <h4 className="font-bold text-gray-900 mb-1.5 text-sm">IMMEDIATE EVACUATION</h4>
+                            <p className="text-xs text-gray-700 mb-2">
                               Evacuate all 12 personnel from Floor 2 to Floor 1 assembly point. Deploy emergency lighting and audio guidance system.
                             </p>
-                            <div className="flex items-center gap-3 mt-2 text-xs">
+                            <div className="flex items-center gap-3 text-[10px]">
                               <span className="text-gray-600">ETA: 2-3 minutes</span>
-                              <span className="text-green-600 font-semibold">Success: 94%</span>
+                              <span className="font-bold text-green-600">Success: 94%</span>
                             </div>
                           </div>
                         </div>
                       </div>
 
                       {/* Action 2 */}
-                      <div className="bg-white border-2 border-orange-500 rounded-lg p-3">
+                      <div className="bg-orange-50 border-2 border-orange-500 rounded-lg p-3">
                         <div className="flex items-start gap-2 mb-2">
-                          <div className="flex items-center justify-center size-6 bg-orange-600 text-white rounded-full font-bold text-sm flex-shrink-0">2</div>
+                          <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white font-bold text-xs">2</span>
+                          </div>
                           <div className="flex-1">
-                            <h4 className="text-sm font-bold text-gray-900">SEAL HVAC SYSTEM</h4>
-                            <p className="text-xs text-gray-700 mt-1">
+                            <h4 className="font-bold text-gray-900 mb-1.5 text-sm">SEAL HVAC SYSTEM</h4>
+                            <p className="text-xs text-gray-700 mb-2">
                               Close all dampers in Floor 2. Shutdown air handlers. Activate pressure barriers to prevent contamination spread.
                             </p>
-                            <div className="flex items-center gap-3 mt-2 text-xs">
+                            <div className="flex items-center gap-3 text-[10px]">
                               <span className="text-gray-600">ETA: 45 seconds</span>
-                              <span className="text-green-600 font-semibold">Success: 91%</span>
+                              <span className="font-bold text-green-600">Success: 91%</span>
                             </div>
                           </div>
                         </div>
                       </div>
 
                       {/* Action 3 */}
-                      <div className="bg-white border-2 border-yellow-500 rounded-lg p-3">
+                      <div className="bg-yellow-50 border-2 border-yellow-500 rounded-lg p-3">
                         <div className="flex items-start gap-2 mb-2">
-                          <div className="flex items-center justify-center size-6 bg-yellow-600 text-white rounded-full font-bold text-sm flex-shrink-0">3</div>
+                          <div className="w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white font-bold text-xs">3</span>
+                          </div>
                           <div className="flex-1">
-                            <h4 className="text-sm font-bold text-gray-900">DEPLOY CBRN TEAM</h4>
-                            <p className="text-xs text-gray-700 mt-1">
+                            <h4 className="font-bold text-gray-900 mb-1.5 text-sm">DEPLOY CBRN TEAM</h4>
+                            <p className="text-xs text-gray-700 mb-2">
                               Dispatch hazmat response team with Level A PPE, chlorine neutralization agents, and air monitoring equipment.
                             </p>
-                            <div className="flex items-center gap-3 mt-2 text-xs">
+                            <div className="flex items-center gap-3 text-[10px]">
                               <span className="text-gray-600">ETA: 2 minutes</span>
-                              <span className="text-green-600 font-semibold">Success: 89%</span>
+                              <span className="font-bold text-green-600">Success: 89%</span>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Execute Button */}
-                    <button className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
-                      <Sparkles className="size-5" />
-                      EXECUTE ALL ACTIONS
+                    {/* Execute All Button */}
+                    <button className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-3 px-5 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                      <Sparkles className="size-4" />
+                      <span>EXECUTE ALL ACTIONS</span>
                     </button>
+                  </div>
+                </div>
 
-                    {/* AI Confidence */}
-                    <div className="mt-3 text-center">
-                      <span className="text-xs text-purple-700">AI Confidence: </span>
-                      <span className="text-sm font-bold text-purple-900">97%</span>
-                    </div>
+                {/* THREAT TIMELINE Section */}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-lg overflow-hidden">
+                  <div className="bg-gray-900 p-3 border-b border-gray-700">
+                    <h3 className="font-bold text-white text-sm">THREAT TIMELINE</h3>
                   </div>
 
-                  {/* Section 3: Threat Timeline */}
-                  <div className="bg-white border-2 border-gray-300 rounded-lg p-4">
-                    <h3 className="text-base font-bold text-gray-900 mb-4">THREAT TIMELINE</h3>
-                    
-                    <div className="space-y-4">
-                      {/* Event 1: Detection */}
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="size-3 bg-red-600 rounded-full"></div>
-                          <div className="w-0.5 h-full bg-gray-300 mt-1"></div>
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-bold text-gray-900">14:33:12</span>
-                            <span className="text-xs text-gray-500">(1m 50s ago)</span>
-                          </div>
-                          <h4 className="text-sm font-bold text-red-900 mb-1">Chemical Agent Detected</h4>
-                          <p className="text-xs text-gray-700">
-                            Chlorine gas sensors triggered in Sector B - Lab. Concentration: 15.7 ppm (IDLH exceeded). Automatic alert sent to command center.
-                          </p>
-                        </div>
+                  <div className="p-4 space-y-4">
+                    {/* Timeline Entry 1 */}
+                    <div className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-600 flex-shrink-0" />
+                        <div className="w-0.5 h-full bg-gray-300 mt-1.5" />
                       </div>
-
-                      {/* Event 2: Spread Detection */}
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="size-3 bg-orange-600 rounded-full"></div>
-                          <div className="w-0.5 h-full bg-gray-300 mt-1"></div>
+                      <div className="flex-1 pb-4">
+                        <div className="mb-1">
+                          <span className="font-bold text-gray-900 text-xs">14:33:12</span>
+                          <span className="text-[10px] text-gray-500 ml-2">(1m 50s ago)</span>
                         </div>
-                        <div className="flex-1 pb-4">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-bold text-gray-900">14:33:45</span>
-                            <span className="text-xs text-gray-500">(1m 17s ago)</span>
-                          </div>
-                          <h4 className="text-sm font-bold text-orange-900 mb-1">Contamination Spreading</h4>
-                          <p className="text-xs text-gray-700">
-                            Trace levels detected in adjacent Sector B - Equipment room. HVAC system identified as contamination vector.
-                          </p>
-                        </div>
+                        <h4 className="font-bold text-red-800 mb-1.5 text-xs">Chemical Agent Detected</h4>
+                        <p className="text-xs text-gray-700">
+                          Chlorine gas sensors triggered in Sector B - Lab. Concentration: 15.7 ppm (IDLH exceeded). Automatic alert sent to command center.
+                        </p>
                       </div>
+                    </div>
 
-                      {/* Event 3: AI Analysis */}
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="size-3 bg-purple-600 rounded-full"></div>
-                          <div className="w-0.5 h-full bg-gray-300 mt-1"></div>
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-bold text-gray-900">14:34:02</span>
-                            <span className="text-xs text-gray-500">(1m ago)</span>
-                          </div>
-                          <h4 className="text-sm font-bold text-purple-900 mb-1">AI Analysis Completed</h4>
-                          <p className="text-xs text-gray-700">
-                            AI system analyzed threat parameters against 47 historical incidents. Leak source identified as storage cylinder valve failure. Response recommendations generated.
-                          </p>
-                        </div>
+                    {/* Timeline Entry 2 */}
+                    <div className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500 flex-shrink-0" />
+                        <div className="w-0.5 h-full bg-gray-300 mt-1.5" />
                       </div>
-
-                      {/* Event 4: Alert Status */}
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="size-3 bg-red-600 rounded-full animate-pulse"></div>
+                      <div className="flex-1 pb-4">
+                        <div className="mb-1">
+                          <span className="font-bold text-gray-900 text-xs">14:33:45</span>
+                          <span className="text-[10px] text-gray-500 ml-2">(1m 17s ago)</span>
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-bold text-gray-900">14:34:18</span>
-                            <span className="text-xs text-gray-500">(now)</span>
+                        <h4 className="font-bold text-orange-800 mb-1.5 text-xs">Contamination Spreading</h4>
+                        <p className="text-xs text-gray-700">
+                          Trace levels detected in adjacent Sector B - Equipment room. HVAC system identified as contamination vector.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Timeline Entry 3 */}
+                    <div className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-purple-600 flex-shrink-0" />
+                        <div className="w-0.5 h-full bg-gray-300 mt-1.5" />
+                      </div>
+                      <div className="flex-1 pb-4">
+                        <div className="mb-1">
+                          <span className="font-bold text-gray-900 text-xs">14:34:02</span>
+                          <span className="text-[10px] text-gray-500 ml-2">(1m ago)</span>
+                        </div>
+                        <h4 className="font-bold text-purple-800 mb-1.5 text-xs">AI Analysis Completed</h4>
+                        <p className="text-xs text-gray-700">
+                          AI system analyzed threat parameters against 47 historical incidents. Leak source identified as storage cylinder valve failure. Response recommendations generated.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Timeline Entry 4 - Current */}
+                    <div className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-600 flex-shrink-0 animate-pulse" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="mb-1">
+                          <span className="font-bold text-gray-900 text-xs">14:34:18</span>
+                          <span className="text-[10px] text-gray-500 ml-2">(now)</span>
+                        </div>
+                        <div className="bg-red-50 border-2 border-red-600 rounded-lg p-2.5">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <AlertTriangle className="size-3.5 text-red-600" />
+                            <h4 className="font-bold text-red-900 text-xs">ACTIVE THREAT - AWAITING RESPONSE</h4>
                           </div>
-                          <h4 className="text-sm font-bold text-red-900 mb-1">⚠️ ACTIVE THREAT - AWAITING RESPONSE</h4>
                           <p className="text-xs text-gray-700">
                             Situation critical. 12 personnel at risk. Immediate action required to prevent casualties and full floor contamination.
                           </p>
@@ -1771,762 +1663,330 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </div>
                 </div>
+              </>
+            ) : (
+              /* Normal Mode - Existing Content */
+              <>
+            {/* Bunker Header */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <h2 className="text-lg font-bold text-gray-900">Bunker Alpha-7</h2>
+            <div className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${emergencyMode ? 'bg-red-600' : 'bg-green-600'}`}>
+              <div className={`w-2 h-2 rounded-full ${emergencyMode ? 'bg-red-200' : 'bg-green-200'} animate-pulse`} />
+              <span className="text-xs font-bold text-white uppercase">{emergencyMode ? 'Under Attack' : 'Operational'}</span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-600 mb-3">Mountain Range Sector, Grid Reference: 42°N 71°W</p>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mt-3">
+            <div className="bg-gray-50 rounded-lg p-2">
+              <div className="text-[10px] text-gray-600 mb-1 uppercase">Rooms</div>
+              <div className="text-lg font-bold text-gray-900">19</div>
+              {emergencyMode && (
+                <div className="text-[10px] text-gray-600 mt-0.5">
+                  15 OK, 2 WARN, 2 CRIT
+                </div>
               )}
             </div>
+            <div className="bg-gray-50 rounded-lg p-2">
+              <div className="text-[10px] text-gray-600 mb-1 uppercase">Sensors</div>
+              <div className="text-lg font-bold text-gray-900">42/42</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-2">
+              <div className="text-[10px] text-gray-600 mb-1 uppercase">Temperature</div>
+              <div className="text-lg font-bold text-gray-900">21°C</div>
+              <div className="text-[10px] text-gray-600 mt-0.5">Average</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-2">
+              <div className="text-[10px] text-gray-600 mb-1 uppercase">Occupancy</div>
+              <div className="text-lg font-bold text-gray-900">28</div>
+              <div className="text-[10px] text-gray-600 mt-0.5">Personnel</div>
+            </div>
           </div>
-        ) : (
-          <div className="max-w-5xl">
-            {/* Room Header */}
-            <div className="flex items-start justify-between mb-6 pb-4 border-b-2 border-gray-300">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">{selectedRoomData.name}</h2>
-                <p className="text-sm text-gray-600 mt-1">{selectedRoomData.type} • {selectedRoomData.id}</p>
+
+          {/* Room Status Alerts */}
+          <div className="mt-4 space-y-2">
+            <h3 className="text-sm font-semibold text-gray-700 uppercase">Room Status Alerts</h3>
+            
+            {/* Temperature Elevation Alert */}
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-orange-500" />
+                  <div>
+                    <div className="font-semibold text-gray-900">Command Center</div>
+                    <div className="text-sm text-gray-600">Temperature Elevation Detected</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xl font-bold text-orange-600">26°C</div>
+                  <div className="text-xs text-gray-600">+5°C above normal</div>
+                </div>
               </div>
-              <button 
-                onClick={() => setSelectedRoom(null)}
-                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="size-5" />
+              
+              {/* AI Recommendation */}
+              <div className="bg-white rounded-lg p-3 mb-3 border border-orange-100">
+                <div className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <div className="flex-1">
+                    <div className="text-xs font-semibold text-gray-700 mb-1">AI Recommended Action</div>
+                    <div className="text-sm text-gray-900">
+                      Increase HVAC cooling output by 20% and reduce fresh air intake to stabilize temperature within 15 minutes.
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Execute Button */}
+              <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                Execute HVAC Adjustment
               </button>
             </div>
+          </div>
 
-            {/* Quick Status Bar */}
-            <div className="mb-6">
-              <div className="grid grid-cols-5 gap-5">
-                {/* Status */}
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Status</p>
-                  <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase whitespace-nowrap ${
-                    selectedRoomData.status === 'operational' ? 'bg-green-100 text-green-800' :
-                    selectedRoomData.status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {selectedRoomData.status}
-                  </span>
-                </div>
-
-                {/* Temperature */}
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Temperature</p>
-                  <p className="text-base font-bold text-orange-600 whitespace-nowrap">
-                    {selectedRoomData.temp ? `${selectedRoomData.temp}°C` : '-'}
-                  </p>
-                </div>
-
-                {/* Devices */}
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Devices</p>
-                  <p className="text-base font-bold text-gray-900">{selectedRoomData.sensors?.length || 0}</p>
-                </div>
-
-                {/* Occupancy */}
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Occupancy</p>
-                  <p className="text-base font-bold text-blue-600">
-                    {selectedRoomData.status === 'critical' ? '0' : 
-                     selectedRoomData.type === 'Command Center' ? '8' :
-                     selectedRoomData.type === 'Laboratory' ? '4' :
-                     selectedRoomData.type === 'Medical' ? '2' : '1'}
-                  </p>
-                </div>
-
-                {/* Last Updated */}
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Last Update</p>
-                  <p className="text-xs font-medium text-gray-700 whitespace-nowrap">2s ago</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Threat Alert - ONLY IN EMERGENCY MODE */}
-            {selectedRoomData.hasIncident && selectedRoomData.status === 'critical' && emergencyMode && (
-              <div className="mb-6 space-y-4">
-                {/* AI Assessment Header */}
-                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                  <Brain className="size-5 text-purple-600" />
-                  <h4 className="font-bold text-gray-900">AI THREAT ASSESSMENT</h4>
-                  <span className="ml-auto text-xs text-gray-500">Updated: 14:34:18</span>
-                </div>
-
-                {/* Chemical Detection Event */}
-                <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-mono font-bold text-gray-900">14:33:12</span>
-                    <span className="text-xs text-gray-600">1m 50s ago</span>
-                  </div>
-                  <div className="flex items-start gap-3 mb-3">
-                    <AlertCircle className="size-5 text-red-600 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <h5 className="font-bold text-red-900 mb-1">Chemical Agent Detected</h5>
-                      <p className="text-xs text-red-700 mb-2">
-                        {selectedRoomData.id === 'F2-R6' 
-                          ? 'High concentration of chlorine gas (15.7 ppm) detected in laboratory. IDLH threshold exceeded. Immediate evacuation required.'
-                          : 'Trace chemical agents detected near incident area. Elevated contamination levels. Enhanced monitoring active.'}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold uppercase rounded border border-red-300">
-                          CRITICAL
-                        </span>
-                        <span className="text-xs text-red-800">
-                          {selectedRoomData.id === 'F2-R6' ? '12 personnel at risk' : '8 adjacent zones affected'}
-                        </span>
-                      </div>
-                    </div>
+          {/* Recently Resolved Incidents */}
+          <div className="mt-4 space-y-2">
+            <h3 className="text-sm font-semibold text-gray-700 uppercase">Recently Resolved Incidents</h3>
+            
+            {/* Automated Resolution Example */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <div>
+                    <div className="font-semibold text-gray-900">Server Room B</div>
+                    <div className="text-sm text-gray-600">CO₂ Level Spike Resolved</div>
                   </div>
                 </div>
-
-                {/* AI Recommended Actions */}
-                <div className="bg-purple-50 border border-purple-300 rounded-lg p-4">
-                  <div className="flex items-start gap-2 mb-3">
-                    <Brain className="size-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <h5 className="font-bold text-purple-900 mb-1">AI RECOMMENDED ACTIONS</h5>
-                      <p className="text-xs text-purple-700 mb-3">
-                        Based on analysis of 47 historical chemical incidents and current threat parameters
-                      </p>
-
-                      {/* Action 1: Evacuation */}
-                      <div className="bg-white border border-purple-200 rounded-lg p-3 mb-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="flex items-center justify-center size-5 bg-red-600 text-white rounded-full font-bold text-[10px]">1</div>
-                          <span className="text-xs font-bold text-gray-900">Immediate Evacuation</span>
-                          <span className="ml-auto text-[10px] text-green-600 font-semibold">94% success</span>
-                        </div>
-                        <p className="text-[11px] text-gray-700 mb-2 pl-7">
-                          Evacuate all personnel from {selectedRoomData.name} to Floor 1 assembly point. Deploy emergency lighting and audio guidance.
-                        </p>
-                        <div className="flex items-center gap-2 pl-7">
-                          <span className="text-[10px] text-gray-600">ETA: 2-3 min</span>
-                        </div>
-                      </div>
-
-                      {/* Action 2: Seal HVAC */}
-                      <div className="bg-white border border-purple-200 rounded-lg p-3 mb-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="flex items-center justify-center size-5 bg-orange-600 text-white rounded-full font-bold text-[10px]">2</div>
-                          <span className="text-xs font-bold text-gray-900">Seal HVAC System</span>
-                          <span className="ml-auto text-[10px] text-green-600 font-semibold">91% success</span>
-                        </div>
-                        <p className="text-[11px] text-gray-700 mb-2 pl-7">
-                          Close all dampers in Sector B. Shutdown air handlers. Activate positive pressure barriers to prevent spread.
-                        </p>
-                        <div className="flex items-center gap-2 pl-7">
-                          <span className="text-[10px] text-gray-600">ETA: 45 sec</span>
-                        </div>
-                      </div>
-
-                      {/* Action 3: Deploy CBRN Team */}
-                      <div className="bg-white border border-purple-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="flex items-center justify-center size-5 bg-yellow-600 text-white rounded-full font-bold text-[10px]">3</div>
-                          <span className="text-xs font-bold text-gray-900">Deploy CBRN Response Team</span>
-                          <span className="ml-auto text-[10px] text-green-600 font-semibold">89% success</span>
-                        </div>
-                        <p className="text-[11px] text-gray-700 mb-2 pl-7">
-                          Dispatch hazmat team with Level A PPE, chlorine neutralization agents, and air monitoring equipment.
-                        </p>
-                        <div className="flex items-center gap-2 pl-7">
-                          <span className="text-[10px] text-gray-600">ETA: 2 min</span>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-2 mt-4">
-                        <button className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded transition-colors">
-                          Approve All Actions
-                        </button>
-                        <button className="px-3 py-1.5 bg-white hover:bg-purple-50 text-purple-700 border border-purple-300 text-xs font-bold rounded transition-colors">
-                          Customize
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-green-600">Auto-Resolved</div>
+                  <div className="text-xs text-gray-600">14 min ago</div>
                 </div>
               </div>
-            )}
-
-            {/* Warning Alert */}
-            {selectedRoomData.status === 'warning' && (
-              <div className="mb-6 bg-yellow-50 border-2 border-yellow-500 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="size-6 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="font-bold text-yellow-900 mb-1">⚠️ WARNING CONDITION DETECTED</h4>
-                    <p className="text-xs text-yellow-800 mb-3">
-                      {selectedRoomData.id === 'F2-R6' && 
-                        'Temperature anomaly detected. Sensor calibration recommended. HVAC system compensating. No personnel safety concerns at this time.'
-                      }
-                      {selectedRoomData.id === 'F2-R7' && 
-                        'Elevated temperature detected near equipment storage. Ventilation operating at increased capacity. Equipment integrity being monitored.'
-                      }
-                      {selectedRoomData.id === 'F1-R12' && 
-                        'Elevated temperature in NBC Equipment storage area. Temperature threshold exceeded. Equipment integrity being monitored. Ventilation systems operating at increased capacity.'
-                      }
-                      {selectedRoomData.id !== 'F2-R6' && selectedRoomData.id !== 'F2-R7' && selectedRoomData.id !== 'F1-R12' &&
-                        'Abnormal environmental conditions detected. Monitoring systems active. No immediate threat to personnel. Continuous assessment in progress.'
-                      }
-                    </p>
-                    
-                    {/* AI Recommended Action */}
-                    <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 mb-3">
-                      <div className="flex items-start gap-2 mb-2">
-                        <span className="text-xs font-bold text-gray-800">🤖 AI RECOMMENDED ACTION:</span>
-                      </div>
-                      <p className="text-xs text-gray-900 mb-3">
-                        {selectedRoomData.id === 'F2-R7' && 
-                          'Restrict access to authorized personnel only with Level C protection. Increase air sampling frequency to every 30 seconds. Prepare evacuation plan if trace levels increase. Monitor personnel for exposure symptoms.'
-                        }
-                        {selectedRoomData.id === 'F1-R12' && 
-                          'Increase ventilation system output by 40%. Deploy cooling units to NBC Equipment storage. Inspect equipment seals for integrity. Prepare for equipment relocation if temperature exceeds 26°C.'
-                        }
-                        {selectedRoomData.id !== 'F2-R7' && selectedRoomData.id !== 'F1-R12' &&
-                          'Increase monitoring frequency for all environmental sensors. Dispatch maintenance team for inspection. Review recent activity logs. Prepare contingency protocols.'
-                        }
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <button className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold rounded transition-colors">
-                          Approve Action
-                        </button>
-                        <button className="px-3 py-1.5 bg-white hover:bg-yellow-50 text-yellow-700 border border-yellow-300 text-xs font-bold rounded transition-colors">
-                          Override
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-xs">
-                      <div className="flex items-center gap-1">
-                        <Thermometer className="size-4 text-yellow-600" />
-                        <span className="font-semibold text-yellow-800">Temp: {selectedRoomData.temp}°C</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Activity className="size-4 text-yellow-600" />
-                        <span className="font-semibold text-yellow-800">Status: Monitoring</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Shield className="size-4 text-yellow-600" />
-                        <span className="font-semibold text-yellow-800">Personnel: Caution Advised</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Critical Alert (for rooms without hasIncident flag) */}
-            {selectedRoomData.status === 'critical' && !selectedRoomData.hasIncident && (
-              <div className="mb-6 bg-red-50 border-2 border-red-500 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="size-6 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="font-bold text-red-900 mb-1">🚨 CRITICAL CONDITION</h4>
-                    <p className="text-xs text-red-700 mb-3">
-                      {selectedRoomData.id === 'F1-R18' && 
-                        'Critical temperature detected in Electrical Room. Overheating condition detected at 29°C. Fire suppression system on standby. Maintenance team dispatched immediately. Area access restricted.'
-                      }
-                      {selectedRoomData.id !== 'F1-R18' &&
-                        'Critical environmental conditions detected. Immediate attention required. Emergency protocols may be necessary. Personnel should evacuate if directed.'
-                      }
-                    </p>
-                    
-                    {/* AI Recommended Action */}
-                    <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 mb-3">
-                      <div className="flex items-start gap-2 mb-2">
-                        <span className="text-xs font-bold text-gray-800">🤖 AI RECOMMENDED ACTION:</span>
-                      </div>
-                      <p className="text-xs text-gray-900 mb-3">
-                        {selectedRoomData.id === 'F1-R18' && 
-                          'Emergency cooling protocol: (1) Activate emergency HVAC override for maximum cooling, (2) Power down non-essential electrical systems to reduce heat load, (3) Deploy portable cooling units, (4) Prepare for emergency power system shutdown if temperature reaches 32°C.'
-                        }
-                        {selectedRoomData.id !== 'F1-R18' &&
-                          'Initiate emergency response: (1) Evacuate non-essential personnel, (2) Deploy emergency response team, (3) Activate emergency ventilation protocols, (4) Prepare emergency medical support.'
-                        }
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <button className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded transition-colors">
-                          Approve Action
-                        </button>
-                        <button className="px-3 py-1.5 bg-white hover:bg-red-50 text-red-700 border border-red-300 text-xs font-bold rounded transition-colors">
-                          Override
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-xs">
-                      <div className="flex items-center gap-1">
-                        <Thermometer className="size-4 text-red-600" />
-                        <span className="font-semibold text-red-800">Temp: {selectedRoomData.temp}°C</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Activity className="size-4 text-red-600" />
-                        <span className="font-semibold text-red-800">Status: Critical</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Shield className="size-4 text-red-600" />
-                        <span className="font-semibold text-red-800">Action: Immediate Response</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Environmental Conditions */}
-            <div className="mb-6 pb-6 border-b border-gray-200">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">Environmental Conditions</h3>
-              <div className="grid grid-cols-4 gap-4">
-                <div>
-                  <p className="text-[10px] text-gray-500 mb-1">Air Pressure</p>
-                  <p className="text-base font-bold text-gray-900">
-                    {selectedRoomData.status === 'critical' ? '-12 Pa' : '+5 Pa'}
-                  </p>
-                  <p className="text-[10px] text-gray-600">
-                    {selectedRoomData.status === 'critical' ? 'Negative' : 'Positive'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 mb-1">Humidity</p>
-                  <p className="text-base font-bold text-gray-900">
-                    {selectedRoomData.status === 'critical' ? '68%' : '45%'}
-                  </p>
-                  <p className="text-[10px] text-gray-600">
-                    {selectedRoomData.status === 'critical' ? 'High' : 'Normal'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 mb-1">Air Quality</p>
-                  <p className={`text-base font-bold ${
-                    selectedRoomData.status === 'critical' ? 'text-red-600' :
-                    selectedRoomData.status === 'warning' ? 'text-yellow-600' : 'text-green-600'
-                  }`}>
-                    {selectedRoomData.status === 'critical' ? 'Critical' :
-                     selectedRoomData.status === 'warning' ? 'Fair' : 'Good'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 mb-1">Ventilation</p>
-                  <p className={`text-base font-bold ${
-                    selectedRoomData.status === 'critical' ? 'text-red-600' : 'text-green-600'
-                  }`}>
-                    {selectedRoomData.status === 'critical' ? 'Sealed' : 'Active'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Room Details */}
-            <div className="mb-6 pb-6 border-b border-gray-200">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">Room Details</h3>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Room ID:</span>
-                  <span className="font-medium text-gray-900">{selectedRoomData.id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Room Type:</span>
-                  <span className="font-medium text-gray-900">{selectedRoomData.type}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Floor:</span>
-                  <span className="font-medium text-gray-900">{floorId}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Area:</span>
-                  <span className="font-medium text-gray-900">
-                    {(selectedRoomData.width * selectedRoomData.height / 100).toFixed(1)} m²
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Access Level:</span>
-                  <span className="font-medium text-gray-900">
-                    {selectedRoomData.type === 'Laboratory' || selectedRoomData.type === 'Command Center' ? 'Restricted' :
-                     selectedRoomData.type === 'Medical' ? 'Medical Only' : 'Standard'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Door Status:</span>
-                  <span className={`font-medium ${
-                    selectedRoomData.status === 'critical' ? 'text-red-600' : 'text-green-600'
-                  }`}>
-                    {selectedRoomData.status === 'critical' ? 'SEALED' : 'Unlocked'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* System Status */}
-            <div className="mb-6 pb-6 border-b border-gray-200">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">System Status</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                  <span className="text-xs text-gray-700">HVAC System</span>
-                  <span className={`text-xs font-bold ${
-                    selectedRoomData.status === 'critical' ? 'text-red-600' : 'text-green-600'
-                  }`}>
-                    {selectedRoomData.status === 'critical' ? 'ISOLATED' : 'ACTIVE'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                  <span className="text-xs text-gray-700">Lighting</span>
-                  <span className="text-xs font-bold text-green-600">ACTIVE</span>
-                </div>
-                <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                  <span className="text-xs text-gray-700">Power</span>
-                  <span className="text-xs font-bold text-green-600">NOMINAL</span>
-                </div>
-                <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                  <span className="text-xs text-gray-700">Security</span>
-                  <span className={`text-xs font-bold ${
-                    selectedRoomData.status === 'critical' ? 'text-red-600' : 'text-green-600'
-                  }`}>
-                    {selectedRoomData.status === 'critical' ? 'LOCKDOWN' : 'NORMAL'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                  <span className="text-xs text-gray-700">Fire Suppression</span>
-                  <span className="text-xs font-bold text-green-600">STANDBY</span>
-                </div>
-                <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                  <span className="text-xs text-gray-700">Emergency Lights</span>
-                  <span className="text-xs font-bold text-green-600">READY</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Sensors Section */}
-            {selectedRoomData.sensors && selectedRoomData.sensors.length > 0 && (
-              <div>
-                <h3 className="text-sm font-bold text-gray-900 mb-3">
-                  Sensors & Devices ({selectedRoomData.sensors.length})
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {selectedRoomData.sensors.map((sensor) => (
-                    <div 
-                      key={sensor.id} 
-                      className={`bg-white border-2 rounded-lg p-3 transition-all cursor-pointer hover:shadow-md ${
-                        selectedSensor?.id === sensor.id ? 'border-blue-500 ring-2 ring-blue-200' :
-                        sensor.status === 'critical' ? 'border-red-500' :
-                        sensor.status === 'warning' ? 'border-yellow-500' :
-                        'border-gray-300'
-                      }`}
-                      onClick={() => handleSensorClick(sensor)}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2.5 h-2.5 rounded-full ${
-                            sensor.status === 'critical' ? 'bg-red-600' :
-                            sensor.status === 'warning' ? 'bg-yellow-500' :
-                            'bg-green-500'
-                          }`}></div>
-                          <h4 className="text-sm font-bold text-gray-900">{sensor.name}</h4>
-                        </div>
-                        <span className="text-[10px] text-gray-500">{sensor.id}</span>
-                      </div>
-                      <div className="space-y-1.5 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Type:</span>
-                          <span className="font-medium text-gray-900 uppercase">{sensor.type}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Value:</span>
-                          <span className={`font-bold ${
-                            sensor.status === 'critical' ? 'text-red-600' :
-                            sensor.status === 'warning' ? 'text-yellow-600' :
-                            'text-green-600'
-                          }`}>{sensor.value}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Last Update:</span>
-                          <span className="font-medium text-gray-700">{sensor.lastUpdate}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Recent Incidents Section */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">
-                Recent Incidents
-              </h3>
               
-              <div className="space-y-3">
-                {/* Generate incidents based on room */}
-                {selectedRoomData.id === 'F2-R1' && selectedRoomData.hasIncident && (
-                  <>
-                    {/* Current Active Incident */}
-                    <div className="bg-red-50 border-2 border-red-500 rounded-lg p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-red-600 rounded-full"></div>
-                          <h4 className="text-sm font-bold text-red-900">Chemical Agent Detection</h4>
-                        </div>
-                        <span className="px-2 py-0.5 bg-red-200 text-red-800 text-[9px] font-bold rounded uppercase">Active</span>
-                      </div>
-                      <p className="text-xs text-red-800 mb-2">
-                        Chlorine gas detected at 15.7 ppm. Emergency containment protocols activated.
-                      </p>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-red-700">Detected:</span>
-                          <span className="font-bold text-red-900 ml-1">14:23:18</span>
-                        </div>
-                        <div>
-                          <span className="text-red-700">Severity:</span>
-                          <span className="font-bold text-red-900 ml-1">Critical</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Auto-resolved temperature spike */}
-                    <div className="bg-green-50 border border-green-300 rounded-lg p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="size-4 text-green-600" />
-                          <h4 className="text-sm font-bold text-green-900">Temperature Spike</h4>
-                        </div>
-                        <span className="px-2 py-0.5 bg-green-200 text-green-800 text-[9px] font-bold rounded uppercase">Auto-Resolved</span>
-                      </div>
-                      <p className="text-xs text-green-800 mb-2">
-                        Temperature exceeded 26°C threshold. System automatically increased HVAC output by 35%.
-                      </p>
-                      <div className="bg-green-100 border border-green-200 rounded p-2 mb-2">
-                        <p className="text-[10px] font-bold text-green-800 mb-1">🤖 AUTO-RESOLUTION RULE:</p>
-                        <p className="text-[10px] text-green-700">
-                          RULE-HVAC-023: "If room temp exceeds 26°C → increase HVAC output by 30-40% + notify facility ops"
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>
-                          <span className="text-green-700">Detected:</span>
-                          <span className="font-bold text-green-900 ml-1 block">13:45:22</span>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Resolved:</span>
-                          <span className="font-bold text-green-900 ml-1 block">13:47:18</span>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Duration:</span>
-                          <span className="font-bold text-green-900 ml-1 block">1m 56s</span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {selectedRoomData.id === 'F2-R7' && (
-                  <>
-                    {/* Auto-resolved air quality issue */}
-                    <div className="bg-green-50 border border-green-300 rounded-lg p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="size-4 text-green-600" />
-                          <h4 className="text-sm font-bold text-green-900">Air Quality Degradation</h4>
-                        </div>
-                        <span className="px-2 py-0.5 bg-green-200 text-green-800 text-[9px] font-bold rounded uppercase">Auto-Resolved</span>
-                      </div>
-                      <p className="text-xs text-green-800 mb-2">
-                        CO2 levels reached 1200 ppm. System automatically activated emergency ventilation protocol.
-                      </p>
-                      <div className="bg-green-100 border border-green-200 rounded p-2 mb-2">
-                        <p className="text-[10px] font-bold text-green-800 mb-1">🤖 AUTO-RESOLUTION RULE:</p>
-                        <p className="text-[10px] text-green-700">
-                          RULE-VENT-015: &quot;If CO2 &gt; 1000 ppm → activate emergency ventilation + increase fresh air intake to 100%&quot;
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>
-                          <span className="text-green-700">Detected:</span>
-                          <span className="font-bold text-green-900 ml-1 block">12:18:45</span>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Resolved:</span>
-                          <span className="font-bold text-green-900 ml-1 block">12:23:12</span>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Duration:</span>
-                          <span className="font-bold text-green-900 ml-1 block">4m 27s</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Manual intervention */}
-                    <div className="bg-blue-50 border border-blue-300 rounded-lg p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="size-4 text-blue-600" />
-                          <h4 className="text-sm font-bold text-blue-900">Door Access Anomaly</h4>
-                        </div>
-                        <span className="px-2 py-0.5 bg-blue-200 text-blue-800 text-[9px] font-bold rounded uppercase">Manual Resolution</span>
-                      </div>
-                      <p className="text-xs text-blue-800 mb-2">
-                        Unauthorized access attempt detected. Security team verified and cleared.
-                      </p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>
-                          <span className="text-blue-700">Detected:</span>
-                          <span className="font-bold text-blue-900 ml-1 block">11:32:08</span>
-                        </div>
-                        <div>
-                          <span className="text-blue-700">Resolved:</span>
-                          <span className="font-bold text-blue-900 ml-1 block">11:38:45</span>
-                        </div>
-                        <div>
-                          <span className="text-blue-700">Resolved By:</span>
-                          <span className="font-bold text-blue-900 ml-1 block">Sec Team</span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {selectedRoomData.id === 'F1-R12' && (
-                  <>
-                    {/* Auto-resolved humidity issue */}
-                    <div className="bg-green-50 border border-green-300 rounded-lg p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="size-4 text-green-600" />
-                          <h4 className="text-sm font-bold text-green-900">High Humidity Alert</h4>
-                        </div>
-                        <span className="px-2 py-0.5 bg-green-200 text-green-800 text-[9px] font-bold rounded uppercase">Auto-Resolved</span>
-                      </div>
-                      <p className="text-xs text-green-800 mb-2">
-                        Humidity exceeded 65% in NBC equipment storage. System activated dehumidifier units.
-                      </p>
-                      <div className="bg-green-100 border border-green-200 rounded p-2 mb-2">
-                        <p className="text-[10px] font-bold text-green-800 mb-1">🤖 AUTO-RESOLUTION RULE:</p>
-                        <p className="text-[10px] text-green-700">
-                          RULE-HUM-008: &quot;If humidity &gt; 60% in NBC storage → activate dehumidifiers + reduce HVAC moisture&quot;
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>
-                          <span className="text-green-700">Detected:</span>
-                          <span className="font-bold text-green-900 ml-1 block">10:15:33</span>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Resolved:</span>
-                          <span className="font-bold text-green-900 ml-1 block">10:28:41</span>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Duration:</span>
-                          <span className="font-bold text-green-900 ml-1 block">13m 8s</span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {selectedRoomData.id === 'F1-R18' && (
-                  <>
-                    {/* Auto-resolved power fluctuation */}
-                    <div className="bg-green-50 border border-green-300 rounded-lg p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="size-4 text-green-600" />
-                          <h4 className="text-sm font-bold text-green-900">Power Surge Detected</h4>
-                        </div>
-                        <span className="px-2 py-0.5 bg-green-200 text-green-800 text-[9px] font-bold rounded uppercase">Auto-Resolved</span>
-                      </div>
-                      <p className="text-xs text-green-800 mb-2">
-                        Voltage spike detected at 248V. System automatically engaged surge protection and load balancing.
-                      </p>
-                      <div className="bg-green-100 border border-green-200 rounded p-2 mb-2">
-                        <p className="text-[10px] font-bold text-green-800 mb-1">🤖 AUTO-RESOLUTION RULE:</p>
-                        <p className="text-[10px] text-green-700">
-                          RULE-PWR-042: &quot;If voltage &gt; 245V → engage surge protection + redistribute load + switch to UPS if needed&quot;
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>
-                          <span className="text-green-700">Detected:</span>
-                          <span className="font-bold text-green-900 ml-1 block">09:42:17</span>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Resolved:</span>
-                          <span className="font-bold text-green-900 ml-1 block">09:42:24</span>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Duration:</span>
-                          <span className="font-bold text-green-900 ml-1 block">7s</span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Default incidents for rooms without specific ones */}
-                {!['F2-R1', 'F2-R7', 'F1-R12', 'F1-R18'].includes(selectedRoomData.id) && (
-                  <>
-                    {/* Auto-resolved lighting flicker */}
-                    <div className="bg-green-50 border border-green-300 rounded-lg p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="size-4 text-green-600" />
-                          <h4 className="text-sm font-bold text-green-900">Lighting Fluctuation</h4>
-                        </div>
-                        <span className="px-2 py-0.5 bg-green-200 text-green-800 text-[9px] font-bold rounded uppercase">Auto-Resolved</span>
-                      </div>
-                      <p className="text-xs text-green-800 mb-2">
-                        Brief lighting flicker detected. System automatically switched to backup circuit.
-                      </p>
-                      <div className="bg-green-100 border border-green-200 rounded p-2 mb-2">
-                        <p className="text-[10px] font-bold text-green-800 mb-1">🤖 AUTO-RESOLUTION RULE:</p>
-                        <p className="text-[10px] text-green-700">
-                          RULE-LIGHT-019: "If lighting flicker detected → switch to backup circuit + log event"
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>
-                          <span className="text-green-700">Detected:</span>
-                          <span className="font-bold text-green-900 ml-1 block">08:22:55</span>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Resolved:</span>
-                          <span className="font-bold text-green-900 ml-1 block">08:22:57</span>
-                        </div>
-                        <div>
-                          <span className="text-green-700">Duration:</span>
-                          <span className="font-bold text-green-900 ml-1 block">2s</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Scheduled maintenance */}
-                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="size-4 text-gray-600" />
-                          <h4 className="text-sm font-bold text-gray-900">Scheduled Sensor Calibration</h4>
-                        </div>
-                        <span className="px-2 py-0.5 bg-gray-200 text-gray-800 text-[9px] font-bold rounded uppercase">Completed</span>
-                      </div>
-                      <p className="text-xs text-gray-700 mb-2">
-                        Routine sensor calibration completed. All readings within normal parameters.
-                      </p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>
-                          <span className="text-gray-600">Started:</span>
-                          <span className="font-bold text-gray-900 ml-1 block">07:00:00</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Completed:</span>
-                          <span className="font-bold text-gray-900 ml-1 block">07:12:30</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Type:</span>
-                          <span className="font-bold text-gray-900 ml-1 block">Scheduled</span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
+              {/* Incident Details */}
+              <div className="bg-white rounded-lg p-3 mb-3 border border-green-100 space-y-2">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="flex-1 text-sm text-gray-700">
+                    <span className="font-semibold">Issue:</span> CO₂ exceeded 1200 ppm threshold (peak: 1450 ppm)
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <div className="flex-1 text-sm text-gray-700">
+                    <span className="font-semibold">Automation Rule:</span> "Air Quality Emergency Protocol"
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="flex-1 text-sm text-gray-700">
+                    <span className="font-semibold">Action Taken:</span> Ventilation increased to 100%, exhaust fans activated. CO₂ normalized to 850 ppm in 12 minutes.
+                  </div>
+                </div>
               </div>
+              
+              {/* View Details Link */}
+              <button className="text-sm text-blue-500 hover:text-blue-600 font-semibold">
+                View Full Incident Log →
+              </button>
             </div>
           </div>
+        </div>
+
+        {/* CBRNE Threat Status */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">CBRNE Threat Status</h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Chemical</span>
+              <span className={`px-2.5 py-0.5 rounded text-xs font-semibold ${emergencyMode ? 'bg-red-600 text-white' : 'bg-green-100 text-green-700'}`}>
+                {emergencyMode ? 'DETECTED' : 'CLEAR'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Biological</span>
+              <span className={`px-2.5 py-0.5 rounded text-xs font-semibold ${emergencyMode ? 'bg-red-600 text-white' : 'bg-green-100 text-green-700'}`}>
+                {emergencyMode ? 'DETECTED' : 'CLEAR'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Radiation</span>
+              <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700">CLEAR</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Nuclear</span>
+              <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700">CLEAR</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Environmental Health */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">Environmental Health</h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">O₂ Level</span>
+              <span className="text-xs font-bold text-green-600">20.9%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">CO₂ Level</span>
+              <span className="text-xs font-bold text-green-600">420 ppm</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">PM 2.5</span>
+              <span className="text-xs font-bold text-green-600">12 μg/m³</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">VOC</span>
+              <span className="text-xs font-bold text-green-600">220 ppb</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Air Filtration Systems */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">Air Filtration Systems</h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">HEPA Filters</span>
+              <span className="text-xs font-bold text-green-600">99%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Carbon Filters</span>
+              <span className="text-xs font-bold text-green-600">97%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">NBC Filters</span>
+              <span className="text-xs font-bold text-blue-600">STANDBY</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Air Exchange</span>
+              <span className="text-xs font-bold text-green-600">6.2 ACH</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Power Systems */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">Power Systems</h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Primary Grid</span>
+              <div className="text-right">
+                <span className="text-xs font-bold text-green-600 block">ONLINE</span>
+                <span className="text-[10px] text-gray-500">450 kW</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Backup Generator</span>
+              <div className="text-right">
+                <span className="text-xs font-bold text-blue-600 block">STANDBY</span>
+                <span className="text-[10px] text-gray-500">100%</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Battery UPS</span>
+              <span className="text-xs font-bold text-green-600">98%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Fuel Reserve</span>
+              <span className="text-xs font-bold text-green-600">95%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Life Support Systems */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">Life Support Systems</h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Water Reserve</span>
+              <div className="text-right">
+                <span className="text-xs font-bold text-green-600 block">15,800 L</span>
+                <span className="text-[10px] text-gray-500">56 Days</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Food Supply</span>
+              <div className="text-right">
+                <span className="text-xs font-bold text-green-600 block">60 Days</span>
+                <span className="text-[10px] text-gray-500">Full</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Water Quality</span>
+              <span className="text-xs font-bold text-green-600">99.8%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-700">Medical Supplies</span>
+              <span className="text-xs font-bold text-green-600">94%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Floor Assessment */}
+        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-200 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 bg-purple-600 rounded-lg">
+              <Brain className="size-4 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 text-sm">AI Floor Assessment</h3>
+              <p className="text-[10px] text-gray-600">Real-time environmental & operational analysis</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <div className="bg-white rounded-lg p-2 text-center">
+              <div className="text-[10px] text-gray-600 mb-1">HEALTH SCORE</div>
+              <div className="text-lg font-bold text-green-600">94<span className="text-xs">/100</span></div>
+            </div>
+            <div className="bg-white rounded-lg p-2 text-center">
+              <div className="text-[10px] text-gray-600 mb-1">AIR QUALITY</div>
+              <div className="text-lg font-bold text-green-600">96<span className="text-xs">%</span></div>
+            </div>
+            <div className="bg-white rounded-lg p-2 text-center">
+              <div className="text-[10px] text-gray-600 mb-1">SAFETY INDEX</div>
+              <div className="text-lg font-bold text-green-600">99<span className="text-xs">%</span></div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-semibold text-xs text-gray-900">AI Insights</h4>
+            <div className="flex items-start gap-2 text-xs text-gray-700">
+              <AlertTriangle className="size-4 text-orange-500 flex-shrink-0 mt-0.5" />
+              <span>Utility Room showing elevated temperature (26°C) - HVAC adjustment recommended</span>
+            </div>
+            <div className="flex items-start gap-2 text-xs text-gray-700">
+              <CheckCircle className="size-4 text-green-600 flex-shrink-0 mt-0.5" />
+              <span>All critical systems operational - no immediate threats detected</span>
+            </div>
+            <div className="flex items-start gap-2 text-xs text-gray-700">
+              <TrendingUp className="size-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <span>Air quality stable across all zones - all sensors reporting nominal values</span>
+            </div>
+            <div className="flex items-start gap-2 text-xs text-gray-700">
+              <Sparkles className="size-4 text-purple-600 flex-shrink-0 mt-0.5" />
+              <span>Recommended: Schedule preventive maintenance for Utility Room cooling system</span>
+            </div>
+          </div>
+        </div>
+          </>
+            )}
+          </>
         )}
       </div>
     </div>

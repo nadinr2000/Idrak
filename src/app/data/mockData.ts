@@ -115,6 +115,21 @@ export const incidents: Incident[] = [
       },
     ],
   },
+  {
+    id: 'inc-011',
+    title: 'Temperature Elevation - Command Center',
+    severity: 'medium',
+    location: 'Floor 2 - Command Center',
+    buildingId: 'building-a',
+    floorId: 'floor-a-2',
+    roomId: 'F2-R1',
+    timestamp: new Date(Date.now() - 8 * 60000),
+    status: 'active',
+    aiPrediction: 'Command Center showing elevated temperature readings (26°C). AI analysis indicates HVAC cooling efficiency reduced in this zone. Recommend adjusting air distribution to maintain optimal operating temperature.',
+    suggestedAction: 'Increase HVAC cooling output by 15% and adjust air vent direction',
+    autoActionApplied: false,
+    sensorId: 'TEMP-CC-001',
+  },
 ];
 
 export const sensorData = {
