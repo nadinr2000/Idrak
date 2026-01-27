@@ -1,4 +1,4 @@
-import { MapPin, AlertTriangle, Building2 } from 'lucide-react';
+import { MapPin, AlertTriangle, LayoutGrid } from 'lucide-react';
 import { Language } from '../translations';
 
 interface EmergencyHeaderProps {
@@ -29,17 +29,6 @@ export function EmergencyHeader({ language, onOpenArchitecturalView }: Emergency
             </div>
           </div>
         </div>
-
-        {/* Architectural View Button */}
-        {onOpenArchitecturalView && (
-          <button
-            onClick={onOpenArchitecturalView}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
-          >
-            <Building2 className="size-4" />
-            {language === 'en' ? 'Architectural View' : 'العرض المعماري'}
-          </button>
-        )}
       </div>
     </div>
   );

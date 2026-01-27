@@ -161,20 +161,6 @@ export function Navigation({ currentView, selectedFloor, selectedRoom, selectedI
             );
           })}
         </div>
-        
-        {/* Action Buttons - Hidden in architectural view */}
-        {viewMode !== 'architectural' && (
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <Filter className="size-4" />
-              <span className="text-sm">{t.filter}</span>
-            </button>
-            <button className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <Download className="size-4" />
-              <span className="text-sm">{t.export}</span>
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

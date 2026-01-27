@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { X, ArrowLeft, Building2 } from 'lucide-react';
-import { BuildingDiagram3D } from './BuildingDiagram3D';
-import { FloorPlanView } from './FloorPlanView';
+import { X, ArrowLeft, LayoutGrid } from 'lucide-react';
+import { SummaryDashboard } from './SummaryDashboard';
 import { Language, translations } from '../translations';
 
 interface ArchitecturalViewModalProps {
@@ -12,21 +11,11 @@ interface ArchitecturalViewModalProps {
 }
 
 export function ArchitecturalViewModal({ isOpen, onClose, language, emergencyMode }: ArchitecturalViewModalProps) {
-  const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
   const t = translations[language];
 
   if (!isOpen) return null;
 
-  const handleFloorClick = (floorId: string) => {
-    setSelectedFloor(floorId);
-  };
-
-  const handleBackToBuilding = () => {
-    setSelectedFloor(null);
-  };
-
   const handleClose = () => {
-    setSelectedFloor(null);
     onClose();
   };
 
@@ -37,9 +26,9 @@ export function ArchitecturalViewModal({ isOpen, onClose, language, emergencyMod
         <div className="flex items-center justify-between">
           {/* Left side - Title */}
           <div className="flex items-center gap-3">
-            <Building2 className="size-6 text-blue-600" />
+            <LayoutGrid className="size-6 text-blue-600" />
             <h1 className="text-2xl font-bold text-gray-900">
-              {language === 'en' ? 'Architectural View' : 'العرض المعماري'}
+              {language === 'en' ? 'Standard Dashboard' : 'لوحة المعلومات القياسية'}
             </h1>
           </div>
 
@@ -54,23 +43,18 @@ export function ArchitecturalViewModal({ isOpen, onClose, language, emergencyMod
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content - Show standard dashboard */}
       <div className="h-[calc(100vh-114px)] overflow-auto">
-        {selectedFloor ? (
-          <FloorPlanView
-            floorId={selectedFloor}
-            onRoomClick={() => {}}
-            onIncidentClick={() => {}}
-            onBack={handleBackToBuilding}
-            emergencyMode={emergencyMode}
-          />
-        ) : (
-          <BuildingDiagram3D
-            onFloorClick={handleFloorClick}
-            language={language}
-            emergencyMode={emergencyMode}
-          />
-        )}
+        <SummaryDashboard
+          viewMode="dashboard"
+          onNavigateToFloors={() => {}}
+          onNavigateToIncidents={() => {}}
+          onNavigateToSensors={() => {}}
+          onFloorClick={() => {}}
+          onIncidentClick={() => {}}
+          language={language}
+          emergencyMode={emergencyMode}
+        />
       </div>
     </div>
   );

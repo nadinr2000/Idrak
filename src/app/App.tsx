@@ -92,7 +92,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<MainSection>('dashboard');
   const [currentView, setCurrentView] = useState<ViewLevel>('summary');
-  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
+  const [viewMode, setViewMode] = useState<ViewMode>('architectural');
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedIncident, setSelectedIncident] = useState<string | null>(null);
@@ -650,30 +650,16 @@ export default function App() {
             <div className="flex-1 flex flex-col overflow-hidden">
               {currentSection === 'dashboard' && (
                 <>
-                  {!emergencyMode && (
-                    <ViewToggle 
-                      viewMode={viewMode} 
-                      onViewModeChange={setViewMode} 
-                      language={language}
-                      emergencyMode={emergencyMode}
-                      onOpenArchitecturalView={() => setArchitecturalViewOpen(true)}
-                    />
-                  )}
-                  {emergencyMode ? (
-                    <EmergencyHeader language={language} onOpenArchitecturalView={() => setArchitecturalViewOpen(true)} />
-                  ) : (
-                    <Navigation
-                      currentView={currentView}
-                      selectedFloor={selectedFloor}
-                      selectedRoom={selectedRoom}
-                      selectedIncident={selectedIncident}
-                      selectedSensor={selectedSensor}
-                      onNavigate={handleNavigate}
-                      language={language}
-                      emergencyMode={emergencyMode}
-                      viewMode={viewMode}
-                    />
-                  )}
+                  <SummaryDashboard
+                    language={language}
+                    emergencyMode={emergencyMode}
+                    onNavigateToFloors={() => setCurrentView('floors')}
+                    onNavigateToIncidents={() => setCurrentView('incidents')}
+                    onNavigateToSensors={() => setCurrentView('sensors')}
+                    onFloorClick={navigateToFloor}
+                    onIncidentClick={navigateToIncident}
+                    viewMode={viewMode}
+                  />
                 </>
               )}
               

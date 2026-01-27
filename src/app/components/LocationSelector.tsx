@@ -2,6 +2,7 @@ import { X, MapPin, Activity, Radio } from 'lucide-react';
 import { Language, translations } from '../translations';
 import { useState } from 'react';
 import { BuildingDiagram3D } from './BuildingDiagram3D';
+import floorPlanImage from 'figma:asset/a1d7c50be4149c7263d7de092815c8c8d9377172.png';
 
 interface Sensor {
   id: string;
@@ -335,161 +336,16 @@ export function LocationSelector({ language, onSelect, onClose, emergencyMode }:
                 <h4 className="font-semibold text-gray-900">
                   {language === 'ar' ? `خطة الطابق ${selectedFloor}` : `Floor ${selectedFloor} Plan`}
                 </h4>
-                <div className="flex items-center gap-4 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="size-2 rounded-full bg-blue-500"></div>
-                    <span className="text-gray-600">{language === 'ar' ? 'الغرفة' : 'Room'}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Radio className="size-3 text-green-600" />
-                    <span className="text-gray-600">{language === 'ar' ? 'جهاز استشعار' : 'Sensor'}</span>
-                  </div>
-                </div>
               </div>
               
-              <svg width="100%" height="500" viewBox="0 0 360 210" className="bg-white rounded border border-gray-300">
-                {/* Grid Background */}
-                <defs>
-                  <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#f3f4f6" strokeWidth="0.5"/>
-                  </pattern>
-                </defs>
-                <rect width="360" height="210" fill="url(#grid)" />
-                
-                {/* Rooms */}
-                {currentFloorRooms.map(room => (
-                  <g key={room.id}>
-                    {/* Room Rectangle */}
-                    <rect
-                      x={room.x}
-                      y={room.y}
-                      width={room.width}
-                      height={room.height}
-                      fill={hoveredRoom === room.id ? '#dbeafe' : '#eff6ff'}
-                      stroke={hoveredRoom === room.id ? '#3b82f6' : '#93c5fd'}
-                      strokeWidth="2"
-                      className="cursor-pointer transition-all"
-                      onMouseEnter={() => setHoveredRoom(room.id)}
-                      onMouseLeave={() => setHoveredRoom(null)}
-                      onClick={() => handleRoomClick(room)}
-                      rx="4"
-                    />
-                    
-                    {/* Room Name */}
-                    <text
-                      x={room.x + room.width / 2}
-                      y={room.y + 12}
-                      textAnchor="middle"
-                      className="text-[8px] font-semibold pointer-events-none select-none"
-                      fill="#1e3a8a"
-                    >
-                      {room.name}
-                    </text>
-                    
-                    {/* Sensors */}
-                    {room.sensors.map(sensor => {
-                      const sensorX = room.x + (room.width * sensor.x) / 100;
-                      const sensorY = room.y + (room.height * sensor.y) / 100;
-                      const isHovered = hoveredSensor === sensor.id;
-                      
-                      return (
-                        <g key={sensor.id}>
-                          {/* Sensor Dot */}
-                          <circle
-                            cx={sensorX}
-                            cy={sensorY}
-                            r={isHovered ? 5 : 3}
-                            fill={getSensorColor(sensor.type)}
-                            stroke="white"
-                            strokeWidth="1.5"
-                            className="cursor-pointer transition-all"
-                            onMouseEnter={() => setHoveredSensor(sensor.id)}
-                            onMouseLeave={() => setHoveredSensor(null)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSensorClick(room, sensor);
-                            }}
-                          />
-                          
-                          {/* Pulse Effect on Hover */}
-                          {isHovered && (
-                            <circle
-                              cx={sensorX}
-                              cy={sensorY}
-                              r="8"
-                              fill={getSensorColor(sensor.type)}
-                              opacity="0.3"
-                              className="pointer-events-none"
-                            >
-                              <animate
-                                attributeName="r"
-                                from="5"
-                                to="10"
-                                dur="1s"
-                                repeatCount="indefinite"
-                              />
-                              <animate
-                                attributeName="opacity"
-                                from="0.3"
-                                to="0"
-                                dur="1s"
-                                repeatCount="indefinite"
-                              />
-                            </circle>
-                          )}
-                          
-                          {/* Sensor Label on Hover */}
-                          {isHovered && (
-                            <g>
-                              <rect
-                                x={sensorX + 8}
-                                y={sensorY - 12}
-                                width={sensor.id.length * 4.5}
-                                height="16"
-                                fill="white"
-                                stroke={getSensorColor(sensor.type)}
-                                strokeWidth="1"
-                                rx="3"
-                                className="pointer-events-none"
-                              />
-                              <text
-                                x={sensorX + 10}
-                                y={sensorY - 2}
-                                className="text-[7px] font-medium pointer-events-none select-none"
-                                fill={getSensorColor(sensor.type)}
-                              >
-                                {sensor.id}
-                              </text>
-                            </g>
-                          )}
-                        </g>
-                      );
-                    })}
-                    
-                    {/* Sensor Count Badge */}
-                    <g>
-                      <rect
-                        x={room.x + room.width - 20}
-                        y={room.y + 4}
-                        width="16"
-                        height="12"
-                        fill="#3b82f6"
-                        rx="6"
-                        className="pointer-events-none"
-                      />
-                      <text
-                        x={room.x + room.width - 12}
-                        y={room.y + 13}
-                        textAnchor="middle"
-                        className="text-[8px] font-bold pointer-events-none select-none"
-                        fill="white"
-                      >
-                        {room.sensors.length}
-                      </text>
-                    </g>
-                  </g>
-                ))}
-              </svg>
+              {/* Floor Plan Image from Screenshot */}
+              <div className="bg-white rounded border border-gray-300 overflow-hidden">
+                <img 
+                  src={floorPlanImage} 
+                  alt="Military Bunker Floor Plan" 
+                  className="w-full h-auto"
+                />
+              </div>
             </div>
           </div>
 

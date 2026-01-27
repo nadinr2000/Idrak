@@ -41,15 +41,6 @@ export function ViewToggle({ viewMode, onViewModeChange, buildingName, language,
             <span>{language === 'en' ? 'Sector 12, Underground Level 3' : 'القطاع 12، المستوى الجوفي 3'}</span>
           </div>
         </div>
-
-        {/* Architectural View Button on the right */}
-        <button
-          onClick={onOpenArchitecturalView}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
-        >
-          <Building2 className="size-4" />
-          {language === 'en' ? 'Architectural View' : 'العرض المعماري'}
-        </button>
       </div>
     </div>
   );

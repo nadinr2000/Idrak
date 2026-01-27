@@ -1,11 +1,41 @@
-import { Activity, AlertTriangle, Brain, TrendingUp, Zap, CheckCircle2, Radio, Thermometer, Droplets, Eye, Wind, Lightbulb, Lock, Sparkles, TrendingDown, AlertCircle, Lightbulb as BulbIcon, Calendar, Target, Layers, DoorOpen, LayoutGrid, Building2, ChevronDown, Shield, MapPin, Clock, Users, CheckCircle } from 'lucide-react';
-import { buildings, incidents, automationRules, floors } from '../data/mockData';
-import { BuildingDiagram } from './BuildingDiagram';
-import { BuildingDiagram3D } from './BuildingDiagram3D';
+import { 
+  Wind, 
+  Activity, 
+  Zap, 
+  Droplets, 
+  AlertTriangle, 
+  Shield, 
+  Gauge, 
+  ThermometerSun,
+  Users,
+  Building,
+  AlertCircle,
+  TrendingUp,
+  Calendar,
+  Clock,
+  ChevronRight,
+  Sparkles,
+  BarChart3,
+  Radio,
+  Lock,
+  Eye,
+  Building2,
+  Thermometer,
+  Lightbulb,
+  Layers,
+  DoorOpen,
+  Brain,
+  CheckCircle2,
+  LineChart as LineChartIcon
+} from 'lucide-react';
 import { ViewMode } from './ViewToggle';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useState } from 'react';
 import { Language, translations, getIncidentTitle, getIncidentLocation } from '../translations';
+import { IncidentCard } from './IncidentCard';
+import { incidents, floors, automationRules } from '../data/mockData';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
+import { FloorPlanView } from './FloorPlanView';
+import { BuildingDiagram3D } from './BuildingDiagram3D';
+import { useState } from 'react';
 
 interface SummaryDashboardProps {
   viewMode: ViewMode;
@@ -21,6 +51,35 @@ interface SummaryDashboardProps {
 export function SummaryDashboard({ viewMode, onNavigateToFloors, onNavigateToIncidents, onNavigateToSensors, onFloorClick, onIncidentClick, language, emergencyMode }: SummaryDashboardProps) {
   const [incidentTimeRange, setIncidentTimeRange] = useState('30');
   const t = translations[language];
+
+  // Environmental gauge data - realistic bunker values
+  const environmentalGauges = [
+    { label: 'O₂', value: 20.9, unit: '%', min: 19.5, max: 23.5, optimal: [19.5, 23.5], status: 'normal' },
+    { label: 'CO₂', value: 420, unit: 'ppm', min: 0, max: 1000, optimal: [0, 600], status: 'normal' },
+    { label: 'CO', value: 2, unit: 'ppm', min: 0, max: 50, optimal: [0, 9], status: 'normal' },
+    { label: 'Pressure', value: 0.05, unit: 'inH₂O', min: -0.1, max: 0.2, optimal: [0.02, 0.1], status: 'normal' },
+    { label: 'Airflow', value: 920, unit: 'CFM', min: 0, max: 1200, optimal: [800, 1200], status: 'normal' },
+    { label: 'Humidity', value: 45, unit: '%', min: 0, max: 100, optimal: [30, 60], status: 'normal' },
+  ];
+
+  // System status data
+  const systemStatuses = [
+    { label: 'Filtration System', status: 'operational', value: '98%', icon: Wind },
+    { label: 'CO₂ Scrubbers', status: 'operational', value: 'Active', icon: Wind },
+    { label: 'Blast Doors', status: 'operational', value: 'Sealed', icon: Lock },
+    { label: 'Chemical Sensors', status: 'operational', value: '12/12', icon: AlertCircle },
+    { label: 'Nuclear Detectors', status: 'operational', value: '8/8', icon: Radio },
+    { label: 'Bio Detectors', status: 'operational', value: '15/15', icon: Eye },
+    { label: 'Power Systems', status: 'operational', value: '100%', icon: Zap },
+  ];
+
+  // Critical resources
+  const resources = [
+    { label: 'Water Supply', value: 87, unit: '%', total: '50,000 gal', icon: Droplets, color: '#3b82f6' },
+    { label: 'Power Reserve', value: 92, unit: '%', total: '72 hrs', icon: Zap, color: '#10b981' },
+    { label: 'O₂ Reserves', value: 78, unit: '%', total: '30 days', icon: Wind, color: '#8b5cf6' },
+    { label: 'Food Supply', value: 95, unit: '%', total: '90 days', icon: Building2, color: '#f59e0b' },
+  ];
 
   // Sensor breakdown data
   const sensorBreakdownData = [
@@ -100,385 +159,16 @@ export function SummaryDashboard({ viewMode, onNavigateToFloors, onNavigateToInc
     { system: t.other, consumption: 8, color: '#6b7280' },
   ];
 
-  // If in architectural view, show the building diagram
-  if (viewMode === 'architectural') {
-    return <BuildingDiagram3D onFloorClick={onFloorClick} language={language} emergencyMode={emergencyMode} />;
-  }
-
-  // If in 3D view, show the 3D building diagram
-  if (viewMode === '3d') {
-    return <BuildingDiagram3D onFloorClick={onFloorClick} language={language} emergencyMode={emergencyMode} />;
-  }
-
+  // Always show the floor plan view directly
   return (
-    <div className="flex-1 overflow-auto p-6 bg-gray-50">
-      <div className="max-w-[2000px] mx-auto">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-5 gap-4 mb-4">
-          {/* Incidents Metric with Breakdown - FIRST */}
-          <MetricCardDetailed
-            title={t.activeIncidents}
-            value={incidents.filter(i => i.status === 'active').length.toString()}
-            icon={AlertTriangle}
-            color="red"
-            onClick={onNavigateToIncidents}
-            breakdown={[
-              { label: t.critical, count: incidents.filter(i => i.severity === 'critical' && i.status === 'active').length, color: 'red' },
-              { label: t.high, count: incidents.filter(i => i.severity === 'high' && i.status === 'active').length, color: 'orange' },
-              { label: t.medium, count: incidents.filter(i => i.severity === 'medium' && i.status === 'active').length, color: 'yellow' },
-              { label: t.low, count: incidents.filter(i => i.severity === 'low' && i.status === 'active').length, color: 'blue' },
-            ]}
-          />
-          {/* Floors Metric with Breakdown */}
-          <MetricCardDetailed
-            title={t.totalFloors}
-            value={floors.length.toString()}
-            icon={Layers}
-            color="blue"
-            onClick={onNavigateToFloors}
-            breakdown={[
-              { label: t.operational, count: floors.filter(f => f.incidents === 0).length, color: 'green' },
-              { label: t.withIssues, count: floors.filter(f => f.incidents > 0).length, color: 'yellow' },
-            ]}
-          />
-          {/* Rooms Metric with Breakdown */}
-          <MetricCardDetailed
-            title={t.totalRooms}
-            value={floors.reduce((sum, f) => sum + f.rooms, 0).toString()}
-            icon={DoorOpen}
-            color="indigo"
-            onClick={onNavigateToFloors}
-            breakdown={[
-              { label: t.occupied, count: Math.floor(floors.reduce((sum, f) => sum + f.rooms, 0) * 0.65), color: 'blue' },
-              { label: t.vacant, count: Math.floor(floors.reduce((sum, f) => sum + f.rooms, 0) * 0.35), color: 'gray' },
-            ]}
-          />
-          {/* Sensors Metric with Breakdown */}
-          <MetricCardDetailed
-            title={t.activeSensors}
-            value={totalSensors.toString()}
-            icon={Radio}
-            color="teal"
-            onClick={onNavigateToSensors}
-            breakdown={[
-              { label: t.online, count: totalSensors - 18, color: 'green' },
-              { label: t.offline, count: 18, color: 'red' },
-            ]}
-          />
-          {/* Automation Rules Metric with Breakdown */}
-          <MetricCardDetailed
-            title={t.automationRules}
-            value={automationRules.length.toString()}
-            icon={Zap}
-            color="yellow"
-            breakdown={[
-              { label: t.active, count: automationRules.filter(r => r.enabled).length, color: 'green' },
-              { label: t.disabled, count: automationRules.filter(r => !r.enabled).length, color: 'gray' },
-            ]}
-          />
-        </div>
-
-        {/* Analytics & Trends Section */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          {/* Incidents Trend Chart with Dropdown */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-red-50 rounded-lg">
-                  <AlertTriangle className="size-5 text-red-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900">{t.incidentsCountTrend}</h3>
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={incidentsTrendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#9ca3af"
-                  style={{ fontSize: '12px' }}
-                />
-                <YAxis 
-                  stroke="#9ca3af"
-                  style={{ fontSize: '12px' }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey={(data: any) => data.ruleMatched + data.conflict + data.undefined}
-                  stroke="#3b82f6" 
-                  strokeWidth={3}
-                  name={t.totalIncidents}
-                  dot={{ r: 5, fill: '#3b82f6' }}
-                  activeDot={{ r: 7 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">{t.totalInPeriod}</span>
-                  <span className="font-bold text-blue-600">
-                    {incidentsTrendData.reduce((sum: number, item: any) => sum + item.ruleMatched + item.conflict + item.undefined, 0)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">{t.averagePerDay}</span>
-                  <span className="font-bold text-blue-600">
-                    {(incidentsTrendData.reduce((sum: number, item: any) => sum + item.ruleMatched + item.conflict + item.undefined, 0) / incidentsTrendData.length).toFixed(1)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Threat Classification Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-red-50 rounded-lg">
-                  <AlertCircle className="size-5 text-red-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900">{t.incidentsOverTime}</h3>
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={threatClassificationData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#9ca3af"
-                  style={{ fontSize: '12px' }}
-                />
-                <YAxis 
-                  stroke="#9ca3af"
-                  style={{ fontSize: '12px' }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                  }}
-                />
-                <Legend 
-                  wrapperStyle={{ fontSize: '12px' }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="ruleMatched" 
-                  stroke="#10b981" 
-                  strokeWidth={2}
-                  name={t.ruleMatchedThreats}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="conflict" 
-                  stroke="#f59e0b" 
-                  strokeWidth={2}
-                  name={t.conflictThreats}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="undefined" 
-                  stroke="#ef4444" 
-                  strokeWidth={2}
-                  name={t.undefinedThreats}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="size-2 rounded-full bg-green-500" />
-                    <span className="text-xs text-gray-600">{t.ruleMatched}</span>
-                  </div>
-                  <span className="font-bold text-green-600">48</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="size-2 rounded-full bg-orange-500" />
-                    <span className="text-xs text-gray-600">{t.conflict}</span>
-                  </div>
-                  <span className="font-bold text-orange-600">21</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="size-2 rounded-full bg-red-500" />
-                    <span className="text-xs text-gray-600">{t.undefined}</span>
-                  </div>
-                  <span className="font-bold text-red-600">14</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* AI Suggestions and Energy Consumption Charts */}
-        <div className="grid grid-cols-2 gap-6 mb-6">
-          {/* AI Suggestions Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-purple-50 rounded-lg">
-                  <Brain className="size-5 text-purple-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900">{t.aiSuggestions}</h3>
-              </div>
-            </div>
-            <div className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={aiSuggestionsData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value, percent }) => `${value} (${(percent * 100).toFixed(0)}%)`}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {aiSuggestionsData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff', 
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="size-3 rounded-full bg-green-500" />
-                    <span className="text-gray-600">{t.approvedLabel}</span>
-                  </div>
-                  <span className="font-bold text-green-600">78</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="size-3 rounded-full bg-red-500" />
-                    <span className="text-gray-600">{t.rejectedLabel}</span>
-                  </div>
-                  <span className="font-bold text-red-600">22</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-gray-600 mb-1">{t.approvalRate}</span>
-                  <span className="font-bold text-purple-600">78%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Energy Consumption Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <Zap className="size-5 text-blue-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900">{t.energyConsumption}</h3>
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={energyConsumptionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="system" 
-                  stroke="#9ca3af"
-                  style={{ fontSize: '12px' }}
-                />
-                <YAxis 
-                  stroke="#9ca3af"
-                  style={{ fontSize: '12px' }}
-                  label={{ value: '%', angle: -90, position: 'insideLeft' }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                  }}
-                />
-                <Bar dataKey="consumption" radius={[8, 8, 0, 0]}>
-                  {energyConsumptionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="grid grid-cols-3 gap-3 text-sm">
-                <div className="flex flex-col items-center">
-                  <span className="text-xs text-gray-600 mb-1">{t.totalUsage}</span>
-                  <span className="font-bold text-blue-600">12,450 kWh</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-xs text-gray-600 mb-1">{t.vsLastMonth}</span>
-                  <span className="font-bold text-green-600">-8.2%</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-xs text-gray-600 mb-1">{t.costSavings}</span>
-                  <span className="font-bold text-green-600">$245</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Incidents Preview - Moved to end */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">{t.recentIncidents}</h3>
-            <button
-              onClick={onNavigateToIncidents}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              {t.viewAll} →
-            </button>
-          </div>
-          <div className="space-y-3">
-            {incidents.slice(0, 3).map(incident => (
-              <div key={incident.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <SeverityDot severity={incident.severity} />
-                  <div>
-                    <p className="font-medium text-gray-900">{getIncidentTitle(language, incident.title)}</p>
-                    <p className="text-sm text-gray-600">{getIncidentLocation(language, incident.location)}</p>
-                  </div>
-                </div>
-                <span className="text-xs text-gray-500">
-                  {Math.floor((Date.now() - incident.timestamp.getTime()) / 60000)}{t.minutes} {t.ago}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+    <FloorPlanView
+      floorId="floor-a-2"
+      onRoomClick={() => {}}
+      onIncidentClick={onIncidentClick}
+      onBack={() => {}}
+      emergencyMode={emergencyMode}
+      hideBreadcrumbs={true}
+    />
   );
 }
 
@@ -609,6 +299,100 @@ function PredictionItem({ icon: Icon, title, description, probability, color }: 
           <span className="text-xs text-gray-500">{probability}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+function CircularGaugeDisplay({ label, value, unit, min, max, status }: any) {
+  const percentage = ((value - min) / (max - min)) * 100;
+  const angle = (percentage / 100) * 180; // Semi-circle (180 degrees)
+  
+  const statusColor = status === 'normal' ? '#10b981' : 
+                     status === 'warning' ? '#f59e0b' : '#ef4444';
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-24 h-12 mb-2">
+        {/* Background arc */}
+        <svg className="w-full h-full" viewBox="0 0 100 60">
+          <path
+            d="M 10 50 A 40 40 0 0 1 90 50"
+            fill="none"
+            stroke="#e5e7eb"
+            strokeWidth="8"
+            strokeLinecap="round"
+          />
+          {/* Foreground arc */}
+          <path
+            d="M 10 50 A 40 40 0 0 1 90 50"
+            fill="none"
+            stroke={statusColor}
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray={`${(angle / 180) * 126} 126`}
+            style={{ transition: 'stroke-dasharray 0.3s ease' }}
+          />
+          {/* Center text */}
+          <text
+            x="50"
+            y="45"
+            textAnchor="middle"
+            className="text-xs font-bold"
+            fill="#111827"
+          >
+            {value}
+          </text>
+        </svg>
+      </div>
+      <div className="text-center">
+        <div className="text-xs font-medium text-gray-900">{label}</div>
+        <div className="text-xs text-gray-500">{unit}</div>
+      </div>
+    </div>
+  );
+}
+
+function SystemStatusItem({ label, status, icon: Icon }: any) {
+  const statusColors = {
+    operational: { bg: 'bg-green-100', icon: 'text-green-600', dot: 'bg-green-500' },
+    warning: { bg: 'bg-yellow-100', icon: 'text-yellow-600', dot: 'bg-yellow-500' },
+    offline: { bg: 'bg-red-100', icon: 'text-red-600', dot: 'bg-red-500' },
+  };
+
+  const colors = statusColors[status] || statusColors.operational;
+
+  return (
+    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+      <div className="flex items-center gap-3">
+        <div className={`p-2 ${colors.bg} rounded-lg`}>
+          <Icon className={`size-4 ${colors.icon}`} />
+        </div>
+        <span className="text-sm font-medium text-gray-900">{label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className={`size-2 rounded-full ${colors.dot}`} />
+        <span className="text-xs font-medium text-gray-600 capitalize">{status}</span>
+      </div>
+    </div>
+  );
+}
+
+function IncidentStatusBar({ label, count, total, color }: any) {
+  const percentage = (count / total) * 100;
+
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div className={`size-2 rounded-full ${color}`} />
+        <span className="text-xs text-gray-600">{label}</span>
+      </div>
+      <div className="relative h-2 bg-gray-200 rounded-full w-24">
+        <div 
+          className={`absolute left-0 top-0 h-full ${color} transition-all duration-300`}
+          style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
+        />
+      </div>
+      <span className="text-xs text-gray-500">{count}</span>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { incidents } from '../data/mockData';
 import { Filters } from './Filters';
 import { useState } from 'react';
 import { Language, translations } from '../translations';
+import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
 interface IncidentsDashboardProps {
   onIncidentClick: (incidentId: string) => void;
@@ -16,6 +17,29 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
   const [filters, setFilters] = useState<any>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'resolved'>('all');
+
+  // Incidents trend data - 7 days view
+  const incidentsTrendData = [
+    { date: 'Jan 30', ruleMatched: 3, conflict: 2, undefined: 1 },
+    { date: 'Jan 31', ruleMatched: 5, conflict: 1, undefined: 2 },
+    { date: 'Feb 1', ruleMatched: 2, conflict: 3, undefined: 1 },
+    { date: 'Feb 2', ruleMatched: 4, conflict: 2, undefined: 2 },
+    { date: 'Feb 3', ruleMatched: 6, conflict: 1, undefined: 1 },
+    { date: 'Feb 4', ruleMatched: 3, conflict: 2, undefined: 3 },
+    { date: 'Feb 5', ruleMatched: 5, conflict: 3, undefined: 2 },
+  ];
+
+  // Threat Classification Data
+  const threatClassificationData = [
+    { date: 'Jan 29', ruleMatched: 5, conflict: 2, undefined: 1 },
+    { date: 'Jan 30', ruleMatched: 7, conflict: 3, undefined: 2 },
+    { date: 'Jan 31', ruleMatched: 4, conflict: 2, undefined: 1 },
+    { date: 'Feb 1', ruleMatched: 8, conflict: 4, undefined: 2 },
+    { date: 'Feb 2', ruleMatched: 6, conflict: 2, undefined: 3 },
+    { date: 'Feb 3', ruleMatched: 5, conflict: 3, undefined: 1 },
+    { date: 'Feb 4', ruleMatched: 7, conflict: 4, undefined: 2 },
+    { date: 'Feb 5', ruleMatched: 6, conflict: 3, undefined: 2 },
+  ];
 
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
@@ -88,6 +112,133 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
               value={ruleResolvedCount}
               color="purple"
             />
+          </div>
+
+          {/* Analytics & Trends Section */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {/* Incidents Count Trend Chart */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-red-50 rounded-lg">
+                    <AlertTriangle className="size-5 text-red-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">{t.incidentsCountTrend}</h3>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={incidentsTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="#9ca3af"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis 
+                    stroke="#9ca3af"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#fff', 
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey={(data: any) => data.ruleMatched + data.conflict + data.undefined}
+                    stroke="#3b82f6" 
+                    strokeWidth={3}
+                    name={t.totalIncidents}
+                    dot={{ r: 5, fill: '#3b82f6' }}
+                    activeDot={{ r: 7 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">{t.totalInPeriod}</span>
+                    <span className="font-bold text-blue-600">
+                      {incidentsTrendData.reduce((sum: number, item: any) => sum + item.ruleMatched + item.conflict + item.undefined, 0)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">{t.averagePerDay}</span>
+                    <span className="font-bold text-blue-600">
+                      {(incidentsTrendData.reduce((sum: number, item: any) => sum + item.ruleMatched + item.conflict + item.undefined, 0) / incidentsTrendData.length).toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Incidents Over Time Chart */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-red-50 rounded-lg">
+                    <AlertCircle className="size-5 text-red-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">{t.incidentsOverTime}</h3>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={threatClassificationData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="#9ca3af"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis 
+                    stroke="#9ca3af"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#fff', 
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '10px' }}
+                    iconSize={8}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="ruleMatched" 
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    name={t.ruleMatchedThreats}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="conflict" 
+                    stroke="#f59e0b" 
+                    strokeWidth={2}
+                    name={t.conflictThreats}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="undefined" 
+                    stroke="#ef4444" 
+                    strokeWidth={2}
+                    name={t.undefinedThreats}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* Search and Filter Bar */}

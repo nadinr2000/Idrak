@@ -18,53 +18,9 @@ export function BuildingView({ buildingId, onFloorClick, onIncidentClick }: Buil
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <Filters
-        onFilterChange={handleFilterChange}
-        showBuildingFilter={false}
-        showStatusFilter={true}
-        showSeverityFilter={true}
-        showDateFilter={true}
-        showSensorTypeFilter={true}
-      />
-      
+    <div className="flex flex-col h-full">      
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-[1600px] mx-auto">
-          {/* Building Overview */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Building Overview</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Building2 className="size-5 text-blue-600" />
-                  <span className="text-sm text-gray-600">Total Floors</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">5</p>
-              </div>
-              <div className="bg-green-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity className="size-5 text-green-600" />
-                  <span className="text-sm text-gray-600">Active Sensors</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">120</p>
-              </div>
-              <div className="bg-red-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle className="size-5 text-red-600" />
-                  <span className="text-sm text-gray-600">Active Incidents</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">3</p>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Thermometer className="size-5 text-purple-600" />
-                  <span className="text-sm text-gray-600">Avg Temperature</span>
-                </div>
-                <p className="text-2xl font-bold text-gray-900">23.2°C</p>
-              </div>
-            </div>
-          </div>
-
           {/* Floor Map Visualization */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="font-semibold text-gray-900 mb-4">Building Floor Map</h3>

@@ -1,6 +1,7 @@
 import { X, MapPin, Activity, Radio, Building2, Layers, CheckCircle, Clock, FileText } from 'lucide-react';
 import { Language, translations } from '../translations';
 import { useState } from 'react';
+import floorPlanImage from 'figma:asset/a1d7c50be4149c7263d7de092815c8c8d9377172.png';
 
 interface Sensor {
   id: string;

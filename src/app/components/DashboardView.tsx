@@ -19,16 +19,7 @@ export function DashboardView({ onBuildingClick, onIncidentClick }: DashboardVie
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <Filters
-        onFilterChange={handleFilterChange}
-        showBuildingFilter={true}
-        showStatusFilter={true}
-        showSeverityFilter={true}
-        showDateFilter={true}
-        showSensorTypeFilter={false}
-      />
-      
+    <div className="flex flex-col h-full">      
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-[1600px] mx-auto">
           {/* Key Metrics */}
@@ -159,41 +150,6 @@ export function DashboardView({ onBuildingClick, onIncidentClick }: DashboardVie
                 <Line type="monotone" dataKey="threshold" stroke="#ef4444" name="Threshold" strokeDasharray="5 5" />
               </LineChart>
             </ResponsiveContainer>
-          </div>
-
-          {/* Buildings Grid */}
-          <div className="mb-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Building Overview</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {buildings.map(building => (
-                <button
-                  key={building.id}
-                  onClick={() => onBuildingClick(building.id)}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow text-left"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">{building.name}</h4>
-                    <StatusBadge status={building.status} />
-                  </div>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Floors:</span>
-                      <span className="font-medium text-gray-900">{building.floors}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Sensors:</span>
-                      <span className="font-medium text-gray-900">{building.sensors}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Incidents:</span>
-                      <span className={`font-medium ${building.incidents > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        {building.incidents}
-                      </span>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Active Incidents */}
