@@ -168,6 +168,7 @@ export function SummaryDashboard({ viewMode, onNavigateToFloors, onNavigateToInc
       onBack={() => {}}
       emergencyMode={emergencyMode}
       hideBreadcrumbs={true}
+      language={language}
     />
   );
 }

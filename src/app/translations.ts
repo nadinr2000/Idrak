@@ -372,6 +372,15 @@ export const translations = {
     degraded: 'Degraded',
     
     systemHealth: 'System Health',
+    
+    // FloorPlanView - Bunker & Legend
+    bunkerAlpha7: 'Bunker Alpha-7',
+    underAttack: 'Under Attack',
+    warning: 'Warning',
+    differentialPressure: 'Differential Pressure',
+    cbrnDetectors: 'CBRN Detectors',
+    airQualitySensors: 'Air Quality Sensors',
+    secure: 'Secure',
   },
   ar: {
     // TopBar
@@ -744,6 +753,15 @@ export const translations = {
     degraded: 'متدهور',
     
     systemHealth: 'صحة النظام',
+    
+    // FloorPlanView - Bunker & Legend
+    bunkerAlpha7: 'خزانة آلفا-7',
+    underAttack: 'تحت هجوم',
+    warning: 'تحذير',
+    differentialPressure: 'ضغط تفاضلي',
+    cbrnDetectors: 'أجهزة الكيميائيات والبيولوجيات والإشعاعيات والنووية',
+    airQualitySensors: 'أجهزة تقييم جودة الهواء',
+    secure: 'آمن',
   },
 };
 

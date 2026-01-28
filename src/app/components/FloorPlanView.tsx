@@ -1,12 +1,12 @@
-import { AlertCircle, Thermometer, Activity, Shield, ArrowLeft, X, ChevronRight, CheckCircle, Brain, TrendingUp, Sparkles, ZoomIn, ZoomOut, RotateCcw, Wind, Radio, Lock, Eye, Zap, Droplets, Building2, Clock, AlertTriangle, MapPin } from 'lucide-react';
+import { AlertCircle, Thermometer, Activity, Shield, ArrowLeft, X, ChevronRight, CheckCircle, Brain, TrendingUp, Sparkles, ZoomIn, ZoomOut, RotateCcw, Wind, Radio, Lock, Eye, Zap, Droplets, Building2, Clock, AlertTriangle, MapPin, ChevronLeft } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { incidents } from '../data/mockData';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { RoomDetailPanel } from './RoomDetailPanel';
 import { SensorDetailPanel } from './SensorDetailPanel';
 import { IncidentDetailView } from './IncidentDetailView';
-import floorPlanImage from '@/assets/BG.png'
-//2bd4b6f097123f4b32ec93c2fea878ea09aebff1.png';
+import floorPlanImage from '@/assets/BG.png';
+import { Language, translations } from '../translations';
 
 // FloorPlanView - Room details with incident tracking
 
@@ -17,6 +17,7 @@ interface FloorPlanViewProps {
   onBack?: () => void;
   emergencyMode?: boolean;
   hideBreadcrumbs?: boolean;
+  language?: Language;
 }
 
 // Room type definition for the floor plan
@@ -46,7 +47,8 @@ interface Sensor {
   lastUpdate?: string;
 }
 
-export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, emergencyMode, hideBreadcrumbs }: FloorPlanViewProps) {
+export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, emergencyMode, hideBreadcrumbs, language = 'en' }: FloorPlanViewProps) {
+  const t = translations[language];
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
@@ -56,20 +58,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [leftPanelWidth, setLeftPanelWidth] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(1.0);
   const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(0);
+  const [panY, setPanY] = useState(emergencyMode ? -100 : -350);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(!emergencyMode);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize panel width to 50% of available space
+  // Initialize panel width - adjust based on emergency mode
   useEffect(() => {
     if (leftPanelWidth === null && containerRef.current) {
       const containerWidth = containerRef.current.offsetWidth;
-      setLeftPanelWidth(containerWidth / 2);
+      // If in emergency mode, right panel is open, so left panel should be 50% (same as normal mode)
+      // Otherwise, right panel is collapsed, so left panel takes full width
+      const initialWidth = emergencyMode 
+        ? containerWidth / 2     // 50% when panel is open (same as normal mode)
+        : containerWidth - 48;   // Full width minus button area when collapsed
+      setLeftPanelWidth(initialWidth);
     }
-  }, [leftPanelWidth]);
+  }, [leftPanelWidth, emergencyMode]);
 
   // Handle dragging for resizing panels
   useEffect(() => {
@@ -143,13 +151,13 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   };
 
   const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 0.25, 0.5));
+    setZoom(prev => Math.max(prev - 0.25, 0.3));
   };
 
   const handleResetZoom = () => {
-    setZoom(1);
+    setZoom(1.0);
     setPanX(0);
-    setPanY(0);
+    setPanY(-350);
   };
 
   // Mouse wheel zoom
@@ -326,12 +334,15 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
   const handleSensorClick = (sensor: any) => {
     setSelectedSensor(sensor);
-    // Find which room this sensor belongs to
-    const room = rooms.find(r => 
-      r.sensors?.some(s => s.id === sensor.id)
-    );
-    if (room) {
-      setSelectedRoom(room.id);
+    setSelectedIncident(null); // Clear any incident selection
+    
+    // Expand the panel and adjust the floor plan width
+    if (isRightPanelCollapsed && containerRef.current) {
+      setIsRightPanelCollapsed(false);
+      setLeftPanelWidth(containerRef.current.offsetWidth / 2);
+      setPanX(0);
+      setPanY(-100);
+      setZoom(1.0);
     }
   };
 
@@ -393,6 +404,28 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
           {/* Legend removed from here - now overlaid on image */}
         </div>
 
+        {/* Facility Header Bar */}
+        <div className="px-6 pb-3">
+          <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
+            <span className="text-sm font-semibold text-gray-900">{t.bunkerAlpha7}</span>
+            {emergencyMode ? (
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-red-600">
+                <div className="w-2 h-2 rounded-full bg-red-200 animate-pulse" />
+                <span className="text-xs font-bold text-white uppercase">{t.underAttack}</span>
+              </div>
+            ) : (
+              <>
+                <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded border border-green-300">
+                  {t.secure}
+                </span>
+                <span className="px-2 py-0.5 bg-orange-100 text-orange-800 text-xs font-medium rounded border border-orange-300">
+                  1 {t.warning}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* SVG Floor Plan - Full Width */}
         <div 
           className="w-full overflow-hidden px-6 pb-6 relative flex items-center justify-center"
@@ -412,7 +445,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
-                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">Differential Pressure</span>
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.differentialPressure}</span>
                   </td>
                 </tr>
                 
@@ -432,7 +465,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
-                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">CBRN Detectors</span>
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.cbrnDetectors}</span>
                   </td>
                 </tr>
                 
@@ -444,7 +477,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
-                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">CO₂ Sensors</span>
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.airQualitySensors}</span>
                   </td>
                 </tr>
                 
@@ -456,7 +489,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
-                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">CO Sensors</span>
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.airQualitySensors}</span>
                   </td>
                 </tr>
                 
@@ -468,7 +501,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
-                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">O₂ Sensors</span>
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.airQualitySensors}</span>
                   </td>
                 </tr>
                 
@@ -524,7 +557,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
           <div
             className="relative"
             style={{
-              transform: `translate(${panX}px, ${panY}px) scale(${zoom}) rotate(-90deg)`,
+              transform: `translate(${panX}px, ${panY + (isRightPanelCollapsed ? 250 : 0)}px) scale(${zoom}) rotate(-90deg)`,
               transformOrigin: 'center center',
               transition: isPanning ? 'none' : 'transform 0.1s ease-out',
             }}
@@ -534,7 +567,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               alt="Floor Plan"
               className="h-auto"
               style={{ 
-                width: `${leftPanelWidth - 100}px`, 
+                width: `${leftPanelWidth ? (isRightPanelCollapsed ? 480 : Math.max(leftPanelWidth - 100, 1500)) : 480}px`, 
                 height: 'auto', 
                 display: 'block' 
               }}
@@ -549,6 +582,14 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   setSelectedIncident('inc-011');
                   setSelectedSensor(null);
                   setSelectedRoom(null);
+                  // Expand the right panel if collapsed
+                  if (isRightPanelCollapsed && containerRef.current) {
+                    setLeftPanelWidth(containerRef.current.offsetWidth / 2);
+                    setPanX(0);
+                    setPanY(-100);
+                    setZoom(1.0);
+                    setIsRightPanelCollapsed(false);
+                  }
                 }}
                 onMouseEnter={(e) => {
                   setHoveredFloorSensor({
@@ -566,7 +607,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   
                   {hoveredFloorSensor?.id === 'command-center-warning' && (
                     <div 
-                      className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-orange-500 pointer-events-none"
+                      className="absolute text-white rounded-lg shadow-xl border border-orange-500 pointer-events-none"
                       style={{ 
                         left: '100%',
                         top: '50%',
@@ -575,7 +616,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         fontSize: `${11 / zoom}px`,
                         padding: `${10 / zoom}px ${14 / zoom}px`,
                         zIndex: 1000,
-                        minWidth: `${200 / zoom}px`
+                        minWidth: `${200 / zoom}px`,
+                        backgroundColor: 'rgb(15, 23, 42)'
                       }}
                     >
                       <div style={{ fontWeight: 'bold', marginBottom: `${6 / zoom}px`, fontSize: `${12 / zoom}px` }}>⚠️ Command Center Alert</div>
@@ -611,13 +653,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               <>
                 {/* Alert 1 - Room Area 1 */}
                 <div 
-                  className="absolute cursor-pointer" 
-                  style={{ left: '67%', top: '46%', transform: 'rotate(90deg)' }}
-                  onClick={() => {
-                    setSelectedIncident('inc-011');
-                    setSelectedSensor(null);
-                    setSelectedRoom(null);
-                  }}
+                  className="absolute" 
+                  style={{ left: '67%', top: '46%', transform: 'rotate(90deg)', pointerEvents: 'none' }}
                 >
                   <div className="relative">
                     <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center animate-pulse shadow-lg border-2 border-white">
@@ -628,13 +665,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
                 {/* Alert 2 - Room Area 2 (nearby) */}
                 <div 
-                  className="absolute cursor-pointer" 
-                  style={{ left: '72%', top: '49%', transform: 'rotate(90deg)' }}
-                  onClick={() => {
-                    setSelectedIncident('inc-011');
-                    setSelectedSensor(null);
-                    setSelectedRoom(null);
-                  }}
+                  className="absolute" 
+                  style={{ left: '72%', top: '49%', transform: 'rotate(90deg)', pointerEvents: 'none' }}
                 >
                   <div className="relative">
                     <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center animate-pulse shadow-lg border-2 border-white">
@@ -645,13 +677,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
                 {/* Alert 3 - Room Area 3 (nearby) */}
                 <div 
-                  className="absolute cursor-pointer" 
-                  style={{ left: '76%', top: '46.5%', transform: 'rotate(90deg)' }}
-                  onClick={() => {
-                    setSelectedIncident('inc-011');
-                    setSelectedSensor(null);
-                    setSelectedRoom(null);
-                  }}
+                  className="absolute" 
+                  style={{ left: '76%', top: '46.5%', transform: 'rotate(90deg)', pointerEvents: 'none' }}
                 >
                   <div className="relative">
                     <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center animate-pulse shadow-lg border-2 border-white">
@@ -697,7 +724,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-3-co2' && (
                       <div 
-                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -705,7 +732,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
                         }}
                       >
                         <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
@@ -754,7 +782,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-3-co' && (
                       <div 
-                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -762,7 +790,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
                         }}
                       >
                         <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
@@ -811,7 +840,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-3-o2' && (
                       <div 
-                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -819,7 +848,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
                         }}
                       >
                         <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
@@ -879,7 +909,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-2-co2' && (
                       <div 
-                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -887,7 +917,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
                         }}
                       >
                         <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
@@ -936,7 +967,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-2-co' && (
                       <div 
-                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -944,7 +975,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
                         }}
                       >
                         <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
@@ -993,7 +1025,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-2-o2' && (
                       <div 
-                        className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1001,7 +1033,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
                         }}
                       >
                         <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
@@ -1057,7 +1090,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 {/* Tooltip for Switch 3 */}
                 {hoveredFloorSensor?.id === 'switch-3' && (
                   <div 
-                    className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                     style={{ 
                       left: '100%',
                       top: '50%',
@@ -1065,7 +1098,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       marginLeft: `${8 / zoom}px`,
                       fontSize: `${10 / zoom}px`,
                       padding: `${8 / zoom}px ${12 / zoom}px`,
-                      zIndex: 1000
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
                     }}
                   >
                     <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
@@ -1122,7 +1156,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   
                   {hoveredFloorSensor?.id === 'cbr-r1' && (
                     <div 
-                      className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                       style={{ 
                         left: '100%',
                         top: '50%',
@@ -1130,7 +1164,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         marginLeft: `${8 / zoom}px`,
                         fontSize: `${10 / zoom}px`,
                         padding: `${8 / zoom}px ${12 / zoom}px`,
-                        zIndex: 1000
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
                       }}
                     >
                       <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
@@ -1179,7 +1214,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   
                   {hoveredFloorSensor?.id === 'cbr-b1' && (
                     <div 
-                      className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                       style={{ 
                         left: '100%',
                         top: '50%',
@@ -1187,7 +1222,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         marginLeft: `${8 / zoom}px`,
                         fontSize: `${10 / zoom}px`,
                         padding: `${8 / zoom}px ${12 / zoom}px`,
-                        zIndex: 1000
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
                       }}
                     >
                       <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
@@ -1237,7 +1273,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   
                   {hoveredFloorSensor?.id === 'cbr-c1' && (
                     <div 
-                      className="absolute bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                       style={{ 
                         left: '100%',
                         top: '50%',
@@ -1245,7 +1281,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         marginLeft: `${8 / zoom}px`,
                         fontSize: `${10 / zoom}px`,
                         padding: `${8 / zoom}px ${12 / zoom}px`,
-                        zIndex: 1000
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
                       }}
                     >
                       <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
@@ -1283,7 +1320,39 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
       </div>
 
       {/* Right Panel - Facility Overview, Sensor Details, or Incident Details */}
-      <div className="flex-1 overflow-auto p-6 space-y-6">
+      <div className="relative flex-1 overflow-auto">
+        {/* Collapse/Expand Button */}
+        <button
+          onClick={() => {
+            if (isRightPanelCollapsed && containerRef.current) {
+              // Expanding - restore previous width or default to half
+              setLeftPanelWidth(containerRef.current.offsetWidth / 2);
+              // Reset pan for narrower panel
+              setPanX(0);
+              setPanY(-100);
+              // Keep zoom at 100 when panel is expanded
+              setZoom(1.0);
+            } else if (containerRef.current) {
+              // Collapsing - set floor plan to full width
+              setLeftPanelWidth(containerRef.current.offsetWidth - 48);
+              // Reset pan for wider panel
+              setPanX(0);
+              setPanY(-350);
+              // Keep zoom at 100 when collapsed
+              setZoom(1.0);
+            }
+            setIsRightPanelCollapsed(!isRightPanelCollapsed);
+          }}
+          className={`absolute top-4 z-10 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-lg transition-all hover:scale-110 flex items-center justify-center ${
+            isRightPanelCollapsed ? 'left-2' : 'right-4'
+          }`}
+          title={isRightPanelCollapsed ? 'Expand panel' : 'Collapse panel'}
+        >
+          {isRightPanelCollapsed ? <ChevronLeft className="size-5" /> : <ChevronRight className="size-5" />}
+        </button>
+
+        {!isRightPanelCollapsed && (
+          <div className="p-6 space-y-6">
         {/* Show Sensor Details if a sensor is selected */}
         {selectedSensor ? (
           <SensorDetailPanel 
@@ -1400,18 +1469,6 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
             {emergencyMode ? (
               /* Emergency Mode - Three Section Overview */
               <>
-                {/* Bunker Header */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-lg font-bold text-gray-900">Bunker Alpha-7</h2>
-                    <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-red-600">
-                      <div className="w-2 h-2 rounded-full bg-red-200 animate-pulse" />
-                      <span className="text-xs font-bold text-white uppercase">Under Attack</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-600">Mountain Range Sector, Grid Reference: 42°N 71°W</p>
-                </div>
-
                 {/* AI ASSESSMENT Section */}
                 <div className="bg-red-50 rounded-lg border-2 border-red-400 shadow-lg overflow-hidden">
                   <div className="p-4">
@@ -1667,47 +1724,44 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
             ) : (
               /* Normal Mode - Existing Content */
               <>
-            {/* Bunker Header */}
+            {/* Facility Overview with Quick Stats */}
             <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <h2 className="text-lg font-bold text-gray-900">Bunker Alpha-7</h2>
-            <div className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${emergencyMode ? 'bg-red-600' : 'bg-green-600'}`}>
-              <div className={`w-2 h-2 rounded-full ${emergencyMode ? 'bg-red-200' : 'bg-green-200'} animate-pulse`} />
-              <span className="text-xs font-bold text-white uppercase">{emergencyMode ? 'Under Attack' : 'Operational'}</span>
-            </div>
-          </div>
-          <p className="text-xs text-gray-600 mb-3">Mountain Range Sector, Grid Reference: 42°N 71°W</p>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mt-3">
-            <div className="bg-gray-50 rounded-lg p-2">
-              <div className="text-[10px] text-gray-600 mb-1 uppercase">Rooms</div>
-              <div className="text-lg font-bold text-gray-900">19</div>
-              {emergencyMode && (
-                <div className="text-[10px] text-gray-600 mt-0.5">
-                  15 OK, 2 WARN, 2 CRIT
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Facility Overview</h2>
+              
+              {/* Quick Stats */}
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="text-[10px] text-gray-600 mb-1 uppercase">Rooms</div>
+                  <div className="text-lg font-bold text-gray-900">19</div>
+                  {emergencyMode && (
+                    <div className="text-[10px] text-gray-600 mt-0.5">
+                      15 OK, 2 WARN, 2 CRIT
+                    </div>
+                  )}
                 </div>
-              )}
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="text-[10px] text-gray-600 mb-1 uppercase">Sensors</div>
+                  <div className="text-lg font-bold text-gray-900">42/42</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="text-[10px] text-gray-600 mb-1 uppercase">Temperature</div>
+                  <div className="text-lg font-bold text-gray-900">21°C</div>
+                  <div className="text-[10px] text-gray-600 mt-0.5">Average</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="text-[10px] text-gray-600 mb-1 uppercase">Occupancy</div>
+                  <div className="text-lg font-bold text-gray-900">28</div>
+                  <div className="text-[10px] text-gray-600 mt-0.5">Personnel</div>
+                </div>
+              </div>
             </div>
-            <div className="bg-gray-50 rounded-lg p-2">
-              <div className="text-[10px] text-gray-600 mb-1 uppercase">Sensors</div>
-              <div className="text-lg font-bold text-gray-900">42/42</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-2">
-              <div className="text-[10px] text-gray-600 mb-1 uppercase">Temperature</div>
-              <div className="text-lg font-bold text-gray-900">21°C</div>
-              <div className="text-[10px] text-gray-600 mt-0.5">Average</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-2">
-              <div className="text-[10px] text-gray-600 mb-1 uppercase">Occupancy</div>
-              <div className="text-lg font-bold text-gray-900">28</div>
-              <div className="text-[10px] text-gray-600 mt-0.5">Personnel</div>
-            </div>
-          </div>
 
-          {/* Room Status Alerts */}
-          <div className="mt-4 space-y-2">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase">Room Status Alerts</h3>
+            {/* Warnings Card - Active and Recently Resolved */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h3 className="text-sm font-semibold text-gray-700 uppercase mb-3">Warnings</h3>
+              
+              {/* Active Alerts */}
+              <div className="space-y-3">
             
             {/* Temperature Elevation Alert */}
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
@@ -1746,13 +1800,13 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               </button>
             </div>
           </div>
-
+              
           {/* Recently Resolved Incidents */}
-          <div className="mt-4 space-y-2">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase">Recently Resolved Incidents</h3>
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="text-xs font-semibold text-gray-600 uppercase mb-3">Recently Resolved</h4>
             
-            {/* Automated Resolution Example */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          {/* Automated Resolution Example */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
@@ -1802,12 +1856,12 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               <button className="text-sm text-blue-500 hover:text-blue-600 font-semibold">
                 View Full Incident Log →
               </button>
-            </div>
           </div>
         </div>
+      </div>
 
-        {/* CBRNE Threat Status */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+      {/* CBRNE Threat Status */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h3 className="font-bold text-gray-900 mb-3 text-sm">CBRNE Threat Status</h3>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -1987,6 +2041,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
           </>
             )}
           </>
+        )}
+          </div>
         )}
       </div>
     </div>

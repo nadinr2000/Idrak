@@ -472,6 +472,7 @@ export default function App() {
               setCurrentView('summary');
             }}
             emergencyMode={emergencyMode}
+            language={language}
           />
         );
       }
@@ -526,6 +527,7 @@ export default function App() {
             floorId={selectedFloor}
             onRoomClick={navigateToRoom}
             onIncidentClick={navigateToIncident}
+            language={language}
             onBack={() => {
               setSelectedFloor(null);
               setCurrentView('floors');
@@ -578,12 +580,7 @@ export default function App() {
         <LandingPage 
           language={language}
           onEnter={() => {
-            setIsLoading(true);
-            // Simulate loading time
-            setTimeout(() => {
-              setIsLoading(false);
-              setShowLandingPage(false);
-            }, 2500);
+            setShowLandingPage(false);
           }}
         />
       ) : isLoading ? (

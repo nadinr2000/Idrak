@@ -55,7 +55,7 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Feature 1: CBRNe Detection */}
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:border-orange-500/50 transition-all hover:shadow-lg hover:shadow-orange-500/10">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:bg-slate-700 hover:border-orange-500 transition-all hover:shadow-lg hover:shadow-orange-500/20">
             <div className="size-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center mb-4">
               <Radio className="size-7 text-white" />
             </div>
@@ -70,7 +70,7 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
           </div>
 
           {/* Feature 2: AI-Powered Analysis */}
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:border-purple-500/50 transition-all hover:shadow-lg hover:shadow-purple-500/10">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:bg-slate-700 hover:border-purple-500 transition-all hover:shadow-lg hover:shadow-purple-500/20">
             <div className="size-14 bg-gradient-to-br from-purple-500 to-violet-500 rounded-xl flex items-center justify-center mb-4">
               <Brain className="size-7 text-white" />
             </div>
@@ -85,7 +85,7 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
           </div>
 
           {/* Feature 3: Emergency Response */}
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:border-yellow-500/50 transition-all hover:shadow-lg hover:shadow-yellow-500/10">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:bg-slate-700 hover:border-yellow-500 transition-all hover:shadow-lg hover:shadow-yellow-500/20">
             <div className="size-14 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-xl flex items-center justify-center mb-4">
               <AlertTriangle className="size-7 text-white" />
             </div>
@@ -100,7 +100,7 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
           </div>
 
           {/* Feature 4: HVAC Containment */}
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:border-blue-500/50 transition-all hover:shadow-lg hover:shadow-blue-500/10">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:bg-slate-700 hover:border-blue-500 transition-all hover:shadow-lg hover:shadow-blue-500/20">
             <div className="size-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-4">
               <Wind className="size-7 text-white" />
             </div>
@@ -115,7 +115,7 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
           </div>
 
           {/* Feature 5: Real-Time Monitoring */}
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:border-green-500/50 transition-all hover:shadow-lg hover:shadow-green-500/10">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:bg-slate-700 hover:border-green-500 transition-all hover:shadow-lg hover:shadow-green-500/20">
             <div className="size-14 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4">
               <Activity className="size-7 text-white" />
             </div>
@@ -130,7 +130,7 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
           </div>
 
           {/* Feature 6: Tactical Simulations */}
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:border-cyan-500/50 transition-all hover:shadow-lg hover:shadow-cyan-500/10">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:bg-slate-700 hover:border-cyan-500 transition-all hover:shadow-lg hover:shadow-cyan-500/20">
             <div className="size-14 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center mb-4">
               <CheckCircle className="size-7 text-white" />
             </div>
