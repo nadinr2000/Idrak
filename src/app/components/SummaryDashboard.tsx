@@ -64,21 +64,21 @@ export function SummaryDashboard({ viewMode, onNavigateToFloors, onNavigateToInc
 
   // System status data
   const systemStatuses = [
-    { label: 'Filtration System', status: 'operational', value: '98%', icon: Wind },
-    { label: 'CO₂ Scrubbers', status: 'operational', value: 'Active', icon: Wind },
-    { label: 'Blast Doors', status: 'operational', value: 'Sealed', icon: Lock },
-    { label: 'Chemical Sensors', status: 'operational', value: '12/12', icon: AlertCircle },
-    { label: 'Nuclear Detectors', status: 'operational', value: '8/8', icon: Radio },
-    { label: 'Bio Detectors', status: 'operational', value: '15/15', icon: Eye },
-    { label: 'Power Systems', status: 'operational', value: '100%', icon: Zap },
+    { label: t.filtrationSystem, status: 'operational', value: '98%', icon: Wind },
+    { label: t.co2Scrubbers, status: 'operational', value: t.activeStatus, icon: Wind },
+    { label: t.blastDoors, status: 'operational', value: t.sealed, icon: Lock },
+    { label: t.chemicalSensors, status: 'operational', value: '12/12', icon: AlertCircle },
+    { label: t.nuclearDetectors, status: 'operational', value: '8/8', icon: Radio },
+    { label: t.bioDetectors, status: 'operational', value: '15/15', icon: Eye },
+    { label: t.powerSystems, status: 'operational', value: '100%', icon: Zap },
   ];
 
   // Critical resources
   const resources = [
-    { label: 'Water Supply', value: 87, unit: '%', total: '50,000 gal', icon: Droplets, color: '#3b82f6' },
-    { label: 'Power Reserve', value: 92, unit: '%', total: '72 hrs', icon: Zap, color: '#10b981' },
-    { label: 'O₂ Reserves', value: 78, unit: '%', total: '30 days', icon: Wind, color: '#8b5cf6' },
-    { label: 'Food Supply', value: 95, unit: '%', total: '90 days', icon: Building2, color: '#f59e0b' },
+    { label: t.waterSupply, value: 87, unit: '%', total: '50,000 gal', icon: Droplets, color: '#3b82f6' },
+    { label: t.powerReserve, value: 92, unit: '%', total: '72 hrs', icon: Zap, color: '#10b981' },
+    { label: t.o2Reserves, value: 78, unit: '%', total: '30 days', icon: Wind, color: '#8b5cf6' },
+    { label: t.foodSupply, value: 95, unit: '%', total: '90 days', icon: Building2, color: '#f59e0b' },
   ];
 
   // Sensor breakdown data

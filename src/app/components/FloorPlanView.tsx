@@ -1,4 +1,4 @@
-import { AlertCircle, Thermometer, Activity, Shield, ArrowLeft, X, ChevronRight, CheckCircle, Brain, TrendingUp, Sparkles, ZoomIn, ZoomOut, RotateCcw, Wind, Radio, Lock, Eye, Zap, Droplets, Building2, Clock, AlertTriangle, MapPin, ChevronLeft } from 'lucide-react';
+import { AlertCircle, Thermometer, Activity, Shield, ArrowLeft, X, ChevronRight, CheckCircle, Brain, TrendingUp, Sparkles, ZoomIn, ZoomOut, RotateCcw, Wind, Radio, Lock, Eye, Zap, Droplets, Building2, Clock, AlertTriangle, MapPin, ChevronLeft, Grid3x3 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { incidents } from '../data/mockData';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -64,6 +64,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(!emergencyMode);
+  const [showGrid, setShowGrid] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Initialize panel width - adjust based on emergency mode
@@ -441,7 +442,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 <tr className="border-b border-gray-900">
                   <td className="border-r border-gray-900 p-0.5 text-center">
                     <div className="w-3 h-2.5 bg-orange-500 border border-gray-900 rounded flex items-center justify-center mx-auto">
-                      <span className="text-[6px] font-bold text-white leading-none">DP</span>
+                      <span className="text-[6px] font-bold text-black leading-none">DP</span>
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
@@ -473,7 +474,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 <tr className="border-b border-gray-900">
                   <td className="border-r border-gray-900 p-0.5 text-center">
                     <div className="w-4 h-4 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center mx-auto">
-                      <span className="text-[6px] font-bold text-white leading-none">CO₂</span>
+                      <span className="text-[6px] font-bold text-black leading-none">CO₂</span>
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
@@ -485,7 +486,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 <tr className="border-b border-gray-900">
                   <td className="border-r border-gray-900 p-0.5 text-center">
                     <div className="w-4 h-4 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center mx-auto">
-                      <span className="text-[6px] font-bold text-white leading-none">CO</span>
+                      <span className="text-[6px] font-bold text-black leading-none">CO</span>
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
@@ -497,7 +498,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 <tr className="border-b border-gray-900">
                   <td className="border-r border-gray-900 p-0.5 text-center">
                     <div className="w-4 h-4 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center mx-auto">
-                      <span className="text-[6px] font-bold text-white leading-none">O₂</span>
+                      <span className="text-[6px] font-bold text-black leading-none">O₂</span>
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
@@ -509,10 +510,10 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 <tr>
                   <td className="border-r border-gray-900 p-0.5 text-center">
                     <div className="flex items-center justify-center gap-0.5">
-                      <div className="px-0.5 py-0.5 bg-red-600 text-white text-[6px] font-bold rounded border border-gray-900 leading-none">
+                      <div className="px-0.5 py-0.5 bg-red-600 text-black text-[6px] font-bold rounded border border-gray-900 leading-none">
                         OFF
                       </div>
-                      <div className="px-0.5 py-0.5 bg-green-600 text-white text-[6px] font-bold rounded border border-gray-900 leading-none">
+                      <div className="px-0.5 py-0.5 bg-green-600 text-black text-[6px] font-bold rounded border border-gray-900 leading-none">
                         ON
                       </div>
                     </div>
@@ -551,6 +552,18 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
             >
               <RotateCcw className="w-4 h-4 text-gray-700" />
             </button>
+            <div className="w-px h-6 bg-gray-300 hidden" />
+            <button
+              onClick={() => setShowGrid(!showGrid)}
+              className={`p-1.5 border rounded transition-colors hidden ${
+                showGrid 
+                  ? 'bg-blue-500 border-blue-600 text-white' 
+                  : 'bg-white border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-700'
+              }`}
+              title={showGrid ? "Hide Grid" : "Show Grid"}
+            >
+              <Grid3x3 className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Detailed Floor Plan Image */}
@@ -572,6 +585,69 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 display: 'block' 
               }}
             />
+            
+            {/* Grid Overlay */}
+            {showGrid && (
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                style={{ 
+                  width: `${leftPanelWidth ? (isRightPanelCollapsed ? 480 : Math.max(leftPanelWidth - 100, 1500)) : 480}px`,
+                }}
+              >
+                {/* Vertical lines (columns) */}
+                {Array.from({ length: 21 }).map((_, i) => (
+                  <div
+                    key={`col-${i}`}
+                    className="absolute top-0 bottom-0 border-l border-blue-400/40"
+                    style={{ left: `${(i * 5)}%` }}
+                  >
+                    {/* Column number at top */}
+                    <div
+                      className="absolute -top-6 left-0 transform -translate-x-1/2 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg"
+                      style={{ transform: 'rotate(90deg) translateY(-50%)' }}
+                    >
+                      {i}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Horizontal lines (rows) */}
+                {Array.from({ length: 21 }).map((_, i) => (
+                  <div
+                    key={`row-${i}`}
+                    className="absolute left-0 right-0 border-t border-blue-400/40"
+                    style={{ top: `${(i * 5)}%` }}
+                  >
+                    {/* Row number at left */}
+                    <div
+                      className="absolute top-0 -left-6 transform -translate-y-1/2 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg"
+                      style={{ transform: 'rotate(90deg)' }}
+                    >
+                      {i}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Grid Cell Numbers */}
+                {Array.from({ length: 20 }).map((_, row) => (
+                  Array.from({ length: 20 }).map((_, col) => (
+                    <div
+                      key={`cell-${col}-${row}`}
+                      className="absolute flex items-center justify-center"
+                      style={{ 
+                        left: `${(col * 5) + 2.5}%`,
+                        top: `${(row * 5) + 2.5}%`,
+                        transform: 'translate(-50%, -50%) rotate(90deg)',
+                      }}
+                    >
+                      <span className="text-[9px] font-bold text-blue-400/30 bg-white/40 px-1 rounded">
+                        {col},{row}
+                      </span>
+                    </div>
+                  ))
+                ))}
+              </div>
+            )}
             
             {/* Command Center Warning Icon - Show in normal mode */}
             {!emergencyMode && (
@@ -695,6 +771,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               className="absolute" 
               style={{ left: '65%', top: '48%', transform: 'rotate(90deg)' }}
             >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>65%,48%</div>
               <div className="flex flex-col items-center gap-px">
                 <div className="flex items-center gap-0">
                   {/* CO₂ Sensor */}
@@ -880,6 +957,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               className="absolute" 
               style={{ left: '80%', top: '48%', transform: 'rotate(90deg)' }}
             >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>80%,48%</div>
               <div className="flex flex-col items-center gap-px">
                 <div className="flex items-center gap-0">
                   {/* CO₂ Sensor */}
@@ -1060,6 +1138,2034 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               </div>
             </div>
 
+            {/* Sensor Group at 16,11 - Sensors 4 */}
+            <div 
+              className="absolute" 
+              style={{ left: '82%', top: '57%', transform: 'rotate(90deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>82%,57%</div>
+              <div className="flex flex-col items-center gap-px">
+                <div className="flex items-center gap-0">
+                  {/* CO₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-4-co2', 
+                      name: 'CO₂ Sensor 4', 
+                      status: 'operational', 
+                      value: '415 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO2-4', 
+                      name: 'CO₂ Sensor 4', 
+                      type: 'air-quality', 
+                      subType: 'CO2', 
+                      status: 'operational', 
+                      value: '415 ppm', 
+                      x: 80, 
+                      y: 55,
+                      lastUpdate: '3s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-4-co2' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* CO Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-4-co', 
+                      name: 'CO Sensor 4', 
+                      status: 'operational', 
+                      value: '1 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO-4', 
+                      name: 'CO Sensor 4', 
+                      type: 'air-quality', 
+                      subType: 'CO', 
+                      status: 'operational', 
+                      value: '1 ppm', 
+                      x: 80, 
+                      y: 55,
+                      lastUpdate: '3s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-4-co' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* O₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-4-o2', 
+                      name: 'O₂ Sensor 4', 
+                      status: 'operational', 
+                      value: '20.8%',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-O2-4', 
+                      name: 'O₂ Sensor 4', 
+                      type: 'air-quality', 
+                      subType: 'O2', 
+                      status: 'operational', 
+                      value: '20.8%', 
+                      x: 80, 
+                      y: 55,
+                      lastUpdate: '2s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>O₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-4-o2' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Sensors 4</span>
+              </div>
+            </div>
+
+            {/* Sensor Group at 16,12 - Sensors 5 */}
+            <div 
+              className="absolute" 
+              style={{ left: '82%', top: '64%', transform: 'rotate(90deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>82%,64%</div>
+              <div className="flex flex-col items-center gap-px">
+                <div className="flex items-center gap-0">
+                  {/* CO₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-5-co2', 
+                      name: 'CO₂ Sensor 5', 
+                      status: 'operational', 
+                      value: '410 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO2-5', 
+                      name: 'CO₂ Sensor 5', 
+                      type: 'air-quality', 
+                      subType: 'CO2', 
+                      status: 'operational', 
+                      value: '410 ppm', 
+                      x: 80, 
+                      y: 60,
+                      lastUpdate: '4s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-5-co2' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* CO Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-5-co', 
+                      name: 'CO Sensor 5', 
+                      status: 'operational', 
+                      value: '2 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO-5', 
+                      name: 'CO Sensor 5', 
+                      type: 'air-quality', 
+                      subType: 'CO', 
+                      status: 'operational', 
+                      value: '2 ppm', 
+                      x: 80, 
+                      y: 60,
+                      lastUpdate: '4s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-5-co' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* O₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-5-o2', 
+                      name: 'O₂ Sensor 5', 
+                      status: 'operational', 
+                      value: '21.0%',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-O2-5', 
+                      name: 'O₂ Sensor 5', 
+                      type: 'air-quality', 
+                      subType: 'O2', 
+                      status: 'operational', 
+                      value: '21.0%', 
+                      x: 80, 
+                      y: 60,
+                      lastUpdate: '3s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>O₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-5-o2' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Sensors 5</span>
+              </div>
+            </div>
+
+            {/* Sensor Group at 10,11 - Sensors 6 */}
+            <div 
+              className="absolute" 
+              style={{ left: '50%', top: '55%', transform: 'rotate(90deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>50%,55%</div>
+              <div className="flex flex-col items-center gap-px">
+                <div className="flex items-center gap-0">
+                  {/* CO₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-6-co2', 
+                      name: 'CO₂ Sensor 6', 
+                      status: 'operational', 
+                      value: '418 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO2-6', 
+                      name: 'CO₂ Sensor 6', 
+                      type: 'air-quality', 
+                      subType: 'CO2', 
+                      status: 'operational', 
+                      value: '418 ppm', 
+                      x: 50, 
+                      y: 55,
+                      lastUpdate: '2s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-6-co2' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* CO Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-6-co', 
+                      name: 'CO Sensor 6', 
+                      status: 'operational', 
+                      value: '1 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO-6', 
+                      name: 'CO Sensor 6', 
+                      type: 'air-quality', 
+                      subType: 'CO', 
+                      status: 'operational', 
+                      value: '1 ppm', 
+                      x: 50, 
+                      y: 55,
+                      lastUpdate: '2s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-6-co' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* O₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-6-o2', 
+                      name: 'O₂ Sensor 6', 
+                      status: 'operational', 
+                      value: '20.9%',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-O2-6', 
+                      name: 'O₂ Sensor 6', 
+                      type: 'air-quality', 
+                      subType: 'O2', 
+                      status: 'operational', 
+                      value: '20.9%', 
+                      x: 50, 
+                      y: 55,
+                      lastUpdate: '1s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>O₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-6-o2' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Sensors 6</span>
+              </div>
+            </div>
+
+            {/* Sensor Group at 10,12 - Sensors 7 */}
+            <div 
+              className="absolute" 
+              style={{ left: '50%', top: '62%', transform: 'rotate(90deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>50%,62%</div>
+              <div className="flex flex-col items-center gap-px">
+                <div className="flex items-center gap-0">
+                  {/* CO₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-7-co2', 
+                      name: 'CO₂ Sensor 7', 
+                      status: 'operational', 
+                      value: '422 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO2-7', 
+                      name: 'CO₂ Sensor 7', 
+                      type: 'air-quality', 
+                      subType: 'CO2', 
+                      status: 'operational', 
+                      value: '422 ppm', 
+                      x: 50, 
+                      y: 60,
+                      lastUpdate: '3s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-7-co2' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* CO Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-7-co', 
+                      name: 'CO Sensor 7', 
+                      status: 'operational', 
+                      value: '2 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO-7', 
+                      name: 'CO Sensor 7', 
+                      type: 'air-quality', 
+                      subType: 'CO', 
+                      status: 'operational', 
+                      value: '2 ppm', 
+                      x: 50, 
+                      y: 60,
+                      lastUpdate: '3s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-7-co' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* O₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-7-o2', 
+                      name: 'O₂ Sensor 7', 
+                      status: 'operational', 
+                      value: '20.7%',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-O2-7', 
+                      name: 'O₂ Sensor 7', 
+                      type: 'air-quality', 
+                      subType: 'O2', 
+                      status: 'operational', 
+                      value: '20.7%', 
+                      x: 50, 
+                      y: 60,
+                      lastUpdate: '2s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>O₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-7-o2' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Sensors 7</span>
+              </div>
+            </div>
+
+            {/* Sensor Group at 9,7 - Sensors 8 */}
+            <div 
+              className="absolute" 
+              style={{ left: '45%', top: '35%', transform: 'rotate(90deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>45%,35%</div>
+              <div className="flex flex-col items-center gap-px">
+                <div className="flex items-center gap-0">
+                  {/* CO₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-8-co2', 
+                      name: 'CO₂ Sensor 8', 
+                      status: 'operational', 
+                      value: '412 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO2-8', 
+                      name: 'CO₂ Sensor 8', 
+                      type: 'air-quality', 
+                      subType: 'CO2', 
+                      status: 'operational', 
+                      value: '412 ppm', 
+                      x: 45, 
+                      y: 35,
+                      lastUpdate: '1s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-8-co2' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* CO Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-8-co', 
+                      name: 'CO Sensor 8', 
+                      status: 'operational', 
+                      value: '1 ppm',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-CO-8', 
+                      name: 'CO Sensor 8', 
+                      type: 'air-quality', 
+                      subType: 'CO', 
+                      status: 'operational', 
+                      value: '1 ppm', 
+                      x: 45, 
+                      y: 35,
+                      lastUpdate: '1s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-8-co' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* O₂ Sensor */}
+                  <div 
+                    className="w-1.5 h-1.5 bg-green-600 border border-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                      id: 'sensors-8-o2', 
+                      name: 'O₂ Sensor 8', 
+                      status: 'operational', 
+                      value: '21.0%',
+                      type: 'air-quality'
+                    })}
+                    onMouseLeave={() => setHoveredFloorSensor(null)}
+                    onClick={() => handleSensorClick({ 
+                      id: 'S-F2-FLOOR-O2-8', 
+                      name: 'O₂ Sensor 8', 
+                      type: 'air-quality', 
+                      subType: 'O2', 
+                      status: 'operational', 
+                      value: '21.0%', 
+                      x: 45, 
+                      y: 35,
+                      lastUpdate: '2s ago'
+                    })}
+                  >
+                    <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>O₂</span>
+                    
+                    {hoveredFloorSensor?.id === 'sensors-8-o2' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Sensors 8</span>
+              </div>
+            </div>
+
+            {/* CBRNE Detector Group at 11,11 - CBRNE 1 */}
+            <div 
+              className="absolute" 
+              style={{ left: '55%', top: '58.2%', transform: 'rotate(90deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>55%,58.2%</div>
+              <div className="flex flex-col gap-0">
+                {/* R1 - Radiological Detector */}
+                <div 
+                  className="w-1 h-1 bg-purple-700 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                    onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-1-r', 
+                    name: 'Radiological Detector (R1)', 
+                    status: 'operational', 
+                    value: 'Normal - No radiation detected',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-R1-2', 
+                    name: 'Radiological Detector (R1)', 
+                    type: 'chemical', 
+                    subType: 'R', 
+                    status: 'operational', 
+                    value: 'Normal', 
+                    x: 55, 
+                    y: 55,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">R1</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-1-r' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                </div>
+                
+                {/* B1 - Biological Detector */}
+                <div 
+                  className="w-1 h-1 bg-teal-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-1-b', 
+                    name: 'Biological Detector (B1)', 
+                    status: 'operational', 
+                    value: 'Clear - No biological threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-B1-2', 
+                    name: 'Biological Detector (B1)', 
+                    type: 'chemical', 
+                    subType: 'B', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 55, 
+                    y: 55,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">B1</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-1-b' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* C1 - Chemical Detector */}
+                <div 
+                  className="w-1 h-1 bg-yellow-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-1-c', 
+                    name: 'Chemical Detector (C1)', 
+                    status: 'operational', 
+                    value: 'Clear - No chemical threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-C1-2', 
+                    name: 'Chemical Detector (C1)', 
+                    type: 'chemical', 
+                    subType: 'C', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 55, 
+                    y: 55,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">C1</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-1-c' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* CBRNE Detector Group at 11,12 - CBRNE 2 */}
+            <div 
+              className="absolute" 
+              style={{ left: '55%', top: '65.5%', transform: 'rotate(90deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>55%,65.5%</div>
+              <div className="flex flex-col gap-0">
+                {/* R2 - Radiological Detector */}
+                <div 
+                  className="w-1 h-1 bg-purple-700 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-2-r', 
+                    name: 'Radiological Detector (R2)', 
+                    status: 'operational', 
+                    value: 'Normal - No radiation detected',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-R2-2', 
+                    name: 'Radiological Detector (R2)', 
+                    type: 'chemical', 
+                    subType: 'R', 
+                    status: 'operational', 
+                    value: 'Normal', 
+                    x: 55, 
+                    y: 60,
+                    lastUpdate: '2s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">R2</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-2-r' && (
+                      <div 
+                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        style={{ 
+                          left: '100%',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          marginLeft: `${8 / zoom}px`,
+                          fontSize: `${10 / zoom}px`,
+                          padding: `${8 / zoom}px ${12 / zoom}px`,
+                          zIndex: 1000,
+                          backgroundColor: 'rgb(15, 23, 42)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ 
+                            padding: `${2 / zoom}px ${6 / zoom}px`, 
+                            borderRadius: `${4 / zoom}px`,
+                            fontWeight: 'bold',
+                            backgroundColor: '#16a34a'
+                          }}>
+                            OPERATIONAL
+                          </span>
+                        </div>
+                        <div style={{ color: '#d1d5db' }}>
+                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        </div>
+                      </div>
+                    )}
+                </div>
+                
+                {/* B2 - Biological Detector */}
+                <div 
+                  className="w-1 h-1 bg-teal-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-2-b', 
+                    name: 'Biological Detector (B2)', 
+                    status: 'operational', 
+                    value: 'Clear - No biological threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-B2-2', 
+                    name: 'Biological Detector (B2)', 
+                    type: 'chemical', 
+                    subType: 'B', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 55, 
+                    y: 60,
+                    lastUpdate: '2s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">B2</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-2-b' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* C2 - Chemical Detector */}
+                <div 
+                  className="w-1 h-1 bg-yellow-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-2-c', 
+                    name: 'Chemical Detector (C2)', 
+                    status: 'operational', 
+                    value: 'Clear - No chemical threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-C2-2', 
+                    name: 'Chemical Detector (C2)', 
+                    type: 'chemical', 
+                    subType: 'C', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 55, 
+                    y: 60,
+                    lastUpdate: '2s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">C2</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-2-c' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* CBRNE Detector Group at 14,11 - CBRNE 3 */}
+            <div 
+              className="absolute" 
+              style={{ left: '70%', top: '52.5%', transform: 'rotate(90deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>70%,52.5%</div>
+              <div className="flex flex-col gap-0">
+                {/* R3 - Radiological Detector */}
+                <div 
+                  className="w-1 h-1 bg-purple-700 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-3-r', 
+                    name: 'Radiological Detector (R3)', 
+                    status: 'operational', 
+                    value: 'Normal - No radiation detected',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-R3', 
+                    name: 'Radiological Detector (R3)', 
+                    type: 'chemical', 
+                    subType: 'R', 
+                    status: 'operational', 
+                    value: 'Normal', 
+                    x: 70, 
+                    y: 55,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">R3</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-3-r' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* B3 - Biological Detector */}
+                <div 
+                  className="w-1 h-1 bg-teal-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-3-b', 
+                    name: 'Biological Detector (B3)', 
+                    status: 'operational', 
+                    value: 'Clear - No biological threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-B3', 
+                    name: 'Biological Detector (B3)', 
+                    type: 'chemical', 
+                    subType: 'B', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 70, 
+                    y: 55,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">B3</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-3-b' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* C3 - Chemical Detector */}
+                <div 
+                  className="w-1 h-1 bg-yellow-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-3-c', 
+                    name: 'Chemical Detector (C3)', 
+                    status: 'operational', 
+                    value: 'Clear - No chemical threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-C3', 
+                    name: 'Chemical Detector (C3)', 
+                    type: 'chemical', 
+                    subType: 'C', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 70, 
+                    y: 55,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">C3</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-3-c' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* CBRNE Detector Group at 13,15 - CBRNE 4 */}
+            <div 
+              className="absolute" 
+              style={{ left: '66.5%', top: '75%', transform: 'rotate(0deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(0deg)', whiteSpace: 'nowrap' }}>66.5%,75%</div>
+              <div className="flex flex-col gap-0">
+                {/* R4 - Radiological Detector */}
+                <div 
+                  className="w-1 h-1 bg-purple-700 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-4-r', 
+                    name: 'Radiological Detector (R4)', 
+                    status: 'operational', 
+                    value: 'Normal - No radiation detected',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-R4', 
+                    name: 'Radiological Detector (R4)', 
+                    type: 'chemical', 
+                    subType: 'R', 
+                    status: 'operational', 
+                    value: 'Normal', 
+                    x: 65, 
+                    y: 75,
+                    lastUpdate: '3s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">R4</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-4-r' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* B4 - Biological Detector */}
+                <div 
+                  className="w-1 h-1 bg-teal-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-4-b', 
+                    name: 'Biological Detector (B4)', 
+                    status: 'operational', 
+                    value: 'Clear - No biological threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-B4', 
+                    name: 'Biological Detector (B4)', 
+                    type: 'chemical', 
+                    subType: 'B', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 65, 
+                    y: 75,
+                    lastUpdate: '3s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">B4</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-4-b' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* C4 - Chemical Detector */}
+                <div 
+                  className="w-1 h-1 bg-yellow-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-4-c', 
+                    name: 'Chemical Detector (C4)', 
+                    status: 'operational', 
+                    value: 'Clear - No chemical threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-C4', 
+                    name: 'Chemical Detector (C4)', 
+                    type: 'chemical', 
+                    subType: 'C', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 65, 
+                    y: 75,
+                    lastUpdate: '3s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">C4</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-4-c' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* CBRNE Detector Group at 2,12 - CBRNE 5 */}
+            <div 
+              className="absolute" 
+              style={{ left: '13%', top: '61%', transform: 'rotate(90deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>13%,61%</div>
+              <div className="flex flex-col gap-0">
+                {/* R5 - Radiological Detector */}
+                <div 
+                  className="w-1 h-1 bg-purple-700 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-5-r', 
+                    name: 'Radiological Detector (R5)', 
+                    status: 'operational', 
+                    value: 'Normal - No radiation detected',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-R5', 
+                    name: 'Radiological Detector (R5)', 
+                    type: 'chemical', 
+                    subType: 'R', 
+                    status: 'operational', 
+                    value: 'Normal', 
+                    x: 10, 
+                    y: 60,
+                    lastUpdate: '2s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">R5</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-5-r' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* B5 - Biological Detector */}
+                <div 
+                  className="w-1 h-1 bg-teal-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-5-b', 
+                    name: 'Biological Detector (B5)', 
+                    status: 'operational', 
+                    value: 'Clear - No biological threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-B5', 
+                    name: 'Biological Detector (B5)', 
+                    type: 'chemical', 
+                    subType: 'B', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 10, 
+                    y: 60,
+                    lastUpdate: '2s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">B5</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-5-b' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* C5 - Chemical Detector */}
+                <div 
+                  className="w-1 h-1 bg-yellow-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-5-c', 
+                    name: 'Chemical Detector (C5)', 
+                    status: 'operational', 
+                    value: 'Clear - No chemical threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-C5', 
+                    name: 'Chemical Detector (C5)', 
+                    type: 'chemical', 
+                    subType: 'C', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 10, 
+                    y: 60,
+                    lastUpdate: '2s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">C5</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-5-c' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* CBRNE Detector Group at 8,5 - CBRNE 6 */}
+            <div 
+              className="absolute" 
+              style={{ left: '43.5%', top: '25%', transform: 'rotate(180deg)' }}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>43.5%,25%</div>
+              <div className="flex flex-col gap-0">
+                {/* R6 - Radiological Detector */}
+                <div 
+                  className="w-1 h-1 bg-purple-700 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-6-r', 
+                    name: 'Radiological Detector (R6)', 
+                    status: 'operational', 
+                    value: 'Normal - No radiation detected',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-R6', 
+                    name: 'Radiological Detector (R6)', 
+                    type: 'chemical', 
+                    subType: 'R', 
+                    status: 'operational', 
+                    value: 'Normal', 
+                    x: 40, 
+                    y: 25,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">R6</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-6-r' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* B6 - Biological Detector */}
+                <div 
+                  className="w-1 h-1 bg-teal-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-6-b', 
+                    name: 'Biological Detector (B6)', 
+                    status: 'operational', 
+                    value: 'Clear - No biological threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-B6', 
+                    name: 'Biological Detector (B6)', 
+                    type: 'chemical', 
+                    subType: 'B', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 40, 
+                    y: 25,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">B6</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-6-b' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* C6 - Chemical Detector */}
+                <div 
+                  className="w-1 h-1 bg-yellow-600 border border-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onMouseEnter={() => setHoveredFloorSensor({ 
+                    id: 'cbrne-6-c', 
+                    name: 'Chemical Detector (C6)', 
+                    status: 'operational', 
+                    value: 'Clear - No chemical threats',
+                    type: 'chemical'
+                  })}
+                  onMouseLeave={() => setHoveredFloorSensor(null)}
+                  onClick={() => handleSensorClick({ 
+                    id: 'S-F2-FLOOR-C6', 
+                    name: 'Chemical Detector (C6)', 
+                    type: 'chemical', 
+                    subType: 'C', 
+                    status: 'operational', 
+                    value: 'Clear', 
+                    x: 40, 
+                    y: 25,
+                    lastUpdate: '1s ago'
+                  })}
+                >
+                  <span className="text-[2px] font-bold text-black leading-none">C6</span>
+                  
+                  {hoveredFloorSensor?.id === 'cbrne-6-c' && (
+                    <div 
+                      className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                      style={{ 
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: `${8 / zoom}px`,
+                        fontSize: `${10 / zoom}px`,
+                        padding: `${8 / zoom}px ${12 / zoom}px`,
+                        zIndex: 1000,
+                        backgroundColor: 'rgb(15, 23, 42)'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                        <span style={{ color: '#9ca3af' }}>Status:</span>
+                        <span style={{ 
+                          padding: `${2 / zoom}px ${6 / zoom}px`, 
+                          borderRadius: `${4 / zoom}px`,
+                          fontWeight: 'bold',
+                          backgroundColor: '#16a34a'
+                        }}>
+                          OPERATIONAL
+                        </span>
+                      </div>
+                      <div style={{ color: '#d1d5db' }}>
+                        <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Switch 3 - Left side corridor */}
             <div 
               className="absolute" 
@@ -1076,6 +3182,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               }}
               onMouseLeave={() => setHoveredFloorSensor(null)}
             >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>71.5%,45.5%</div>
               <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity relative">
                 <div className="flex flex-col gap-0">
                   <div className="w-1 h-1 bg-red-600 border border-gray-900 flex items-center justify-center">
@@ -1089,6 +3196,845 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 
                 {/* Tooltip for Switch 3 */}
                 {hoveredFloorSensor?.id === 'switch-3' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Switch 4 - Position 12,13 */}
+            <div 
+              className="absolute" 
+              style={{ left: '60%', top: '70%', transform: 'rotate(0deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'switch-4', 
+                  name: 'Switch 4 (Door Control)', 
+                  status: 'operational', 
+                  value: 'Door OPEN',
+                  type: 'door'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', whiteSpace: 'nowrap' }}>60%,70%</div>
+              <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity relative">
+                <div className="flex flex-col gap-0">
+                  <div className="w-1 h-1 bg-red-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">OFF</span>
+                  </div>
+                  <div className="w-1 h-1 bg-green-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">ON</span>
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Switch 4</span>
+                
+                {/* Tooltip for Switch 4 */}
+                {hoveredFloorSensor?.id === 'switch-4' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Switch 5 - Position 12,15 */}
+            <div 
+              className="absolute" 
+              style={{ left: '60%', top: '79%', transform: 'rotate(0deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'switch-5', 
+                  name: 'Switch 5 (Door Control)', 
+                  status: 'operational', 
+                  value: 'Door OPEN',
+                  type: 'door'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-12px', left: '0', whiteSpace: 'nowrap' }}>60%,79%</div>
+              <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity relative">
+                <div className="flex flex-col gap-0">
+                  <div className="w-1 h-1 bg-red-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">OFF</span>
+                  </div>
+                  <div className="w-1 h-1 bg-green-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">ON</span>
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Switch 5</span>
+                
+                {/* Tooltip for Switch 5 */}
+                {hoveredFloorSensor?.id === 'switch-5' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                     <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Switch 6 - Position 9,4 */}
+            <div 
+              className="absolute" 
+              style={{ left: '48%', top: '23.5%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'switch-6', 
+                  name: 'Switch 6 (Door Control)', 
+                  status: 'operational', 
+                  value: 'Door OPEN',
+                  type: 'door'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>48%,23.5%</div>
+              <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity relative">
+                <div className="flex flex-col gap-0">
+                  <div className="w-1 h-1 bg-red-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">OFF</span>
+                  </div>
+                  <div className="w-1 h-1 bg-green-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">ON</span>
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Switch 6</span>
+                
+                {hoveredFloorSensor?.id === 'switch-6' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Switch 7 - Position 9,6 */}
+            <div 
+              className="absolute" 
+              style={{ left: '48%', top: '32.5%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'switch-7', 
+                  name: 'Switch 7 (Door Control)', 
+                  status: 'operational', 
+                  value: 'Door OPEN',
+                  type: 'door'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>48%,32.5%</div>
+              <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity relative">
+                <div className="flex flex-col gap-0">
+                  <div className="w-1 h-1 bg-red-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">OFF</span>
+                  </div>
+                  <div className="w-1 h-1 bg-green-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">ON</span>
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Switch 7</span>
+                
+                {hoveredFloorSensor?.id === 'switch-7' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Switch 8 - Position 8,9 */}
+            <div 
+              className="absolute" 
+              style={{ left: '40%', top: '45.5%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'switch-8', 
+                  name: 'Switch 8 (Door Control)', 
+                  status: 'operational', 
+                  value: 'Door OPEN',
+                  type: 'door'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>40%,45.5%</div>
+              <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity relative">
+                <div className="flex flex-col gap-0">
+                  <div className="w-1 h-1 bg-red-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">OFF</span>
+                  </div>
+                  <div className="w-1 h-1 bg-green-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">ON</span>
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Switch 8</span>
+                
+                {hoveredFloorSensor?.id === 'switch-8' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Switch 9 - Position 7,9 */}
+            <div 
+              className="absolute" 
+              style={{ left: '29.5%', top: '45.5%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'switch-9', 
+                  name: 'Switch 9 (Door Control)', 
+                  status: 'operational', 
+                  value: 'Door OPEN',
+                  type: 'door'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>29.5%,45.5%</div>
+              <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity relative">
+                <div className="flex flex-col gap-0">
+                  <div className="w-1 h-1 bg-red-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">OFF</span>
+                  </div>
+                  <div className="w-1 h-1 bg-green-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">ON</span>
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Switch 9</span>
+                
+                {hoveredFloorSensor?.id === 'switch-9' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Switch 10 - Position 6,9 */}
+            <div 
+              className="absolute" 
+              style={{ left: '18.5%', top: '45.5%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'switch-10', 
+                  name: 'Switch 10 (Door Control)', 
+                  status: 'operational', 
+                  value: 'Door OPEN',
+                  type: 'door'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>18.5%,45.5%</div>
+              <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-80 transition-opacity relative">
+                <div className="flex flex-col gap-0">
+                  <div className="w-1 h-1 bg-red-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">OFF</span>
+                  </div>
+                  <div className="w-1 h-1 bg-green-600 border border-gray-900 flex items-center justify-center">
+                    <span className="text-[2px] font-bold text-black leading-none">ON</span>
+                  </div>
+                </div>
+                <span className="text-[3px] text-gray-900 px-0.5 rounded whitespace-nowrap">Switch 10</span>
+                
+                {hoveredFloorSensor?.id === 'switch-10' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Differential Pressure Sensor 1 - Position 13,15 */}
+            <div 
+              className="absolute" 
+              style={{ left: '66%', top: '79%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'dp-1', 
+                  name: 'Differential Pressure Sensor (DP1)', 
+                  status: 'operational', 
+                  value: '+3.2 Pa',
+                  type: 'pressure'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+              onClick={() => handleSensorClick({ 
+                id: 'S-F2-FLOOR-DP1', 
+                name: 'Differential Pressure Sensor (DP1)', 
+                type: 'pressure', 
+                subType: 'DP', 
+                status: 'operational', 
+                value: '+3.2 Pa', 
+                x: 66, 
+                y: 79,
+                lastUpdate: '1s ago'
+              })}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>66%,79%</div>
+              <div className="w-1.5 h-1 bg-orange-500 border border-gray-900 rounded-sm flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative">
+                <span className="text-[2px] font-bold text-black leading-none">DP1</span>
+                
+                {hoveredFloorSensor?.id === 'dp-1' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Differential Pressure Sensor 2 - Position 13,13 */}
+            <div 
+              className="absolute" 
+              style={{ left: '66%', top: '70%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'dp-2', 
+                  name: 'Differential Pressure Sensor (DP2)', 
+                  status: 'operational', 
+                  value: '+2.8 Pa',
+                  type: 'pressure'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+              onClick={() => handleSensorClick({ 
+                id: 'S-F2-FLOOR-DP2', 
+                name: 'Differential Pressure Sensor (DP2)', 
+                type: 'pressure', 
+                subType: 'DP', 
+                status: 'operational', 
+                value: '+2.8 Pa', 
+                x: 66, 
+                y: 70,
+                lastUpdate: '1s ago'
+              })}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>66%,70%</div>
+              <div className="w-1.5 h-1 bg-orange-500 border border-gray-900 rounded-sm flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative">
+                <span className="text-[2px] font-bold text-black leading-none">DP2</span>
+                
+                {hoveredFloorSensor?.id === 'dp-2' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Differential Pressure Sensor 3 - Position 6,10 */}
+            <div 
+              className="absolute" 
+              style={{ left: '31.5%', top: '47%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'dp-3', 
+                  name: 'Differential Pressure Sensor (DP3)', 
+                  status: 'operational', 
+                  value: '+4.1 Pa',
+                  type: 'pressure'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+              onClick={() => handleSensorClick({ 
+                id: 'S-F2-FLOOR-DP3', 
+                name: 'Differential Pressure Sensor (DP3)', 
+                type: 'pressure', 
+                subType: 'DP', 
+                status: 'operational', 
+                value: '+4.1 Pa', 
+                x: 31.5, 
+                y: 47,
+                lastUpdate: '1s ago'
+              })}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>31.5%,47%</div>
+              <div className="w-1.5 h-1 bg-orange-500 border border-gray-900 rounded-sm flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative">
+                <span className="text-[2px] font-bold text-black leading-none">DP3</span>
+                
+                {hoveredFloorSensor?.id === 'dp-3' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Differential Pressure Sensor 4 - Position 5,10 */}
+            <div 
+              className="absolute" 
+              style={{ left: '20.5%', top: '47%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'dp-4', 
+                  name: 'Differential Pressure Sensor (DP4)', 
+                  status: 'operational', 
+                  value: '+3.5 Pa',
+                  type: 'pressure'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+              onClick={() => handleSensorClick({ 
+                id: 'S-F2-FLOOR-DP4', 
+                name: 'Differential Pressure Sensor (DP4)', 
+                type: 'pressure', 
+                subType: 'DP', 
+                status: 'operational', 
+                value: '+3.5 Pa', 
+                x: 25, 
+                y: 50,
+                lastUpdate: '1s ago'
+              })}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>20.5%,47%</div>
+              <div className="w-1.5 h-1 bg-orange-500 border border-gray-900 rounded-sm flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative">
+                <span className="text-[2px] font-bold text-black leading-none">DP4</span>
+                
+                {hoveredFloorSensor?.id === 'dp-4' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Differential Pressure Sensor 5 - Position 8,6 */}
+            <div 
+              className="absolute" 
+              style={{ left: '43.5%', top: '32%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'dp-5', 
+                  name: 'Differential Pressure Sensor (DP5)', 
+                  status: 'operational', 
+                  value: '+2.9 Pa',
+                  type: 'pressure'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+              onClick={() => handleSensorClick({ 
+                id: 'S-F2-FLOOR-DP5', 
+                name: 'Differential Pressure Sensor (DP5)', 
+                type: 'pressure', 
+                subType: 'DP', 
+                status: 'operational', 
+                value: '+2.9 Pa', 
+                x: 43.5, 
+                y: 32,
+                lastUpdate: '1s ago'
+              })}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>43.5%,32%</div>
+              <div className="w-1.5 h-1 bg-orange-500 border border-gray-900 rounded-sm flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative">
+                <span className="text-[2px] font-bold text-black leading-none">DP5</span>
+                
+                {hoveredFloorSensor?.id === 'dp-5' && (
+                  <div 
+                    className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                    style={{ 
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: `${8 / zoom}px`,
+                      fontSize: `${10 / zoom}px`,
+                      padding: `${8 / zoom}px ${12 / zoom}px`,
+                      zIndex: 1000,
+                      backgroundColor: 'rgb(15, 23, 42)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
+                      <span style={{ color: '#9ca3af' }}>Status:</span>
+                      <span style={{ 
+                        padding: `${2 / zoom}px ${6 / zoom}px`, 
+                        borderRadius: `${4 / zoom}px`,
+                        fontWeight: 'bold',
+                        backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                                       hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+                      }}>
+                        {hoveredFloorSensor.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ color: '#d1d5db' }}>
+                      <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Differential Pressure Sensor 6 - Position 8,4 */}
+            <div 
+              className="absolute" 
+              style={{ left: '43.5%', top: '22.5%', transform: 'rotate(90deg)' }}
+              onMouseEnter={(e) => {
+                setHoveredFloorSensor({ 
+                  id: 'dp-6', 
+                  name: 'Differential Pressure Sensor (DP6)', 
+                  status: 'operational', 
+                  value: '+3.7 Pa',
+                  type: 'pressure'
+                });
+                setTooltipPosition({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => setHoveredFloorSensor(null)}
+              onClick={() => handleSensorClick({ 
+                id: 'S-F2-FLOOR-DP6', 
+                name: 'Differential Pressure Sensor (DP6)', 
+                type: 'pressure', 
+                subType: 'DP', 
+                status: 'operational', 
+                value: '+3.7 Pa', 
+                x: 43.5, 
+                y: 22.5,
+                lastUpdate: '1s ago'
+              })}
+            >
+              <div className="text-[6px] text-red-500 font-bold absolute hidden" style={{ top: '-10px', left: '0', transform: 'rotate(-90deg)', whiteSpace: 'nowrap' }}>43.5%,22.5%</div>
+              <div className="w-1.5 h-1 bg-orange-500 border border-gray-900 rounded-sm flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative">
+                <span className="text-[2px] font-bold text-black leading-none">DP6</span>
+                
+                {hoveredFloorSensor?.id === 'dp-6' && (
                   <div 
                     className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
                     style={{ 
@@ -1726,12 +4672,12 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               <>
             {/* Facility Overview with Quick Stats */}
             <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Facility Overview</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">{t.facilityOverview}</h2>
               
               {/* Quick Stats */}
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
                 <div className="bg-gray-50 rounded-lg p-2">
-                  <div className="text-[10px] text-gray-600 mb-1 uppercase">Rooms</div>
+                  <div className="text-[10px] text-gray-600 mb-1 uppercase">{t.rooms}</div>
                   <div className="text-lg font-bold text-gray-900">19</div>
                   {emergencyMode && (
                     <div className="text-[10px] text-gray-600 mt-0.5">
@@ -1740,25 +4686,25 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   )}
                 </div>
                 <div className="bg-gray-50 rounded-lg p-2">
-                  <div className="text-[10px] text-gray-600 mb-1 uppercase">Sensors</div>
+                  <div className="text-[10px] text-gray-600 mb-1 uppercase">{t.sensors}</div>
                   <div className="text-lg font-bold text-gray-900">42/42</div>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-2">
-                  <div className="text-[10px] text-gray-600 mb-1 uppercase">Temperature</div>
+                  <div className="text-[10px] text-gray-600 mb-1 uppercase">{t.temperature}</div>
                   <div className="text-lg font-bold text-gray-900">21°C</div>
-                  <div className="text-[10px] text-gray-600 mt-0.5">Average</div>
+                  <div className="text-[10px] text-gray-600 mt-0.5">{t.average}</div>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-2">
-                  <div className="text-[10px] text-gray-600 mb-1 uppercase">Occupancy</div>
+                  <div className="text-[10px] text-gray-600 mb-1 uppercase">{t.occupancyLabel}</div>
                   <div className="text-lg font-bold text-gray-900">28</div>
-                  <div className="text-[10px] text-gray-600 mt-0.5">Personnel</div>
+                  <div className="text-[10px] text-gray-600 mt-0.5">{t.personnel}</div>
                 </div>
               </div>
             </div>
 
             {/* Warnings Card - Active and Recently Resolved */}
             <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-700 uppercase mb-3">Warnings</h3>
+              <h3 className="text-sm font-semibold text-gray-700 uppercase mb-3">{t.warnings}</h3>
               
               {/* Active Alerts */}
               <div className="space-y-3">
@@ -1769,13 +4715,13 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-orange-500" />
                   <div>
-                    <div className="font-semibold text-gray-900">Command Center</div>
-                    <div className="text-sm text-gray-600">Temperature Elevation Detected</div>
+                    <div className="font-semibold text-gray-900">{t.commandCenter}</div>
+                    <div className="text-sm text-gray-600">{t.temperatureElevationDetected}</div>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-xl font-bold text-orange-600">26°C</div>
-                  <div className="text-xs text-gray-600">+5°C above normal</div>
+                  <div className="text-xs text-gray-600">+5°C {t.aboveNormal}</div>
                 </div>
               </div>
               
@@ -1786,9 +4732,9 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                   </svg>
                   <div className="flex-1">
-                    <div className="text-xs font-semibold text-gray-700 mb-1">AI Recommended Action</div>
+                    <div className="text-xs font-semibold text-gray-700 mb-1">{t.aiRecommendedAction}</div>
                     <div className="text-sm text-gray-900">
-                      Increase HVAC cooling output by 20% and reduce fresh air intake to stabilize temperature within 15 minutes.
+                      {t.increaseHvacCoolingText}
                     </div>
                   </div>
                 </div>
@@ -1796,14 +4742,14 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               
               {/* Execute Button */}
               <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                Execute HVAC Adjustment
+                {t.executeHvacAdjustment}
               </button>
             </div>
           </div>
               
           {/* Recently Resolved Incidents */}
           <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-xs font-semibold text-gray-600 uppercase mb-3">Recently Resolved</h4>
+            <h4 className="text-xs font-semibold text-gray-600 uppercase mb-3">{t.recentlyResolved}</h4>
             
           {/* Automated Resolution Example */}
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -1811,13 +4757,13 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
                   <div>
-                    <div className="font-semibold text-gray-900">Server Room B</div>
-                    <div className="text-sm text-gray-600">CO₂ Level Spike Resolved</div>
+                    <div className="font-semibold text-gray-900">{t.serverRoomB}</div>
+                    <div className="text-sm text-gray-600">{t.co2LevelSpikeResolved}</div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-green-600">Auto-Resolved</div>
-                  <div className="text-xs text-gray-600">14 min ago</div>
+                  <div className="text-sm font-semibold text-green-600">{t.autoResolved}</div>
+                  <div className="text-xs text-gray-600">14 {t.minAgo}</div>
                 </div>
               </div>
               
@@ -1862,49 +4808,49 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
       {/* CBRNE Threat Status */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="font-bold text-gray-900 mb-3 text-sm">CBRNE Threat Status</h3>
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">{t.cbrneThreatStatus}</h3>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Chemical</span>
+              <span className="text-xs text-gray-700">{t.chemical}</span>
               <span className={`px-2.5 py-0.5 rounded text-xs font-semibold ${emergencyMode ? 'bg-red-600 text-white' : 'bg-green-100 text-green-700'}`}>
-                {emergencyMode ? 'DETECTED' : 'CLEAR'}
+                {emergencyMode ? t.detected.toUpperCase() : t.clear}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Biological</span>
+              <span className="text-xs text-gray-700">{t.biological}</span>
               <span className={`px-2.5 py-0.5 rounded text-xs font-semibold ${emergencyMode ? 'bg-red-600 text-white' : 'bg-green-100 text-green-700'}`}>
-                {emergencyMode ? 'DETECTED' : 'CLEAR'}
+                {emergencyMode ? t.detected.toUpperCase() : t.clear}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Radiation</span>
-              <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700">CLEAR</span>
+              <span className="text-xs text-gray-700">{t.radiation}</span>
+              <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700">{t.clear}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Nuclear</span>
-              <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700">CLEAR</span>
+              <span className="text-xs text-gray-700">{t.nuclear}</span>
+              <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700">{t.clear}</span>
             </div>
           </div>
         </div>
 
         {/* Environmental Health */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="font-bold text-gray-900 mb-3 text-sm">Environmental Health</h3>
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">{t.environmentalHealth}</h3>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">O₂ Level</span>
+              <span className="text-xs text-gray-700">{t.o2Level}</span>
               <span className="text-xs font-bold text-green-600">20.9%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">CO₂ Level</span>
+              <span className="text-xs text-gray-700">{t.co2Level}</span>
               <span className="text-xs font-bold text-green-600">420 ppm</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">PM 2.5</span>
+              <span className="text-xs text-gray-700">{t.pm25}</span>
               <span className="text-xs font-bold text-green-600">12 μg/m³</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">VOC</span>
+              <span className="text-xs text-gray-700">{t.voc}</span>
               <span className="text-xs font-bold text-green-600">220 ppb</span>
             </div>
           </div>
@@ -1912,22 +4858,22 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
         {/* Air Filtration Systems */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="font-bold text-gray-900 mb-3 text-sm">Air Filtration Systems</h3>
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">{t.airFiltrationSystems}</h3>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">HEPA Filters</span>
+              <span className="text-xs text-gray-700">{t.hepaFilters}</span>
               <span className="text-xs font-bold text-green-600">99%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Carbon Filters</span>
+              <span className="text-xs text-gray-700">{t.carbonFilters}</span>
               <span className="text-xs font-bold text-green-600">97%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">NBC Filters</span>
-              <span className="text-xs font-bold text-blue-600">STANDBY</span>
+              <span className="text-xs text-gray-700">{t.nbcFilters}</span>
+              <span className="text-xs font-bold text-blue-600">{t.standby}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Air Exchange</span>
+              <span className="text-xs text-gray-700">{t.airExchange}</span>
               <span className="text-xs font-bold text-green-600">6.2 ACH</span>
             </div>
           </div>
@@ -1935,28 +4881,28 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
         {/* Power Systems */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="font-bold text-gray-900 mb-3 text-sm">Power Systems</h3>
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">{t.powerSystems}</h3>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Primary Grid</span>
+              <span className="text-xs text-gray-700">{t.primaryGrid}</span>
               <div className="text-right">
-                <span className="text-xs font-bold text-green-600 block">ONLINE</span>
+                <span className="text-xs font-bold text-green-600 block">{t.online.toUpperCase()}</span>
                 <span className="text-[10px] text-gray-500">450 kW</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Backup Generator</span>
+              <span className="text-xs text-gray-700">{t.backupGenerator}</span>
               <div className="text-right">
-                <span className="text-xs font-bold text-blue-600 block">STANDBY</span>
+                <span className="text-xs font-bold text-blue-600 block">{t.standby}</span>
                 <span className="text-[10px] text-gray-500">100%</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Battery UPS</span>
+              <span className="text-xs text-gray-700">{t.batteryUps}</span>
               <span className="text-xs font-bold text-green-600">98%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Fuel Reserve</span>
+              <span className="text-xs text-gray-700">{t.fuelReserve}</span>
               <span className="text-xs font-bold text-green-600">95%</span>
             </div>
           </div>
@@ -1964,28 +4910,28 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
         {/* Life Support Systems */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="font-bold text-gray-900 mb-3 text-sm">Life Support Systems</h3>
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">{t.lifeSupportSystems}</h3>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Water Reserve</span>
+              <span className="text-xs text-gray-700">{t.waterReserve}</span>
               <div className="text-right">
                 <span className="text-xs font-bold text-green-600 block">15,800 L</span>
-                <span className="text-[10px] text-gray-500">56 Days</span>
+                <span className="text-[10px] text-gray-500">56 {t.days}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Food Supply</span>
+              <span className="text-xs text-gray-700">{t.foodSupply}</span>
               <div className="text-right">
-                <span className="text-xs font-bold text-green-600 block">60 Days</span>
-                <span className="text-[10px] text-gray-500">Full</span>
+                <span className="text-xs font-bold text-green-600 block">60 {t.days}</span>
+                <span className="text-[10px] text-gray-500">{t.full}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Water Quality</span>
+              <span className="text-xs text-gray-700">{t.waterQuality}</span>
               <span className="text-xs font-bold text-green-600">99.8%</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-700">Medical Supplies</span>
+              <span className="text-xs text-gray-700">{t.medicalSupplies}</span>
               <span className="text-xs font-bold text-green-600">94%</span>
             </div>
           </div>
@@ -1998,43 +4944,43 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               <Brain className="size-4 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 text-sm">AI Floor Assessment</h3>
-              <p className="text-[10px] text-gray-600">Real-time environmental & operational analysis</p>
+              <h3 className="font-bold text-gray-900 text-sm">{t.aiFloorAssessment}</h3>
+              <p className="text-[10px] text-gray-600">{t.realTimeAnalysis}</p>
             </div>
           </div>
           
           <div className="grid grid-cols-3 gap-2 mb-3">
             <div className="bg-white rounded-lg p-2 text-center">
-              <div className="text-[10px] text-gray-600 mb-1">HEALTH SCORE</div>
+              <div className="text-[10px] text-gray-600 mb-1">{t.healthScore}</div>
               <div className="text-lg font-bold text-green-600">94<span className="text-xs">/100</span></div>
             </div>
             <div className="bg-white rounded-lg p-2 text-center">
-              <div className="text-[10px] text-gray-600 mb-1">AIR QUALITY</div>
+              <div className="text-[10px] text-gray-600 mb-1">{t.airQuality.toUpperCase()}</div>
               <div className="text-lg font-bold text-green-600">96<span className="text-xs">%</span></div>
             </div>
             <div className="bg-white rounded-lg p-2 text-center">
-              <div className="text-[10px] text-gray-600 mb-1">SAFETY INDEX</div>
+              <div className="text-[10px] text-gray-600 mb-1">{t.safetyIndex}</div>
               <div className="text-lg font-bold text-green-600">99<span className="text-xs">%</span></div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-semibold text-xs text-gray-900">AI Insights</h4>
+            <h4 className="font-semibold text-xs text-gray-900">{t.aiInsights}</h4>
             <div className="flex items-start gap-2 text-xs text-gray-700">
               <AlertTriangle className="size-4 text-orange-500 flex-shrink-0 mt-0.5" />
-              <span>Utility Room showing elevated temperature (26°C) - HVAC adjustment recommended</span>
+              <span>{t.utilityRoomElevatedTemp}</span>
             </div>
             <div className="flex items-start gap-2 text-xs text-gray-700">
               <CheckCircle className="size-4 text-green-600 flex-shrink-0 mt-0.5" />
-              <span>All critical systems operational - no immediate threats detected</span>
+              <span>{t.allSystemsOperational}</span>
             </div>
             <div className="flex items-start gap-2 text-xs text-gray-700">
               <TrendingUp className="size-4 text-blue-600 flex-shrink-0 mt-0.5" />
-              <span>Air quality stable across all zones - all sensors reporting nominal values</span>
+              <span>{t.airQualityStable}</span>
             </div>
             <div className="flex items-start gap-2 text-xs text-gray-700">
               <Sparkles className="size-4 text-purple-600 flex-shrink-0 mt-0.5" />
-              <span>Recommended: Schedule preventive maintenance for Utility Room cooling system</span>
+              <span>{t.recommendedMaintenance}</span>
             </div>
           </div>
         </div>
