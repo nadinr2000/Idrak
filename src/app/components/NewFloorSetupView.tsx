@@ -24,7 +24,8 @@ import {
   Grid3x3,
   Lightbulb,
   Fan,
-  X
+  X,
+  Layers
 } from 'lucide-react';
 import { Language } from '../translations';
 
@@ -82,10 +83,10 @@ const DEVICE_LIBRARY: DeviceType[] = [
 ];
 
 const FLOORS = [
-  { id: 'floor-a-1', name: 'Floor 1 - Ground Level', rooms: 18 },
-  { id: 'floor-a-2', name: 'Floor 2 - Operations', rooms: 19 },
-  { id: 'floor-a-3', name: 'Floor 3 - Storage', rooms: 12 },
-  { id: 'floor-b-1', name: 'Basement 1 - Utilities', rooms: 10 },
+  { id: 'floor-a-1', name: 'Ground Level', rooms: 18 },
+  { id: 'floor-a-2', name: 'Operations', rooms: 19 },
+  { id: 'floor-a-3', name: 'Storage', rooms: 12 },
+  { id: 'floor-b-1', name: 'Utilities', rooms: 10 },
 ];
 
 // Define rooms for each floor (same as FloorPlanView)
@@ -446,11 +447,13 @@ function FloorPlanCanvas({
 }
 
 export function NewFloorSetupView({ language = 'en', planId = null, onBack = () => {} }: NewFloorSetupViewProps) {
-  const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
-  const [placedDevices, setPlacedDevices] = useState<PlacedDevice[]>([]);
+  const [selectedFloor, setSelectedFloor] = useState<string>('floor-a-2'); // Default to Operations floor
+  const [placedDevices, setPlacedDevices] = useState<PlacedDevice[]>(EXISTING_DEVICES['floor-a-2'] || []);
   const [deviceCounter, setDeviceCounter] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'sensor' | 'equipment' | 'safety'>('all');
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  const [layoutName, setLayoutName] = useState('');
+  const [layoutDescription, setLayoutDescription] = useState('');
 
   // Load existing devices when floor changes
   const handleFloorSelect = (floorId: string) => {
@@ -519,9 +522,9 @@ export function NewFloorSetupView({ language = 'en', planId = null, onBack = () 
         <div className="bg-white border-b-2 border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">New Floor Setup</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Device Configuration Testing - Editor</h1>
               <p className="text-sm text-gray-600 mt-1">
-                Design and test virtual floor configurations before deployment
+                Design and test conceptual floor plans with virtual device layouts before deployment
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -548,23 +551,39 @@ export function NewFloorSetupView({ language = 'en', planId = null, onBack = () 
         <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Left Panel - Floor Selection & Device Library */}
           <div className="w-80 bg-white border-r-2 border-gray-200 flex flex-col overflow-y-auto">
-            {/* Floor Selection - DROPDOWN */}
+            {/* Layout Information */}
             <div className="p-4 border-b-2 border-gray-200">
               <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-3">
-                Select Floor
+                Layout Information
               </h3>
-              <select
-                value={selectedFloor || ''}
-                onChange={(e) => handleFloorSelect(e.target.value)}
-                className="w-full p-3 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all"
-              >
-                <option value="" disabled>Choose a floor...</option>
-                {FLOORS.map((floor) => (
-                  <option key={floor.id} value={floor.id}>
-                    {floor.name} ({floor.rooms} rooms)
-                  </option>
-                ))}
-              </select>
+              
+              {/* Layout Name */}
+              <div className="mb-3">
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Layout Name
+                </label>
+                <input
+                  type="text"
+                  value={layoutName}
+                  onChange={(e) => setLayoutName(e.target.value)}
+                  placeholder="e.g., Enhanced Chemical Detection"
+                  className="w-full p-2.5 border-2 border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all"
+                />
+              </div>
+              
+              {/* Layout Description */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  value={layoutDescription}
+                  onChange={(e) => setLayoutDescription(e.target.value)}
+                  placeholder="Describe the purpose of this device layout..."
+                  rows={3}
+                  className="w-full p-2.5 border-2 border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all resize-none"
+                />
+              </div>
             </div>
 
             {/* Device Library Header */}
@@ -639,10 +658,7 @@ export function NewFloorSetupView({ language = 'en', planId = null, onBack = () 
               <>
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      {FLOORS.find(f => f.id === selectedFloor)?.name}
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-600">
                       {selectedDeviceData 
                         ? `Selected: ${selectedDeviceData.name} - Click and drag to move, or click Remove button`
                         : 'Drag devices from the library to place them on the floor plan'

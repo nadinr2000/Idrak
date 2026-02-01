@@ -3,11 +3,11 @@ import { Language, translations } from '../translations';
 import { Filters } from './Filters';
 import { useState } from 'react';
 
-interface CBRNeAttacksViewProps {
+interface CBRNeThreatsViewProps {
   language?: Language;
 }
 
-interface AttackReport {
+interface ThreatReport {
   id: string;
   date: Date;
   type: 'Chemical' | 'Biological' | 'Radiological' | 'Nuclear' | 'Explosive';
@@ -24,90 +24,90 @@ interface AttackReport {
   reportGenerated: boolean;
 }
 
-const mockAttackReports: AttackReport[] = [
+const mockThreatReports: ThreatReport[] = [
   {
-    id: 'ATK-2025-001',
+    id: 'THR-2025-001',
     date: new Date('2025-12-15T14:30:00'),
     type: 'Chemical',
     agent: 'Sarin Gas (GB)',
-    location: 'Floor 2 - Sector B',
+    location: 'Sector B',
     severity: 'critical',
     status: 'resolved',
     casualties: 0,
     responseTime: '4 minutes',
     duration: '2 hours 15 minutes',
-    affectedAreas: ['Floor 2 - Sector B', 'Floor 2 - Corridor East'],
+    affectedAreas: ['Sector B', 'Corridor East'],
     responsibleUnit: 'CBRN Response Team Alpha',
     decontaminationStatus: 'complete',
     reportGenerated: true,
   },
   {
-    id: 'ATK-2025-002',
+    id: 'THR-2025-002',
     date: new Date('2025-11-08T09:15:00'),
     type: 'Chemical',
     agent: 'Chlorine Gas (CL)',
-    location: 'Floor 3 - Ventilation System',
+    location: 'Ventilation System',
     severity: 'high',
     status: 'resolved',
     casualties: 2,
     responseTime: '6 minutes',
     duration: '3 hours 45 minutes',
-    affectedAreas: ['Floor 3 - All Sectors', 'Floor 4 - North Wing'],
+    affectedAreas: ['All Sectors', 'North Wing'],
     responsibleUnit: 'CBRN Response Team Bravo',
     decontaminationStatus: 'complete',
     reportGenerated: true,
   },
   {
-    id: 'ATK-2024-018',
+    id: 'THR-2024-018',
     date: new Date('2024-08-22T16:45:00'),
     type: 'Biological',
     agent: 'Anthrax Spores',
-    location: 'Floor 1 - Command Center',
+    location: 'Command Center',
     severity: 'critical',
     status: 'resolved',
     casualties: 1,
     responseTime: '8 minutes',
     duration: '6 hours 30 minutes',
-    affectedAreas: ['Floor 1 - Command Center', 'Floor 1 - Medical Bay'],
+    affectedAreas: ['Command Center', 'Medical Bay'],
     responsibleUnit: 'CBRN Response Team Alpha',
     decontaminationStatus: 'complete',
     reportGenerated: true,
   },
   {
-    id: 'ATK-2024-012',
+    id: 'THR-2024-012',
     date: new Date('2024-05-10T11:20:00'),
     type: 'Radiological',
     agent: 'Cesium-137 (Cs-137)',
-    location: 'Floor 5 - Research Lab',
+    location: 'Research Lab',
     severity: 'high',
     status: 'resolved',
     casualties: 0,
     responseTime: '5 minutes',
     duration: '12 hours 15 minutes',
-    affectedAreas: ['Floor 5 - Research Lab', 'Floor 5 - Storage Area'],
+    affectedAreas: ['Research Lab', 'Storage Area'],
     responsibleUnit: 'Radiological Hazmat Team',
     decontaminationStatus: 'complete',
     reportGenerated: true,
   },
   {
-    id: 'ATK-2023-031',
+    id: 'THR-2023-031',
     date: new Date('2023-11-03T03:30:00'),
     type: 'Chemical',
     agent: 'VX Nerve Agent',
-    location: 'Floor 4 - Storage Facility',
+    location: 'Storage Facility',
     severity: 'critical',
     status: 'resolved',
     casualties: 3,
     responseTime: '7 minutes',
     duration: '4 hours 20 minutes',
-    affectedAreas: ['Floor 4 - Storage Facility', 'Floor 4 - Equipment Room'],
+    affectedAreas: ['Storage Facility', 'Equipment Room'],
     responsibleUnit: 'CBRN Response Team Alpha',
     decontaminationStatus: 'complete',
     reportGenerated: true,
   },
 ];
 
-export function CBRNeAttacksView({ language = 'en' }: CBRNeAttacksViewProps) {
+export function CBRNeAttacksView({ language = 'en' }: CBRNeThreatsViewProps) {
   const t = translations[language];
   const [filters, setFilters] = useState<any>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,7 +119,7 @@ export function CBRNeAttacksView({ language = 'en' }: CBRNeAttacksViewProps) {
   };
 
   // Filter reports based on search, type, severity, and date
-  const filteredReports = mockAttackReports.filter(report => {
+  const filteredReports = mockThreatReports.filter(report => {
     const matchesSearch = report.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          report.agent.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          report.location.toLowerCase().includes(searchQuery.toLowerCase());
@@ -195,7 +195,7 @@ export function CBRNeAttacksView({ language = 'en' }: CBRNeAttacksViewProps) {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {language === 'en' ? 'CBRNe Attack Reports' : 'تقارير هجمات CBRNe'}
+                  {language === 'en' ? 'CBRNe Threat Reports' : 'تقارير تهديدات CBRNe'}
                 </h1>
                 <p className="text-sm text-gray-600">
                   {language === 'en' 
@@ -210,7 +210,7 @@ export function CBRNeAttacksView({ language = 'en' }: CBRNeAttacksViewProps) {
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
             <StatCard
-              title={language === 'en' ? 'Total Attacks' : 'إجمالي الهجمات'}
+              title={language === 'en' ? 'Total Threats' : 'إجمالي التهديدات'}
               value={totalAttacks.toString()}
               icon={AlertTriangle}
               color="red"
@@ -253,7 +253,7 @@ export function CBRNeAttacksView({ language = 'en' }: CBRNeAttacksViewProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
               <input
                 type="text"
-                placeholder={language === 'en' ? 'Search attacks by ID, agent, or location...' : 'البحث عن الهجمات بالمعرف أو العامل أو الموقع...'}
+                placeholder={language === 'en' ? 'Search threats by ID, agent, or location...' : 'البحث عن التهديدات بالمعرف أو العامل أو الموقع...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -360,11 +360,11 @@ export function CBRNeAttacksView({ language = 'en' }: CBRNeAttacksViewProps) {
             </button>
           </div>
 
-          {/* Attack Reports List */}
+          {/* Threat Reports List */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
-                {language === 'en' ? `Attack History (${filteredReports.length} ${filteredReports.length === 1 ? 'result' : 'results'})` : `سجل الهجمات (${filteredReports.length} ${filteredReports.length === 1 ? 'نتيجة' : 'نتائج'})`}
+                {language === 'en' ? `Threat History (${filteredReports.length} ${filteredReports.length === 1 ? 'result' : 'results'})` : `سجل التهديدات (${filteredReports.length} ${filteredReports.length === 1 ? 'نتيجة' : 'نتائج'})`}
               </h2>
             </div>
             <div className="divide-y divide-gray-200">
@@ -372,7 +372,7 @@ export function CBRNeAttacksView({ language = 'en' }: CBRNeAttacksViewProps) {
                 <div className="p-12 text-center">
                   <Shield className="size-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500">
-                    {language === 'en' ? 'No attack reports match your filters' : 'لا توجد تقارير هجمات تطابق الفلاتر'}
+                    {language === 'en' ? 'No threat reports match your filters' : 'لا توجد تقارير تهديدات تطابق الفلاتر'}
                   </p>
                 </div>
               ) : (
@@ -477,8 +477,8 @@ export function CBRNeAttacksView({ language = 'en' }: CBRNeAttacksViewProps) {
                 </h3>
                 <p className="text-sm text-blue-800">
                   {language === 'en'
-                    ? 'All CBRNe attack reports are archived and available for review. Detailed incident analysis, response procedures, and lessons learned are documented for each event.'
-                    : 'جميع تقارير هجمات CBRNe مؤرشفة ومتاحة للمراجعة. يتم توثيق تحليل تفصيلي للحادث وإجراءات الاستجابة والدروس المستفادة لكل حدث.'
+                    ? 'All CBRNe threat reports are archived and available for review. Detailed incident analysis, response procedures, and lessons learned are documented for each event.'
+                    : 'جميع تقارير تهديدات CBRNe مؤرشفة ومتاحة للمراجعة. يتم توثيق تحليل تفصيلي للحادث وإجراءات الاستجابة والدروس المستفادة لكل حدث.'
                   }
                 </p>
               </div>

@@ -5,8 +5,8 @@ import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 import { RoomDetailPanel } from './RoomDetailPanel';
 import { SensorDetailPanel } from './SensorDetailPanel';
 import { IncidentDetailView } from './IncidentDetailView';
-import floorPlanImage from '@/assets/BG.png';
 import { Language, translations } from '../translations';
+import floorPlanImage from '@/assets/BG.png';
 
 // FloorPlanView - Room details with incident tracking
 
@@ -49,6 +49,7 @@ interface Sensor {
 
 export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, emergencyMode, hideBreadcrumbs, language = 'en' }: FloorPlanViewProps) {
   const t = translations[language];
+  const SHOW_INLINE_TOOLTIPS = false; // Disable inline tooltips, use global tooltip instead
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
@@ -66,19 +67,60 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(!emergencyMode);
   const [showGrid, setShowGrid] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // Initialize panel width - adjust based on emergency mode
+  // Reset selections when hideBreadcrumbs is true (used in summary dashboard)
+  useEffect(() => {
+    if (hideBreadcrumbs) {
+      setSelectedRoom(null);
+      setSelectedSensor(null);
+      setSelectedIncident(null);
+      setIsRightPanelCollapsed(true);
+    }
+  }, [hideBreadcrumbs]);
+
+  // Initialize panel width once on mount to a fixed size based on current container
   useEffect(() => {
     if (leftPanelWidth === null && containerRef.current) {
+      // Set initial width based on current container size
+      // This will be a fixed pixel value that won't change when sidebar toggles
       const containerWidth = containerRef.current.offsetWidth;
-      // If in emergency mode, right panel is open, so left panel should be 50% (same as normal mode)
-      // Otherwise, right panel is collapsed, so left panel takes full width
+      // If in emergency mode (right panel is open), use 50%
+      // Otherwise (right panel collapsed), use full width minus button area (48px)
       const initialWidth = emergencyMode 
-        ? containerWidth / 2     // 50% when panel is open (same as normal mode)
-        : containerWidth - 48;   // Full width minus button area when collapsed
+        ? Math.floor(containerWidth * 0.5) 
+        : containerWidth - 48;
       setLeftPanelWidth(initialWidth);
     }
-  }, [leftPanelWidth, emergencyMode]);
+  }, [leftPanelWidth, emergencyMode])
+
+  // Watch for container size changes (e.g., sidebar opening/closing)
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const containerWidth = entry.contentRect.width;
+        
+        // Recalculate left panel width based on current state
+        if (isRightPanelCollapsed) {
+          // Right panel collapsed: floor takes all space minus button column
+          setLeftPanelWidth(containerWidth - 48);
+        } else {
+          // Right panel expanded: floor takes half the available space
+          setLeftPanelWidth(Math.floor((containerWidth - 48) / 2));
+        }
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [isRightPanelCollapsed])
+
+
 
   // Handle dragging for resizing panels
   useEffect(() => {
@@ -145,6 +187,51 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
       }
     };
   }, [isPanning, panStart]);
+
+  // Track mouse position for tooltip with smart positioning
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (hoveredFloorSensor && tooltipRef.current) {
+        const tooltipWidth = tooltipRef.current.offsetWidth || 200;
+        const tooltipHeight = tooltipRef.current.offsetHeight || 80;
+        const offset = 10;
+        const padding = 10; // Extra padding from viewport edges
+        
+        let x = e.clientX + offset;
+        let y = e.clientY + offset;
+        
+        // Check if tooltip would go off the right edge
+        if (x + tooltipWidth + padding > window.innerWidth) {
+          x = e.clientX - tooltipWidth - offset;
+        }
+        
+        // Check if tooltip would go off the bottom edge
+        if (y + tooltipHeight + padding > window.innerHeight) {
+          y = e.clientY - tooltipHeight - offset;
+        }
+        
+        // Ensure tooltip doesn't go off the left edge
+        if (x < padding) {
+          x = padding;
+        }
+        
+        // Ensure tooltip doesn't go off the top edge
+        if (y < padding) {
+          y = e.clientY + offset;
+        }
+        
+        setTooltipPosition({ x, y });
+      }
+    };
+
+    if (hoveredFloorSensor) {
+      document.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [hoveredFloorSensor]);
 
   // Zoom functions
   const handleZoomIn = () => {
@@ -351,31 +438,70 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
   // Helper function to generate historical data for sensors
   const generateSensorHistory = (sensor: Sensor) => {
-    const hours = 24;
+    const historicalHours = 6; // Last 6 hours
+    const forecastHours = 6;   // Next 6 hours
     const data = [];
+    const now = new Date();
     
-    for (let i = hours; i >= 0; i--) {
-      const timestamp = `${i}h`;
+    // Generate historical data (last 6 hours)
+    for (let i = historicalHours; i >= 0; i--) {
+      const timeDate = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const timeStr = timeDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).toLowerCase();
+      const timestamp = i === 0 ? 'Now' : `-${i}h`;
       let value = 0;
       
       if (sensor.subType === 'CO2') {
-        const base = sensor.status === 'warning' ? 850 : 420;
+        const base = sensor.status === 'warning' ? 850 : sensor.status === 'critical' ? 1300 : 420;
         value = base + (Math.random() * 50 - 25);
       } else if (sensor.subType === 'O2') {
-        const base = sensor.status === 'warning' ? 19.2 : 20.9;
+        const base = sensor.status === 'warning' ? 19.2 : sensor.status === 'critical' ? 18.5 : 20.9;
         value = base + (Math.random() * 0.5 - 0.25);
       } else if (sensor.subType === 'CO') {
-        const base = sensor.status === 'warning' ? 12 : 2;
+        const base = sensor.status === 'warning' ? 12 : sensor.status === 'critical' ? 40 : 2;
         value = base + (Math.random() * 3 - 1.5);
       } else if (sensor.subType === 'DP') {
         const base = sensor.status === 'warning' ? -12 : 8;
         value = base + (Math.random() * 4 - 2);
       }
       
-      data.push({ time: timestamp, value: Math.max(0, value) });
+      data.push({ 
+        time: timestamp, 
+        timeActual: timeStr,
+        actual: Math.max(0, value), 
+        predicted: null 
+      });
     }
     
-    return data.reverse();
+    // Generate forecast data (next 6 hours)
+    const lastValue = data[data.length - 1].actual;
+    for (let i = 1; i <= forecastHours; i++) {
+      const timeDate = new Date(now.getTime() + i * 60 * 60 * 1000);
+      const timeStr = timeDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).toLowerCase();
+      const timestamp = `+${i}h`;
+      let predictedValue = 0;
+      
+      // AI prediction logic - trend based on current status
+      if (sensor.status === 'critical') {
+        // Critical: predict gradual improvement if interventions taken
+        predictedValue = lastValue - (i * 0.15 * lastValue);
+      } else if (sensor.status === 'warning') {
+        // Warning: predict stabilization
+        const targetNormal = sensor.subType === 'CO2' ? 420 : sensor.subType === 'O2' ? 20.9 : sensor.subType === 'CO' ? 2 : 8;
+        predictedValue = lastValue - ((lastValue - targetNormal) * i / forecastHours);
+      } else {
+        // Operational: predict slight variations
+        predictedValue = lastValue + (Math.random() * 10 - 5);
+      }
+      
+      data.push({ 
+        time: timestamp, 
+        timeActual: timeStr,
+        actual: null, 
+        predicted: Math.max(0, predictedValue) 
+      });
+    }
+    
+    return data;
   };
 
   // Helper function to generate temperature history for rooms
@@ -395,7 +521,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   };
 
   return (
-    <div ref={containerRef} className="h-full bg-gray-50 flex">
+    <div ref={containerRef} className="h-full w-full bg-gray-50 flex overflow-hidden">
       {/* Left Panel - Floor Plan */}
       <div 
         className="flex-shrink-0 bg-white overflow-auto"
@@ -478,7 +604,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
-                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.airQualitySensors}</span>
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.co2Sensor}</span>
                   </td>
                 </tr>
                 
@@ -490,7 +616,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
-                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.airQualitySensors}</span>
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.coSensor}</span>
                   </td>
                 </tr>
                 
@@ -502,7 +628,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
-                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.airQualitySensors}</span>
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.o2Sensor}</span>
                   </td>
                 </tr>
                 
@@ -519,7 +645,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </td>
                   <td className="p-0.5 px-1">
-                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">Door Status</span>
+                    <span className="text-[8px] font-medium text-gray-900 whitespace-nowrap">{t.doorStatus}</span>
                   </td>
                 </tr>
               </tbody>
@@ -681,42 +807,31 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 <div className="relative">
                   <AlertTriangle className="w-6 h-6 text-orange-500 fill-orange-100 drop-shadow-lg animate-pulse hover:scale-110 transition-transform" />
                   
-                  {hoveredFloorSensor?.id === 'command-center-warning' && (
+                  {SHOW_INLINE_TOOLTIPS && hoveredFloorSensor?.id === 'command-center-warning' && (
                     <div 
-                      className="absolute text-white rounded-lg shadow-xl border border-orange-500 pointer-events-none"
+                      className="absolute pointer-events-none whitespace-nowrap"
                       style={{ 
-                        left: '100%',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        marginLeft: `${12 / zoom}px`,
-                        fontSize: `${11 / zoom}px`,
-                        padding: `${10 / zoom}px ${14 / zoom}px`,
-                        zIndex: 1000,
-                        minWidth: `${200 / zoom}px`,
-                        backgroundColor: 'rgb(15, 23, 42)'
+                        bottom: '100%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        marginBottom: '12px',
+                        zIndex: 99999
                       }}
                     >
-                      <div style={{ fontWeight: 'bold', marginBottom: `${6 / zoom}px`, fontSize: `${12 / zoom}px` }}>⚠️ Command Center Alert</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${4 / zoom}px` }}>
-                        <span style={{ color: '#9ca3af' }}>Status:</span>
-                        <span style={{ 
-                          padding: `${2 / zoom}px ${8 / zoom}px`, 
-                          borderRadius: `${4 / zoom}px`,
-                          fontWeight: 'bold',
-                          backgroundColor: '#f97316',
-                          color: 'white'
-                        }}>
-                          WARNING
-                        </span>
-                      </div>
-                      <div style={{ color: '#d1d5db', marginBottom: `${4 / zoom}px` }}>
-                        <span style={{ color: '#9ca3af' }}>Type:</span> Equipment Alert
-                      </div>
-                      <div style={{ color: '#d1d5db', marginBottom: `${4 / zoom}px` }}>
-                        <span style={{ color: '#9ca3af' }}>Severity:</span> Medium
-                      </div>
-                      <div style={{ color: '#d1d5db', fontSize: `${10 / zoom}px`, marginTop: `${6 / zoom}px`, paddingTop: `${6 / zoom}px`, borderTop: '1px solid #374151' }}>
-                        Click to view details
+                      <div style={{
+                        backgroundColor: '#ffffff',
+                        border: '1.5px solid #f97316',
+                        borderRadius: '6px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        fontSize: '11px',
+                        padding: '8px 12px',
+                        color: '#1e293b',
+                        fontWeight: 600
+                      }}>
+                        <div style={{ marginBottom: '4px', color: '#f97316' }}>⚠️ Command Center Alert</div>
+                        <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 500 }}>
+                          Equipment Alert
+                        </div>
                       </div>
                     </div>
                   )}
@@ -799,35 +914,57 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   >
                     <span className="text-[2px] text-gray-900 leading-none font-bold" style={{ transform: 'translateY(0.3px)' }}>CO₂</span>
                     
-                    {hoveredFloorSensor?.id === 'sensors-3-co2' && (
+                    {SHOW_INLINE_TOOLTIPS && hoveredFloorSensor?.id === 'sensors-3-co2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute pointer-events-none whitespace-nowrap animate-in fade-in duration-200"
                         style={{ 
-                          left: '100%',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          marginLeft: `${8 / zoom}px`,
-                          fontSize: `${10 / zoom}px`,
-                          padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          bottom: '100%',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          marginBottom: `${16 / zoom}px`,
+                          zIndex: 99999
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
-                          <span style={{ 
-                            padding: `${2 / zoom}px ${6 / zoom}px`, 
-                            borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
-                          }}>
-                            OPERATIONAL
-                          </span>
+                        <div
+                          className="bg-white rounded-lg shadow-2xl border-2 border-blue-500"
+                          style={{
+                            fontSize: `${13 / zoom}px`,
+                            padding: `${12 / zoom}px ${16 / zoom}px`,
+                            minWidth: `${180 / zoom}px`
+                          }}
+                        >
+                          <div style={{ fontWeight: 700, marginBottom: `${8 / zoom}px`, color: '#1e293b', fontSize: `${14 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: `${8 / zoom}px`, marginBottom: `${6 / zoom}px` }}>
+                            <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
+                            <span style={{ 
+                              padding: `${3 / zoom}px ${8 / zoom}px`, 
+                              borderRadius: `${6 / zoom}px`,
+                              fontWeight: 600,
+                              fontSize: `${11 / zoom}px`,
+                              backgroundColor: '#16a34a',
+                              color: 'white'
+                            }}>
+                              OPERATIONAL
+                            </span>
+                          </div>
+                          <div style={{ color: '#334155', fontWeight: 500 }}>
+                            <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
+                          </div>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
-                        </div>
+                        {/* Arrow pointing down */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: `${-6 / zoom}px`,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: 0,
+                            height: 0,
+                            borderLeft: `${6 / zoom}px solid transparent`,
+                            borderRight: `${6 / zoom}px solid transparent`,
+                            borderTop: `${6 / zoom}px solid #3b82f6`
+                          }}
+                        />
                       </div>
                     )}
                   </div>
@@ -859,7 +996,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-3-co' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -867,24 +1004,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -917,7 +1056,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-3-o2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -925,24 +1064,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -987,7 +1128,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-2-co2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -995,24 +1136,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1045,7 +1188,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-2-co' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1053,24 +1196,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1103,7 +1248,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-2-o2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1111,24 +1256,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1173,7 +1320,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-4-co2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1181,24 +1328,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1231,7 +1380,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-4-co' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1239,24 +1388,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1289,7 +1440,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-4-o2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1297,24 +1448,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1359,7 +1512,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-5-co2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1367,24 +1520,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1417,7 +1572,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-5-co' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1425,24 +1580,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1475,7 +1632,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-5-o2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1483,24 +1640,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1545,7 +1704,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-6-co2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1553,24 +1712,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1603,7 +1764,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-6-co' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1611,24 +1772,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1661,7 +1824,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-6-o2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1669,24 +1832,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1731,7 +1896,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-7-co2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1739,24 +1904,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1789,7 +1956,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-7-co' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1797,24 +1964,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1847,7 +2016,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-7-o2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1855,24 +2024,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1917,7 +2088,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-8-co2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1925,24 +2096,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -1975,7 +2148,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-8-co' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -1983,24 +2156,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -2033,7 +2208,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     
                     {hoveredFloorSensor?.id === 'sensors-8-o2' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -2041,24 +2216,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -2102,7 +2279,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   
                   {hoveredFloorSensor?.id === 'cbrne-1-r' && (
                       <div 
-                        className="absolute text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+                        className="absolute rounded-lg shadow-2xl border-2 border-blue-500 pointer-events-none whitespace-nowrap"
                         style={{ 
                           left: '100%',
                           top: '50%',
@@ -2110,24 +2287,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                           marginLeft: `${8 / zoom}px`,
                           fontSize: `${10 / zoom}px`,
                           padding: `${8 / zoom}px ${12 / zoom}px`,
-                          zIndex: 1000,
-                          backgroundColor: 'rgb(15, 23, 42)'
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff'
                         }}
                       >
-                        <div style={{ fontWeight: 'bold', marginBottom: `${4 / zoom}px` }}>{hoveredFloorSensor.name}</div>
+                        <div style={{ fontWeight: 700, marginBottom: `${4 / zoom}px`, color: '#1e293b' }}>{hoveredFloorSensor.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: `${6 / zoom}px`, marginBottom: `${2 / zoom}px` }}>
-                          <span style={{ color: '#9ca3af' }}>Status:</span>
+                          <span style={{ color: '#64748b', fontWeight: 500 }}>Status:</span>
                           <span style={{ 
                             padding: `${2 / zoom}px ${6 / zoom}px`, 
                             borderRadius: `${4 / zoom}px`,
-                            fontWeight: 'bold',
-                            backgroundColor: '#16a34a'
+                            fontWeight: 600,
+                            fontSize: `${11 / zoom}px`,
+                            backgroundColor: '#16a34a',
+                            color: 'white'
                           }}>
                             OPERATIONAL
                           </span>
                         </div>
-                        <div style={{ color: '#d1d5db' }}>
-                          <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+                        <div style={{ color: '#334155', fontWeight: 500 }}>
+                          <span style={{ color: '#64748b' }}>Reading:</span> <span style={{ fontWeight: 600, color: '#1e293b' }}>{hoveredFloorSensor.value}</span>
                         </div>
                       </div>
                     )}
@@ -4263,42 +4442,64 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
       >
         {/* Visual indicator on hover */}
         <div className="absolute inset-y-0 -left-1 -right-1 group-hover:bg-blue-500/20" />
+        
+        {/* Floating Collapse Button - Positioned on the draggable border */}
+        {!isRightPanelCollapsed && (
+          <button
+            onClick={() => {
+              if (containerRef.current) {
+                // Collapsing - set floor plan to full width
+                setLeftPanelWidth(containerRef.current.offsetWidth);
+                // Reset pan for wider panel
+                setPanX(0);
+                setPanY(-350);
+                // Keep zoom at 100 when collapsed
+                setZoom(1.0);
+              }
+              setIsRightPanelCollapsed(true);
+            }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-50 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-lg transition-all hover:scale-110 flex items-center justify-center"
+            title="Collapse panel"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+        )}
       </div>
 
-      {/* Right Panel - Facility Overview, Sensor Details, or Incident Details */}
-      <div className="relative flex-1 overflow-auto">
-        {/* Collapse/Expand Button */}
-        <button
-          onClick={() => {
-            if (isRightPanelCollapsed && containerRef.current) {
-              // Expanding - restore previous width or default to half
-              setLeftPanelWidth(containerRef.current.offsetWidth / 2);
-              // Reset pan for narrower panel
-              setPanX(0);
-              setPanY(-100);
-              // Keep zoom at 100 when panel is expanded
-              setZoom(1.0);
-            } else if (containerRef.current) {
-              // Collapsing - set floor plan to full width
-              setLeftPanelWidth(containerRef.current.offsetWidth - 48);
-              // Reset pan for wider panel
-              setPanX(0);
-              setPanY(-350);
-              // Keep zoom at 100 when collapsed
-              setZoom(1.0);
-            }
-            setIsRightPanelCollapsed(!isRightPanelCollapsed);
-          }}
-          className={`absolute top-4 z-10 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-lg transition-all hover:scale-110 flex items-center justify-center ${
-            isRightPanelCollapsed ? 'left-2' : 'right-4'
-          }`}
-          title={isRightPanelCollapsed ? 'Expand panel' : 'Collapse panel'}
-        >
-          {isRightPanelCollapsed ? <ChevronLeft className="size-5" /> : <ChevronRight className="size-5" />}
-        </button>
+      {/* Expand Button - Only visible when right panel is collapsed */}
+      {isRightPanelCollapsed && (
+        <div className="flex-shrink-0 relative bg-gray-100" style={{ width: '48px' }}>
+          <button
+            onClick={() => {
+              if (containerRef.current) {
+                // Expanding - restore previous width or default to half
+                setLeftPanelWidth((containerRef.current.offsetWidth) / 2);
+                // Reset pan for narrower panel
+                setPanX(0);
+                setPanY(-100);
+                // Keep zoom at 100 when panel is expanded
+                setZoom(1.0);
+              }
+              setIsRightPanelCollapsed(false);
+            }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-10 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-lg transition-all hover:scale-110 flex items-center justify-center"
+            title="Expand panel"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+        </div>
+      )}
 
-        {!isRightPanelCollapsed && (
-          <div className="p-6 space-y-6">
+      {/* Right Panel - Facility Overview, Sensor Details, or Incident Details */}
+      <div 
+        className="relative overflow-auto bg-white"
+        style={{ 
+          width: isRightPanelCollapsed ? '0px' : undefined,
+          flex: isRightPanelCollapsed ? '0 0 0px' : '1',
+          display: isRightPanelCollapsed ? 'none' : 'block'
+        }}
+      >
+        <div className="p-6 space-y-6">
         {/* Show Sensor Details if a sensor is selected */}
         {selectedSensor ? (
           <SensorDetailPanel 
@@ -4989,8 +5190,57 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
           </>
         )}
           </div>
-        )}
       </div>
+
+      {/* Global Tooltip - Renders at top level with highest z-index */}
+      {hoveredFloorSensor && (
+        <div 
+          ref={tooltipRef}
+          className="global-sensor-tooltip fixed text-white rounded-lg shadow-xl border border-gray-700 pointer-events-none whitespace-nowrap"
+          style={{ 
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y}px`,
+            zIndex: 99999,
+            backgroundColor: 'rgb(15, 23, 42)',
+            fontSize: '10px',
+            padding: '8px 12px'
+          }}
+        >
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{hoveredFloorSensor.name}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+            <span style={{ color: '#9ca3af' }}>Status:</span>
+            <span style={{ 
+              padding: '2px 6px', 
+              borderRadius: '4px',
+              fontWeight: 'bold',
+              backgroundColor: hoveredFloorSensor.status === 'operational' ? '#16a34a' :
+                             hoveredFloorSensor.status === 'warning' ? '#ca8a04' : '#dc2626'
+            }}>
+              {hoveredFloorSensor.status.toUpperCase()}
+            </span>
+          </div>
+          <div style={{ color: '#d1d5db' }}>
+            <span style={{ color: '#9ca3af' }}>Reading:</span> {hoveredFloorSensor.value}
+          </div>
+        </div>
+      )}
+      
+      {/* Hide all inline tooltips - only show global tooltip */}
+      <style>{`
+        /* Hide ALL inline tooltips */
+        .absolute.pointer-events-none.whitespace-nowrap:not(.global-sensor-tooltip),
+        .absolute.pointer-events-none.whitespace-nowrap > div,
+        .absolute.pointer-events-none > div.bg-white,
+        .absolute.text-white.rounded-lg.shadow-xl:not(.global-sensor-tooltip) {
+          display: none !important;
+        }
+        
+        /* Ensure global tooltip is always visible */
+        .global-sensor-tooltip,
+        .global-sensor-tooltip > * {
+          display: block !important;
+        }
+      `}</style>
     </div>
   );
 }

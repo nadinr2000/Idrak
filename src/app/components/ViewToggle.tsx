@@ -14,7 +14,7 @@ interface ViewToggleProps {
 
 export function ViewToggle({ viewMode, onViewModeChange, buildingName, language, emergencyMode, onOpenArchitecturalView }: ViewToggleProps) {
   const t = translations[language];
-  const defaultBuildingName = language === 'en' ? 'Bunker Alpha-7' : 'المخبأ ألفا-7';
+  const defaultBuildingName = language === 'en' ? 'Site' : 'الموقع';
   
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4">

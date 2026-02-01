@@ -21,7 +21,7 @@ export const translations = {
     export: 'Export',
     
     // Sidebar
-    dashboards: 'Homepage',
+    dashboards: 'Facility Overview',
     configurations: 'Configurations',
     settings: 'Settings',
     main: 'Main',
@@ -31,21 +31,39 @@ export const translations = {
     configuration: 'Configuration',
     automation: 'Automation Rules',
     alarms: 'Alarms',
-    tacticalThreatDrills: 'Tactical Threat Drills',
-    layoutTests: 'New Floor Setup',
+    tacticalThreatDrills: 'Situation Simulations',
+    layoutTests: 'Device Configuration Testing',
     
     // Sidebar Descriptions
     dashboardsDesc: 'Monitor system status',
     automationDesc: 'Manage rule-based actions',
     tacticalCasesDesc: 'Simulate emergency scenarios',
-    tacticalThreatDrillsDesc: 'Simulate emergency drills',
-    layoutTestsDesc: 'Test infrastructure changes before deployment',
+    tacticalThreatDrillsDesc: 'Simulate emergency situations',
+    layoutTestsDesc: 'Test floor systems after adding or removing devices',
     thresholdsDesc: 'Set sensor limits',
     alarmsDesc: 'Configure alarm triggers',
     
     // View Toggle
     dashboard: 'Dashboard',
     architectural: 'Architectural',
+    
+    // FloorPlanView - Facility Overview Panel
+    facilityOverview: 'Facility Overview',
+    temperature: 'Temperature',
+    average: 'Average',
+    personnel: 'Personnel',
+    warnings: 'Warnings',
+    commandCenter: 'Command Center',
+    temperatureElevationDetected: 'Temperature Elevation Detected',
+    aboveNormal: 'Above Normal',
+    aiRecommendedAction: 'AI Recommended Action',
+    increaseHvacCoolingText: 'Increase HVAC cooling capacity to 85% to stabilize temperature',
+    executeHvacAdjustment: 'Execute HVAC Adjustment',
+    recentlyResolved: 'Recently Resolved',
+    serverRoomB: 'Server Room B',
+    co2LevelSpikeResolved: 'CO₂ Level Spike - Resolved',
+    autoResolved: 'Auto-Resolved',
+    minAgo: 'min ago',
     
     // Summary Dashboard - Metrics
     totalFloors: 'Total Floors',
@@ -258,7 +276,7 @@ export const translations = {
     hostileForce: 'Hostile Force',
     
     // Mock Tactical Cases
-    case1Name: 'Extended Siege Scenario',
+    case1Name: 'Extended Duration Scenario',
     case1Desc: 'Prolonged hostile force containment with resource management protocols',
     case1Location1: 'Perimeter - All Sectors',
     case1Location2: 'Floor 1 - Command Center',
@@ -308,30 +326,12 @@ export const translations = {
     strategicRecommendationsSubtitle: 'Infrastructure and capability improvements for future readiness',
     infrastructure: 'Infrastructure',
     equipment: 'Equipment',
-    personnel: 'Personnel',
     protocol: 'Protocol',
     estimatedCost: 'Estimated Cost',
     estimatedTime: 'Timeline',
     implemented: 'Implemented',
     outcome: 'Outcome',
     failed: 'Failed',
-    scenarioTimeline: 'Scenario Timeline',
-    threatDetected: 'Threat Detected',
-    aiReassessment: 'AI Reassessment',
-    trigger: 'Trigger',
-    situationSummary: 'Situation Summary',
-    keyChanges: 'Key Changes',
-    aiRecommendations: 'AI Recommendations',
-    effectOfAction: 'Effect of Action',
-    summaryTab: 'Summary',
-    detailsTab: 'Details',
-    scenarioOutcome: 'Scenario Outcome',
-    reassessments: 'Reassessments',
-    threatsDetected: 'Threats Detected',
-    emergencyMode: 'Emergency State',
-    liveSimulation: 'Live Simulation',
-    startSimulation: 'Start Simulation',
-    systemStatus: 'System Status',
     
     // Emergency Dashboard
     aiThreatAssessment: 'AI Threat Assessment',
@@ -412,26 +412,29 @@ export const translations = {
     recommendedMaintenance: 'Recommended: Schedule preventive maintenance for Utility Room cooling system',
     
     // FloorPlanView - Bunker & Legend
-    bunkerAlpha7: 'Bunker Alpha-7',
+    bunkerAlpha7: 'Site',
     underAttack: 'Under Attack',
-    warning: 'warning',
-    differentialPressure: 'differential pressure',
-    cbrnDetectors: 'CBRN detectors',
-    airQualitySensors: 'air quality sensors',
-    secure: 'secure',
+    warning: 'Warning',
+    differentialPressure: 'Differential Pressure',
+    cbrnDetectors: 'CBRN Detectors',
+    co2Sensor: 'CO₂ Sensor',
+    coSensor: 'CO Sensor',
+    o2Sensor: 'O₂ Sensor',
+    doorStatus: 'Door Status',
+    secure: 'Secure',
     
     // Emergency Side Panel
-    chemicalAttackSectorB: 'هجوم كيميائي - القطاع ب',
-    chlorineGasRelease: 'انبعاث غاز الكلورين',
-    hazmatLevel4: 'مستوى 4 للمواد الخطرة',
-    aiAssessmentTitle: 'تقييم الذكاء الاصطناعي',
-    detectedLower: 'مكتشف',
-    lethalThreshold: 'حد قاتل',
-    exposureTime: 'وقت التعرض',
-    affectedArea: 'المنطقة المتأثرة',
-    fatalWithout: 'سيتوفت دون تدخل فوري',
-    predictedSpread: 'انتشار متوقع',
-    estimatedCasualtiesCount: 'عدد الجرحى المتوقع',
+    chemicalAttackSectorB: 'Chemical Attack - Sector B',
+    chlorineGasRelease: 'Chlorine Gas Release',
+    hazmatLevel4: 'Level 4 Hazardous Materials',
+    aiAssessmentTitle: 'AI Assessment',
+    detectedLower: 'Detected',
+    lethalThreshold: 'Lethal Threshold',
+    exposureTime: 'Exposure Time',
+    affectedArea: 'Affected Area',
+    fatalWithout: 'Fatal Without Immediate Intervention',
+    predictedSpread: 'Predicted Spread',
+    estimatedCasualtiesCount: 'Estimated Casualties Count',
   },
   ar: {
     // TopBar
@@ -440,7 +443,7 @@ export const translations = {
     admin: 'مسؤول المرافق',
     
     // Navigation
-    summary: 'نظرة عامة على المرافق',
+    summary: 'نظرة عامة على الموقع',
     floors: 'الطوابق',
     incidents: 'الحوادث',
     sensors: 'المستشعرات',
@@ -453,7 +456,7 @@ export const translations = {
     export: 'تصدير',
     
     // Sidebar
-    dashboards: 'Homepage',
+    dashboards: 'نظرة عامة على الموقع',
     configurations: 'التكوينات',
     settings: 'الإعدادات',
     main: 'الأساسي',
@@ -463,21 +466,39 @@ export const translations = {
     configuration: 'التكوين',
     automation: 'قواعد الأتمتة',
     alarms: 'الإنذارات',
-    tacticalThreatDrills: 'تمارين التهديدات الاستراتيجية',
-    layoutTests: 'تخطيط الطابق الجديد/الأجهزة',
+    tacticalThreatDrills: 'محاكاة المواقف',
+    layoutTests: 'اختبار تكوين الأجهزة',
     
     // Sidebar Descriptions
     dashboardsDesc: 'مراقبة حالة النظام',
     automationDesc: 'إدارة الإجراءات القائمة على القواعد',
     tacticalCasesDesc: 'محاكاة سيناريوهات الطوارئ',
-    tacticalThreatDrillsDesc: 'محاكاة تدريبات الطوارئ',
-    layoutTestsDesc: 'اختبار التغييرات في البنية التحتية قبل التنفيذ',
+    tacticalThreatDrillsDesc: 'محاكاة حالات الطوارئ',
+    layoutTestsDesc: 'اختبار أنظمة الطابق بعد إضافة أو إزالة الأجهزة',
     thresholdsDesc: 'تعيين حدود المستشعرات',
     alarmsDesc: 'تكوين مشغات الإنذار',
     
     // View Toggle
     dashboard: 'لوحة المعلومات',
     architectural: 'معماري',
+    
+    // FloorPlanView - Facility Overview Panel
+    facilityOverview: 'نظرة عامة على الموقع',
+    temperature: 'درجة الحرارة',
+    average: 'متوسط',
+    personnel: 'الموظفين',
+    warnings: 'التحذيرات',
+    commandCenter: 'مركز القيادة',
+    temperatureElevationDetected: 'اكتشاف ارتفاع درجة الحرارة',
+    aboveNormal: 'فوق الطبيعي',
+    aiRecommendedAction: 'إجراء موصى به من الذكاء الاصطناعي',
+    increaseHvacCoolingText: 'زيادة سعة تبريد نظام التكييف والتهوية إلى 85% لاستقرار درجة الحرارة',
+    executeHvacAdjustment: 'تنفيذ تعديل نظام التكييف والتهوية',
+    recentlyResolved: 'حل مؤخراً',
+    serverRoomB: 'غرفة الخوادم ب',
+    co2LevelSpikeResolved: 'ارتفاع مستوى ثاني أكسيد الكربون - تم حلها',
+    autoResolved: 'تم حلها تلقائياً',
+    minAgo: 'دقيقة مضت',
     
     // Summary Dashboard - Metrics
     totalFloors: 'إجمالي الطوابق',
@@ -546,7 +567,7 @@ export const translations = {
     alert: 'تنبيه',
     emergency: 'طوارئ',
     incident: 'حادث',
-    groundLevelLabel: 'مستوى الأرض ±0.0م',
+    groundLevelLabel: 'مسوى الأرض ±0.0م',
     hoverRoomsEquipment: 'مرر فوق الغرف والمعدات لرؤية التفاصيل',
     viewFullFloor: 'عرض الطابق الكامل',
     
@@ -641,7 +662,7 @@ export const translations = {
     phosgene: 'فسجين',
     
     // Biological agents
-    anthrax: 'أنثركس',
+    anthrax: 'أثركس',
     smallpox: 'السعال الجلدي',
     plague: 'البلاط',
     ricin: 'ريسين',
@@ -740,30 +761,12 @@ export const translations = {
     strategicRecommendationsSubtitle: 'تحسينا البنية التحتية والقدرات للاستعداد للمستقبل',
     infrastructure: 'البنية التحتية',
     equipment: 'المعدات',
-    personnel: 'الموظفين',
     protocol: 'البروتوكول',
     estimatedCost: 'التكلفة المتوقعة',
     estimatedTime: 'جدول زمني',
     implemented: 'مطبوع',
     outcome: 'النهاية',
     failed: 'فشل',
-    scenarioTimeline: 'جدول زمني السيناريو',
-    threatDetected: 'اكتشاف التهديد',
-    aiReassessment: 'إعادة تقييم الذكاء الاصطناعي',
-    trigger: 'المشغل',
-    situationSummary: 'ملخص الوضع',
-    keyChanges: 'ال변يات الرئيسية',
-    aiRecommendations: 'التوصيات الذكاء الاصناعي',
-    effectOfAction: 'تأثير الإجراء',
-    summaryTab: 'ملخص',
-    detailsTab: 'تفاصيل',
-    scenarioOutcome: 'نهاية السيناريو',
-    reassessments: 'إعادة التقييمات',
-    threatsDetected: 'التهديدات المكتشفة',
-    emergencyMode: 'الحالة الطارئة',
-    liveSimulation: 'محاكاة حية',
-    startSimulation: 'بدء المحاكاة',
-    systemStatus: 'حالة النظام',
     
     // Emergency Dashboard
     aiThreatAssessment: 'تقييم التهديد بالذكاء الاصطناعي',
@@ -819,7 +822,7 @@ export const translations = {
     sealed: 'مغلق',
     activeStatus: 'نشط',
     airFiltrationSystems: 'أنظمة تنقية الهواء',
-    hepaFilters: 'فلاتر HEPA',
+    hepaFilters: 'لاتر HEPA',
     carbonFilters: 'فلاتر الكربون',
     nbcFilters: 'فلاتر NBC',
     airExchange: 'تبادل الهواء',
@@ -834,132 +837,38 @@ export const translations = {
     medicalSupplies: 'مستلزمات طبية',
     full: 'كامل',
     aiFloorAssessment: 'تقييم الطابق بالذكاء الاصطناعي',
-    realTimeAnalysis: 'تحليل بيئي وتشغيلي في الوقت الحقيقي',
-    healthScore: 'نقاط الصحة',
+    realTimeAnalysis: 'تحليل بيئي و تشغيلي في الوقت الفعلي',
+    healthScore: 'درجة الصحة',
     safetyIndex: 'مؤشر السلامة',
     aiInsights: 'رؤى الذكاء الاصطناعي',
-    utilityRoomElevatedTemp: 'غرفة المرافق تعرضت لارتفاع درجة الحرارة (26 درجة مئوية) - يُنصح بتعديل نظام التكييف',
-    allSystemsOperational: 'جميع أنظمة الحرجة تعمل - لم يتم اكتشاف أي تهديدات فورية',
-    airQualityStable: 'جودة الهواء مستقرة في جميع المناطق - جميع المستشعرات تبلغ عن قيم طبيعية',
-    recommendedMaintenance: 'موصى به: جدولة الصيانة الوقائية لنظام تبريد غرفة المرافق',
+    utilityRoomElevatedTemp: 'غرفة المرافق تظهر درجة حرارة مرتفعة (26 درجة مئوية) - يوصى بتعديل نظام التكييف',
+    allSystemsOperational: 'جميع الأنظمة الحرجة تشغيلية - لا توجد تهديدات فورية',
+    airQualityStable: 'جودة الهواء مستقرة في جميع المناطق - جميع المستشعرات تعطي قيماً طبيعية',
+    recommendedMaintenance: 'موصى به: جدولة صيانة وقائية لنظام تبريد غرفة المرافق',
     
     // FloorPlanView - Bunker & Legend
-    bunkerAlpha7: 'خزانة آلفا-7',
+    bunkerAlpha7: 'الموقع',
     underAttack: 'تحت هجوم',
     warning: 'تحذير',
-    differentialPressure: 'ضغط تفاضلي',
-    cbrnDetectors: 'أجهزة الكربونات الكيميائية والبيولوجية والإشعاعية والنووية',
-    airQualitySensors: 'حساسات جودة الهواء',
+    differentialPressure: 'جهاز تغير الضغط',
+    cbrnDetectors: 'أجهزة الكشف عن CBRN',
+    co2Sensor: 'حساس ثاني أكسيد الكربون',
+    coSensor: 'حساس ثاني أكسيد الكربون',
+    o2Sensor: 'حساس الأكسجين',
+    doorStatus: 'حالة الباب',
     secure: 'آمن',
     
     // Emergency Side Panel
     chemicalAttackSectorB: 'هجوم كيميائي - القطاع ب',
-    chlorineGasRelease: 'انبعاث غاز الكلورين',
+    chlorineGasRelease: 'انبعاث غاز الكلورن',
     hazmatLevel4: 'مستوى 4 للمواد الخطرة',
     aiAssessmentTitle: 'تقييم الذكاء الاصطناعي',
     detectedLower: 'مكتشف',
     lethalThreshold: 'حد قاتل',
     exposureTime: 'وقت التعرض',
     affectedArea: 'المنطقة المتأثرة',
-    fatalWithout: 'سيتوفت دون تدخل فوري',
+    fatalWithout: 'سيتوفى دون تدخل فوري',
     predictedSpread: 'انتشار متوقع',
     estimatedCasualtiesCount: 'عدد الجرحى المتوقع',
   },
 };
-
-export function getTranslation(lang: Language, key: string): string {
-  const keys = key.split('.');
-  let value: any = translations[lang];
-  
-  for (const k of keys) {
-    value = value?.[k];
-  }
-  
-  return value || key;
-}
-
-// Helper function to translate room type
-export function getRoomType(lang: Language, type: string): string {
-  const typeMap: { [key: string]: keyof typeof translations.en } = {
-    'Office': 'office',
-    'Conference': 'conference',
-    'Lab': 'lab',
-    'Storage': 'storage',
-    'Utility Room': 'utilityRoom',
-    'Open Office': 'openOffice',
-    'Conference Room': 'conferenceRoom',
-  };
-  
-  const key = typeMap[type];
-  return key ? translations[lang][key] : type;
-}
-
-// Helper function to translate room name
-export function getRoomName(lang: Language, name: string): string {
-  if (lang === 'en') return name;
-  
-  // Parse room names like "Room 101"
-  const match = name.match(/Room (\d+)/);
-  if (match) {
-    return `غرفة ${match[1]}`;
-  }
-  
-  return name;
-}
-
-// Helper function to translate equipment type
-export function getEquipmentType(lang: Language, type: string): string {
-  const typeMap: { [key: string]: keyof typeof translations.en } = {
-    'Cooling System': 'coolingSystem',
-    'Air Handling Unit': 'airHandlingUnit',
-    'Chiller': 'chiller',
-  };
-  
-  const key = typeMap[type];
-  return key ? translations[lang][key] : type;
-}
-
-// Helper function to get localized incident title
-export function getIncidentTitle(lang: Language, englishTitle: string): string {
-  const titleMap: { [key: string]: keyof typeof translations.en } = {
-    'Temperature Spike Detected': 'temperatureSpikeDetected',
-    'Humidity Level Abnormal': 'humidityLevelAbnormal',
-    'Motion Sensor Offline': 'motionSensorOffline',
-    'CO2 Levels Elevated': 'co2LevelsElevated',
-    'Water Leak Detected': 'waterLeakDetected',
-    'Air Quality Warning': 'airQualityWarning',
-    'Unusual Vibration Pattern Detected': 'unusualVibrationPatternDetected',
-    'Multi-Floor HVAC System Failure': 'multiFloorHVACSystemFailure',
-  };
-  
-  const key = titleMap[englishTitle];
-  return key ? translations[lang][key] : englishTitle;
-}
-
-// Helper function to get localized location
-export function getIncidentLocation(lang: Language, englishLocation: string): string {
-  if (lang === 'en') return englishLocation;
-  
-  // Parse location like "Building A - Floor 3 - Room 301"
-  const parts = englishLocation.split(' - ');
-  if (parts.length >= 3) {
-    const building = parts[0]; // Keep building identifier as is
-    const floorPart = parts[1]; // "Floor 3"
-    const roomPart = parts[2]; // "Room 301"
-    
-    const floorNum = floorPart.match(/\d+/)?.[0] || '';
-    const roomId = roomPart.replace('Room ', '').replace('Conference Room', '').replace('Utility Room', '').replace('Open Office', '').trim();
-    
-    if (roomPart.includes('Conference Room')) {
-      return `${building} - الطابق ${floorNum} - غرفة الاجتماعات`;
-    } else if (roomPart.includes('Utility Room')) {
-      return `${building} - الطابق ${floorNum} - غرفة المرافق`;
-    } else if (roomPart.includes('Open Office')) {
-      return `${building} - الطابق ${floorNum} - مكتب مفتوح`;
-    } else {
-      return `${building} - الطابق ${floorNum} - غرفة ${roomId}`;
-    }
-  }
-  
-  return englishLocation;
-}

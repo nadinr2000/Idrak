@@ -148,30 +148,19 @@ export function EmergencyBar({
           )}
         </div>
 
-        {/* Quick Jump Buttons */}
-        <div className="flex gap-1">
-          <button
-            onClick={() => onTimeChange && onTimeChange(300)}
-            className="bg-gray-600 hover:bg-gray-500 rounded px-2 py-1 transition-colors border border-gray-500 text-xs font-semibold text-white"
-            title="Jump to 5 minutes"
-          >
-            5m
-          </button>
-          <button
-            onClick={() => onTimeChange && onTimeChange(900)}
-            className="bg-gray-600 hover:bg-gray-500 rounded px-2 py-1 transition-colors border border-gray-500 text-xs font-semibold text-white"
-            title="Jump to 15 minutes"
-          >
-            15m
-          </button>
-          <button
-            onClick={() => onTimeChange && onTimeChange(1800)}
-            className="bg-gray-600 hover:bg-gray-500 rounded px-2 py-1 transition-colors border border-gray-500 text-xs font-semibold text-white"
-            title="Jump to 30 minutes"
-          >
-            30m
-          </button>
-        </div>
+        {/* Next Event Button */}
+        <button
+          onClick={() => {
+            // This will be implemented to jump to next threat event
+            // For now, just demonstrate the button
+            console.log('Next Event clicked');
+          }}
+          className="bg-blue-600 hover:bg-blue-500 rounded px-4 py-1.5 transition-colors border border-blue-500 text-xs font-semibold text-white flex items-center gap-1.5"
+          title="Jump to next event"
+        >
+          <FastForward className="size-3.5" />
+          {language === 'ar' ? 'الحدث التالي' : 'Next Event'}
+        </button>
       </div>
 
       {/* Right: Controls */}

@@ -23,7 +23,7 @@ interface FloorPlan {
   deviceCount: number;
   createdDate: string;
   lastModified: string;
-  status: 'draft' | 'active' | 'tested';
+  status: 'draft' | 'published';
   testsRun?: number;
 }
 
@@ -36,14 +36,14 @@ interface FloorSetupListViewProps {
 const MOCK_FLOOR_PLANS: FloorPlan[] = [
   {
     id: 'plan-1',
-    name: 'Enhanced Chemical Detection - Floor 2',
+    name: 'Enhanced Chemical Detection - Operations',
     description: 'Added 8 additional chemical detectors to Sector B and surrounding areas for improved early warning coverage',
     floorId: 'floor-a-2',
-    floorName: 'Floor 2 - Operations',
+    floorName: 'Operations',
     deviceCount: 13,
     createdDate: '2026-01-10',
     lastModified: '2026-01-14',
-    status: 'tested',
+    status: 'published',
     testsRun: 3,
   },
   {
@@ -51,11 +51,11 @@ const MOCK_FLOOR_PLANS: FloorPlan[] = [
     name: 'Ground Floor Security Upgrade',
     description: 'Comprehensive security enhancement with additional cameras, motion sensors, and access control points at all entry zones',
     floorId: 'floor-a-1',
-    floorName: 'Floor 1 - Ground Level',
+    floorName: 'Ground Level',
     deviceCount: 15,
     createdDate: '2026-01-08',
     lastModified: '2026-01-12',
-    status: 'active',
+    status: 'published',
     testsRun: 5,
   },
   {
@@ -63,7 +63,7 @@ const MOCK_FLOOR_PLANS: FloorPlan[] = [
     name: 'Medical Bay Air Quality Monitoring',
     description: 'Medical-grade air quality sensors and pressure monitoring for isolation room and decontamination areas',
     floorId: 'floor-a-2',
-    floorName: 'Floor 2 - Operations',
+    floorName: 'Operations',
     deviceCount: 8,
     createdDate: '2026-01-15',
     lastModified: '2026-01-15',
@@ -75,11 +75,11 @@ const MOCK_FLOOR_PLANS: FloorPlan[] = [
     name: 'Emergency Lighting & Alarms - All Corridors',
     description: 'Strategic placement of emergency lighting and fire alarms along main corridors and emergency exit routes',
     floorId: 'floor-a-2',
-    floorName: 'Floor 2 - Operations',
+    floorName: 'Operations',
     deviceCount: 12,
     createdDate: '2025-12-28',
     lastModified: '2026-01-05',
-    status: 'tested',
+    status: 'published',
     testsRun: 7,
   },
 ];
@@ -123,18 +123,11 @@ export function FloorSetupListView({ language = 'en', onCreateNew, onEditPlan }:
             <span className="text-xs font-semibold text-gray-700">Draft</span>
           </div>
         );
-      case 'active':
-        return (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-100 border border-blue-300 rounded-full">
-            <Clock className="size-3 text-blue-600" />
-            <span className="text-xs font-semibold text-blue-700">Active</span>
-          </div>
-        );
-      case 'tested':
+      case 'published':
         return (
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-100 border border-green-300 rounded-full">
             <CheckCircle className="size-3 text-green-600" />
-            <span className="text-xs font-semibold text-green-700">Tested</span>
+            <span className="text-xs font-semibold text-green-700">Published</span>
           </div>
         );
     }
@@ -151,9 +144,9 @@ export function FloorSetupListView({ language = 'en', onCreateNew, onEditPlan }:
       <div className="bg-white border-b-2 border-gray-200 px-6 py-5">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Conceptual Floor Plans</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Device Configuration Testing</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Design and test virtual floor configurations before deployment
+              Design and test conceptual floor plans with virtual device layouts before deployment
             </p>
           </div>
           <button
@@ -161,7 +154,7 @@ export function FloorSetupListView({ language = 'en', onCreateNew, onEditPlan }:
             className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold shadow-lg transition-colors"
           >
             <Plus className="size-5" />
-            Create New Floor Plan
+            New Device Layout
           </button>
         </div>
       </div>
@@ -175,16 +168,9 @@ export function FloorSetupListView({ language = 'en', onCreateNew, onEditPlan }:
           </div>
           <div className="h-10 w-px bg-gray-300"></div>
           <div>
-            <p className="text-xs text-gray-600 mb-1">Tested & Ready</p>
+            <p className="text-xs text-gray-600 mb-1">Published</p>
             <p className="text-2xl font-bold text-green-600">
-              {plans.filter(p => p.status === 'tested').length}
-            </p>
-          </div>
-          <div className="h-10 w-px bg-gray-300"></div>
-          <div>
-            <p className="text-xs text-gray-600 mb-1">Active Deployments</p>
-            <p className="text-2xl font-bold text-blue-600">
-              {plans.filter(p => p.status === 'active').length}
+              {plans.filter(p => p.status === 'published').length}
             </p>
           </div>
           <div className="h-10 w-px bg-gray-300"></div>

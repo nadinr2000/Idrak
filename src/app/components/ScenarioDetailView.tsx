@@ -74,11 +74,11 @@ interface ScenarioDetailViewProps {
 
 type TabType = 'summary' | 'details';
 
-// Mock data for Extended Siege Scenario
+// Mock data for Extended Duration Scenario
 const mockScenarioData: { [key: string]: ScenarioData } = {
   '1': {
     id: '1',
-    name: 'Extended Siege Scenario',
+    name: 'Extended Duration Scenario',
     description: 'Prolonged hostile force containment with resource management protocols',
     status: 'failed',
     startTime: '2024-12-20T08:00:00',

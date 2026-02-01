@@ -109,39 +109,88 @@ export function SensorDetailPanel({ sensor, onBack, generateSensorHistory, emerg
       </div>
 
       {/* Historical Data Chart */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h3 className="font-bold text-gray-900 mb-4">24-Hour History</h3>
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={generateSensorHistory(sensor)}>
-            <defs>
-              <linearGradient id="sensorGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="time" stroke="#9ca3af" style={{ fontSize: '12px' }} />
-            <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#1f2937', 
-                border: 'none', 
-                borderRadius: '8px',
-                color: '#fff',
-                fontSize: '12px'
-              }}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="value" 
-              stroke="#3b82f6" 
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#sensorGradient)"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      {sensor.subType !== 'R' && sensor.subType !== 'B' && sensor.subType !== 'C' && (
+        <div className="bg-white rounded-lg border border-gray-200 p-5">
+          <h3 className="font-bold text-gray-900 mb-4">Trend</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={generateSensorHistory(sensor)}>
+              <defs>
+                <linearGradient id="sensorGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="predictionGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis 
+                dataKey="time" 
+                stroke="#9ca3af" 
+                style={{ fontSize: '12px' }}
+                tick={(props: any) => {
+                  const { x, y, payload } = props;
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      <text x={0} y={0} dy={8} textAnchor="middle" fill="#9ca3af" fontSize="12">
+                        {payload.value}
+                      </text>
+                      <text x={0} y={0} dy={22} textAnchor="middle" fill="#6b7280" fontSize="10">
+                        {props.payload?.timeActual || ''}
+                      </text>
+                    </g>
+                  );
+                }}
+                height={50}
+              />
+              <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#1f2937', 
+                  border: 'none', 
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '12px'
+                }}
+              />
+              {/* Actual readings (solid line) */}
+              <Area 
+                type="monotone" 
+                dataKey="actual" 
+                stroke="#3b82f6" 
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#sensorGradient)"
+                name="Actual"
+              />
+              {/* Predicted readings (dashed line) */}
+              <Area 
+                type="monotone" 
+                dataKey="predicted" 
+                stroke="#8b5cf6" 
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                fillOpacity={1}
+                fill="url(#predictionGradient)"
+                name="Predicted"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+          
+          {/* Legend */}
+          <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-0.5 bg-blue-500"></div>
+              <span className="text-gray-600">Last 6 Hours</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-0.5 bg-purple-500 border-dashed" style={{ borderTop: '2px dashed #8b5cf6', height: '0' }}></div>
+              <span className="text-gray-600">AI Forecast (Next 6h)</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sensor Details */}
       <div className="bg-white rounded-lg border border-gray-200 p-5">
@@ -205,12 +254,14 @@ export function SensorDetailPanel({ sensor, onBack, generateSensorHistory, emerg
                 : `CRITICAL: Immediate action required. Activate emergency protocols.`}
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <TrendingUp className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-gray-700">
-              Predicted trend: {sensor.status === 'critical' ? 'Elevated levels persisting' : Math.random() > 0.5 ? 'Stable' : 'Slight increase expected'} over next 6 hours
+          {sensor.subType !== 'R' && sensor.subType !== 'B' && sensor.subType !== 'C' && (
+            <div className="flex items-start gap-3">
+              <TrendingUp className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-gray-700">
+                Predicted trend: {sensor.status === 'critical' ? 'Elevated levels persisting' : Math.random() > 0.5 ? 'Stable' : 'Slight increase expected'} over next 6 hours
+              </div>
             </div>
-          </div>
+          )}
           <div className="flex items-start gap-3">
             <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-gray-700">

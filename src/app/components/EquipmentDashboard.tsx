@@ -13,20 +13,23 @@ interface EquipmentDashboardProps {
 
 // Mock equipment data
 const allEquipment = buildings.flatMap(building =>
-  Array.from({ length: Math.floor(building.sensors * 0.4) }, (_, i) => ({
-    id: `${building.id}-equipment-${i + 1}`,
-    buildingId: building.id,
-    buildingName: building.name,
-    floor: `Floor ${Math.floor(Math.random() * building.floors) + 1}`,
-    room: `Room ${Math.floor(Math.random() * 20) + 100}`,
-    type: ['HVAC Unit', 'Generator', 'Water Pump', 'Air Filter', 'Cooling System', 'Ventilation Fan'][Math.floor(Math.random() * 6)],
-    status: Math.random() > 0.08 ? 'operational' : Math.random() > 0.5 ? 'offline' : 'maintenance',
-    model: ['Model-A2X', 'Model-B7K', 'Model-C3M', 'Model-D9P'][Math.floor(Math.random() * 4)],
-    lastMaintenance: new Date(Date.now() - Math.random() * 7776000000), // Random within ~90 days
-    nextMaintenance: new Date(Date.now() + Math.random() * 7776000000),
-    operatingHours: Math.floor(Math.random() * 10000),
-    efficiency: 70 + Math.floor(Math.random() * 30), // 70-100%
-  }))
+  Array.from({ length: Math.floor(building.sensors * 0.4) }, (_, i) => {
+    const equipmentNumber = (buildings.indexOf(building) * 500) + i + 1;
+    return {
+      id: `EQP-${String(equipmentNumber).padStart(4, '0')}`,
+      buildingId: building.id,
+      buildingName: building.name,
+      floor: `Floor ${Math.floor(Math.random() * building.floors) + 1}`,
+      room: `Room ${Math.floor(Math.random() * 20) + 100}`,
+      type: ['HVAC Unit', 'Generator', 'Water Pump', 'Air Filter', 'Cooling System', 'Ventilation Fan'][Math.floor(Math.random() * 6)],
+      status: Math.random() > 0.08 ? 'operational' : Math.random() > 0.5 ? 'offline' : 'maintenance',
+      model: ['Model-A2X', 'Model-B7K', 'Model-C3M', 'Model-D9P'][Math.floor(Math.random() * 4)],
+      lastMaintenance: new Date(Date.now() - Math.random() * 7776000000), // Random within ~90 days
+      nextMaintenance: new Date(Date.now() + Math.random() * 7776000000),
+      operatingHours: Math.floor(Math.random() * 10000),
+      efficiency: 70 + Math.floor(Math.random() * 30), // 70-100%
+    };
+  })
 );
 
 export function EquipmentDashboard({ onEquipmentClick, onNavigateToSummary, onNavigateToBuildings, language }: EquipmentDashboardProps) {
@@ -108,68 +111,43 @@ export function EquipmentDashboard({ onEquipmentClick, onNavigateToSummary, onNa
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex flex-col h-full overflow-auto p-6 bg-gray-50 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            {language === 'en' ? 'Facility Equipment' : 'معدات المنشأة'}
-          </h1>
-          <p className="text-sm text-gray-600 mt-1">
-            {language === 'en' ? `Monitoring ${stats.total} equipment units` : `مراقبة ${stats.total} وحدة معدات`}
-          </p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          {language === 'en' ? 'Facility Equipment' : 'معدات المنشأة'}
+        </h1>
+        <p className="text-sm text-gray-600 mt-1">
+          {language === 'en' ? 'Monitor and manage all facility equipment' : 'مراقبة وإدارة جميع معدات المنشأة'}
+        </p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">{language === 'en' ? 'Total Equipment' : 'إجمالي المعدات'}</p>
-              <p className="text-2xl font-semibold text-gray-900 mt-1">{stats.total}</p>
-            </div>
-            <div className="size-12 bg-blue-50 rounded-lg flex items-center justify-center">
-              <Wrench className="size-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">{language === 'en' ? 'Operational' : 'تشغيلي'}</p>
-              <p className="text-2xl font-semibold text-green-600 mt-1">{stats.operational}</p>
-            </div>
-            <div className="size-12 bg-green-50 rounded-lg flex items-center justify-center">
-              <CheckCircle2 className="size-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">{language === 'en' ? 'Maintenance' : 'صيانة'}</p>
-              <p className="text-2xl font-semibold text-yellow-600 mt-1">{stats.maintenance}</p>
-            </div>
-            <div className="size-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-              <AlertCircle className="size-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">{language === 'en' ? 'Offline' : 'غير متصل'}</p>
-              <p className="text-2xl font-semibold text-red-600 mt-1">{stats.offline}</p>
-            </div>
-            <div className="size-12 bg-red-50 rounded-lg flex items-center justify-center">
-              <XCircle className="size-6 text-red-600" />
-            </div>
-          </div>
-        </div>
+        <StatCard
+          icon={Wrench}
+          label={language === 'en' ? 'Total Equipment' : 'إجمالي المعدات'}
+          value={stats.total}
+          color="blue"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label={language === 'en' ? 'Operational' : 'تشغيلي'}
+          value={stats.operational}
+          color="green"
+        />
+        <StatCard
+          icon={AlertCircle}
+          label={language === 'en' ? 'Maintenance' : 'صيانة'}
+          value={stats.maintenance}
+          color="yellow"
+        />
+        <StatCard
+          icon={XCircle}
+          label={language === 'en' ? 'Offline' : 'غير متصل'}
+          value={stats.offline}
+          color="silver"
+        />
       </div>
 
       {/* Search and Filters */}
@@ -334,6 +312,33 @@ export function EquipmentDashboard({ onEquipmentClick, onNavigateToSummary, onNa
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// StatCard component
+function StatCard({ icon: Icon, label, value, color }: { icon: any, label: string, value: number, color: 'blue' | 'green' | 'yellow' | 'silver' }) {
+  const bgClasses = {
+    blue: 'bg-blue-50',
+    green: 'bg-green-50',
+    yellow: 'bg-yellow-50',
+    silver: 'bg-gray-100',
+  };
+
+  const iconClasses = {
+    blue: 'bg-blue-100 text-blue-600',
+    green: 'bg-green-100 text-green-600',
+    yellow: 'bg-yellow-100 text-yellow-600',
+    silver: 'bg-gray-200 text-gray-600',
+  };
+
+  return (
+    <div className={`rounded-xl shadow-sm border border-gray-200 p-4 ${bgClasses[color]}`}>
+      <div className={`p-2 rounded-lg w-fit mb-3 ${iconClasses[color]}`}>
+        <Icon className="size-5" />
+      </div>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-sm text-gray-600 mt-1">{label}</p>
     </div>
   );
 }

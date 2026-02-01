@@ -2,7 +2,9 @@ import { X, MapPin, Activity, Radio } from 'lucide-react';
 import { Language, translations } from '../translations';
 import { useState } from 'react';
 import { BuildingDiagram3D } from './BuildingDiagram3D';
-import floorPlanImage from 'figma:asset/a1d7c50be4149c7263d7de092815c8c8d9377172.png';
+
+// Use a placeholder for the floor plan image
+const floorPlanImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwMCIgaGVpZ2h0PSI4MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMDAiIGhlaWdodD0iODAwIiBmaWxsPSIjZjhmYWZjIi8+PC9zdmc+';
 
 interface Sensor {
   id: string;

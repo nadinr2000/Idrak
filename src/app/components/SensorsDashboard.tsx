@@ -12,19 +12,22 @@ interface SensorsDashboardProps {
 
 // Mock sensor data
 const allSensors = buildings.flatMap(building =>
-  Array.from({ length: building.sensors }, (_, i) => ({
-    id: `${building.id}-sensor-${i + 1}`,
-    buildingId: building.id,
-    buildingName: building.name,
-    floor: `Floor ${Math.floor(Math.random() * building.floors) + 1}`,
-    room: `Room ${Math.floor(Math.random() * 20) + 100}`,
-    type: ['Temperature', 'Humidity', 'Air Quality', 'Motion', 'Energy'][Math.floor(Math.random() * 5)],
-    status: Math.random() > 0.05 ? 'online' : Math.random() > 0.5 ? 'offline' : 'warning',
-    value: Math.floor(Math.random() * 100),
-    unit: ['°C', '%', 'AQI', 'count', 'kWh'][Math.floor(Math.random() * 5)],
-    lastUpdate: new Date(Date.now() - Math.random() * 3600000),
-    batteryLevel: Math.floor(Math.random() * 100),
-  }))
+  Array.from({ length: building.sensors }, (_, i) => {
+    const sensorNumber = (buildings.indexOf(building) * 1000) + i + 1;
+    return {
+      id: `SNS-${String(sensorNumber).padStart(4, '0')}`,
+      buildingId: building.id,
+      buildingName: building.name,
+      floor: `Floor ${Math.floor(Math.random() * building.floors) + 1}`,
+      room: `Room ${Math.floor(Math.random() * 20) + 100}`,
+      type: ['Temperature', 'Humidity', 'Air Quality', 'Motion', 'Energy'][Math.floor(Math.random() * 5)],
+      status: Math.random() > 0.05 ? 'online' : Math.random() > 0.5 ? 'offline' : 'warning',
+      value: Math.floor(Math.random() * 100),
+      unit: ['°C', '%', 'AQI', 'count', 'kWh'][Math.floor(Math.random() * 5)],
+      batteryLevel: Math.floor(Math.random() * 100),
+      lastUpdate: new Date(Date.now() - Math.random() * 86400000), // Random within last 24 hours
+    };
+  })
 );
 
 export function SensorsDashboard({ onSensorClick, onNavigateToSummary, onNavigateToBuildings, onNavigateToIncidents }: SensorsDashboardProps) {
@@ -32,6 +35,7 @@ export function SensorsDashboard({ onSensorClick, onNavigateToSummary, onNavigat
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'online' | 'offline' | 'warning'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
@@ -57,19 +61,18 @@ export function SensorsDashboard({ onSensorClick, onNavigateToSummary, onNavigat
 
   return (
     <div className="flex flex-col h-full">
-      <Filters
-        onFilterChange={handleFilterChange}
-        showBuildingFilter={true}
-        showStatusFilter={false}
-        showSeverityFilter={false}
-        showDateFilter={false}
-        showSensorTypeFilter={true}
-      />
-      
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-6 bg-gray-50">
         <div className="max-w-[1600px] mx-auto">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Facility Sensors</h1>
+            <p className="text-sm text-gray-600 mt-1">
+              Monitor and manage all facility sensors
+            </p>
+          </div>
+
           {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <StatCard
               icon={Radio}
               label="Total Sensors"
@@ -93,245 +96,269 @@ export function SensorsDashboard({ onSensorClick, onNavigateToSummary, onNavigat
               icon={XCircle}
               label="Offline"
               value={offlineCount}
-              color="red"
+              color="silver"
             />
           </div>
 
           {/* Search and Filter Bar */}
           <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex items-center gap-4">
               {/* Search */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search sensors by ID, building, room, or type..."
+                  placeholder="Search sensors by ID, room, or type..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
-              {/* Type Filter */}
-              <div className="flex items-center gap-2">
-                <Filter className="size-5 text-gray-400" />
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {sensorTypes.map(type => (
-                    <option key={type} value={type}>
-                      {type === 'all' ? 'All Types' : type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Filter */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setStatusFilter('all')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    statusFilter === 'all'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setStatusFilter('online')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    statusFilter === 'online'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Online
-                </button>
-                <button
-                  onClick={() => setStatusFilter('warning')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    statusFilter === 'warning'
-                      ? 'bg-orange-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Warning
-                </button>
-                <button
-                  onClick={() => setStatusFilter('offline')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    statusFilter === 'offline'
-                      ? 'bg-red-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Offline
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Sensors Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredSensors.map(sensor => (
-              <div
-                key={sensor.id}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-lg hover:border-blue-300 transition-all"
-                onClick={() => onSensorClick(sensor.id)}
+              {/* Filters Button */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
+                  showFilters ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-gray-300 text-gray-700'
+                }`}
               >
-                {/* Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <SensorTypeIcon type={sensor.type} />
-                    <div>
-                      <p className="font-semibold text-gray-900 text-sm">{sensor.type}</p>
-                      <p className="text-xs text-gray-500">{sensor.id}</p>
-                    </div>
-                  </div>
-                  <StatusBadge status={sensor.status} />
-                </div>
+                <Filter className="size-5" />
+                <span>Filters</span>
+              </button>
+            </div>
 
-                {/* Current Value */}
-                <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-3xl font-bold text-gray-900">
-                    {sensor.value}
-                    <span className="text-lg text-gray-600 ml-1">{sensor.unit}</span>
-                  </p>
+            {/* Expandable Filters */}
+            {showFilters && (
+              <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="online">Online</option>
+                    <option value="offline">Offline</option>
+                    <option value="warning">Warning</option>
+                  </select>
                 </div>
-
-                {/* Location */}
-                <div className="space-y-1 mb-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Building:</span>
-                    <span className="text-gray-900 font-medium">{sensor.buildingName}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Location:</span>
-                    <span className="text-gray-900 font-medium">{sensor.floor}, {sensor.room}</span>
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Activity className="size-3" />
-                    <span>{Math.floor((Date.now() - sensor.lastUpdate.getTime()) / 60000)}m ago</span>
-                  </div>
-                  <BatteryIndicator level={sensor.batteryLevel} />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sensor Type
+                  </label>
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {sensorTypes.map(type => (
+                      <option key={type} value={type}>
+                        {type === 'all' ? 'All Types' : type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
-            ))}
+            )}
           </div>
 
-          {filteredSensors.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
-              <Radio className="size-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600">No sensors found matching your criteria</p>
-            </div>
-          )}
+          {/* Sensors Table */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sensor
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Location
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Current Value
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Battery
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Last Update
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredSensors.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center">
+                        <Radio className="size-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500">No sensors match your filters</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredSensors.map((sensor) => {
+                      const Icon = getSensorIcon(sensor.type);
+                      const StatusIcon = getStatusIcon(sensor.status);
+                      const statusColor = getStatusColor(sensor.status);
 
-          {/* Results count */}
-          {filteredSensors.length > 0 && (
-            <div className="mt-6 text-center text-sm text-gray-600">
-              Showing {filteredSensors.length} of {totalCount} sensors
+                      return (
+                        <tr
+                          key={sensor.id}
+                          onClick={() => onSensorClick(sensor.id)}
+                          className="hover:bg-gray-50 cursor-pointer transition-colors"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <div className="size-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                <Icon className="size-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{sensor.type}</div>
+                                <div className="text-xs text-gray-500">{sensor.id}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{sensor.room}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                              <StatusIcon className="size-3.5" />
+                              {sensor.status === 'online' ? 'Online' :
+                               sensor.status === 'offline' ? 'Offline' :
+                               'Warning'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-semibold text-gray-900">
+                              {sensor.value} <span className="text-gray-600 font-normal">{sensor.unit}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden w-20">
+                                <div
+                                  className={`h-full ${
+                                    sensor.batteryLevel >= 70 ? 'bg-green-500' :
+                                    sensor.batteryLevel >= 30 ? 'bg-yellow-500' :
+                                    'bg-red-500'
+                                  }`}
+                                  style={{ width: `${sensor.batteryLevel}%` }}
+                                />
+                              </div>
+                              <span className="text-sm text-gray-600">{sensor.batteryLevel}%</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {formatTime(sensor.lastUpdate)}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {formatDate(sensor.lastUpdate)}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+function getSensorIcon(type: string) {
+  switch (type) {
+    case 'Temperature':
+      return Thermometer;
+    case 'Humidity':
+      return Droplets;
+    case 'Air Quality':
+      return Wind;
+    case 'Motion':
+      return Activity;
+    case 'Energy':
+      return Zap;
+    default:
+      return Radio;
+  }
+}
+
+function getStatusIcon(status: string) {
+  switch (status) {
+    case 'online':
+      return CheckCircle2;
+    case 'offline':
+      return XCircle;
+    case 'warning':
+      return AlertCircle;
+    default:
+      return CheckCircle2;
+  }
+}
+
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'online':
+      return 'bg-green-100 text-green-800';
+    case 'offline':
+      return 'bg-gray-100 text-gray-600';
+    case 'warning':
+      return 'bg-orange-100 text-orange-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
+
+function formatTime(date: Date) {
+  return date.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+}
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric' 
+  });
+}
+
 function StatCard({ icon: Icon, label, value, color, percentage }: any) {
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600 border-blue-200',
-    green: 'bg-green-50 text-green-600 border-green-200',
-    orange: 'bg-orange-50 text-orange-600 border-orange-200',
-    red: 'bg-red-50 text-red-600 border-red-200',
+  const bgClasses = {
+    blue: 'bg-blue-50',
+    green: 'bg-green-50',
+    orange: 'bg-orange-50',
+    red: 'bg-red-50',
+    silver: 'bg-gray-100',
+  };
+
+  const iconClasses = {
+    blue: 'bg-blue-100 text-blue-600',
+    green: 'bg-green-100 text-green-600',
+    orange: 'bg-orange-100 text-orange-600',
+    red: 'bg-red-100 text-red-600',
+    silver: 'bg-gray-200 text-gray-600',
   };
 
   return (
-    <div className={`rounded-xl border-2 p-4 ${colorClasses[color]}`}>
-      <Icon className="size-6 mb-2" />
-      <p className="text-3xl font-bold mb-1">{value}</p>
-      <p className="text-sm font-medium">{label}</p>
-      {percentage !== undefined && (
-        <p className="text-xs mt-1 opacity-80">{percentage}%</p>
-      )}
-    </div>
-  );
-}
-
-function SensorTypeIcon({ type }: { type: string }) {
-  const icons = {
-    'Temperature': Thermometer,
-    'Humidity': Droplets,
-    'Air Quality': Wind,
-    'Motion': Activity,
-    'Energy': Zap,
-  };
-
-  const colors = {
-    'Temperature': 'text-red-600 bg-red-50',
-    'Humidity': 'text-blue-600 bg-blue-50',
-    'Air Quality': 'text-green-600 bg-green-50',
-    'Motion': 'text-purple-600 bg-purple-50',
-    'Energy': 'text-yellow-600 bg-yellow-50',
-  };
-
-  const Icon = icons[type] || Radio;
-  const colorClass = colors[type] || 'text-gray-600 bg-gray-50';
-
-  return (
-    <div className={`p-2 rounded-lg ${colorClass}`}>
-      <Icon className="size-5" />
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles = {
-    online: 'bg-green-100 text-green-800 border-green-200',
-    offline: 'bg-red-100 text-red-800 border-red-200',
-    warning: 'bg-orange-100 text-orange-800 border-orange-200',
-  };
-
-  const icons = {
-    online: CheckCircle2,
-    offline: XCircle,
-    warning: AlertCircle,
-  };
-
-  const Icon = icons[status] || Radio;
-
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold border ${styles[status]} uppercase`}>
-      <Icon className="size-3" />
-      {status}
-    </span>
-  );
-}
-
-function BatteryIndicator({ level }: { level: number }) {
-  const getColor = () => {
-    if (level > 50) return 'text-green-600';
-    if (level > 20) return 'text-orange-600';
-    return 'text-red-600';
-  };
-
-  return (
-    <div className={`flex items-center gap-1 ${getColor()}`}>
-      <div className="relative w-6 h-3 border-2 border-current rounded-sm">
-        <div className="absolute right-[-3px] top-1/2 -translate-y-1/2 w-1 h-1.5 bg-current rounded-r-sm" />
-        <div
-          className="h-full bg-current rounded-sm"
-          style={{ width: `${level}%` }}
-        />
+    <div className={`rounded-xl shadow-sm border border-gray-200 p-4 ${bgClasses[color]}`}>
+      <div className={`p-2 rounded-lg w-fit mb-3 ${iconClasses[color]}`}>
+        <Icon className="size-5" />
       </div>
-      <span className="text-xs font-medium">{level}%</span>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-sm text-gray-600 mt-1">{label}</p>
+      {percentage !== undefined && (
+        <p className="text-xs text-gray-500 mt-1">{percentage}%</p>
+      )}
     </div>
   );
 }

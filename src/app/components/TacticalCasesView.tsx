@@ -56,7 +56,7 @@ const threatTypes: ThreatType[] = [
 const mockTacticalCases: TacticalCase[] = [
   {
     id: '1',
-    name: 'Extended Siege Scenario',
+    name: 'Extended Duration Scenario',
     description: 'Prolonged hostile force containment with resource management protocols',
     threats: [
       { type: 'hostileForce', severity: 'critical', location: 'Perimeter - All Sectors' },
@@ -117,7 +117,8 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
   const [activeLocationThreatIndex, setActiveLocationThreatIndex] = useState<number | null>(null);
   const [newThreatLocationCallback, setNewThreatLocationCallback] = useState<((location: string) => void) | null>(null);
   const [floorSelectionMode, setFloorSelectionMode] = useState<'real' | 'conceptual'>('real');
-  const [scenarioComplexity, setScenarioComplexity] = useState<'simple' | 'detailed'>('detailed');
+  // Always use 'detailed' mode - complexity selector has been removed
+  const scenarioComplexity = 'detailed';
   
   // Simulation state
   const [showSimulation, setShowSimulation] = useState(false);
@@ -664,104 +665,6 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
                 </div>
               </div>
 
-              {/* Scenario Complexity Card */}
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="flex items-center justify-center size-10 rounded-lg bg-emerald-600 text-white">
-                    <Shield className="size-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-base">
-                      {language === 'ar' ? 'تعقيد السيناريو' : 'Scenario Complexity'}
-                      <span className="text-red-500 ml-1">*</span>
-                    </h3>
-                    <p className="text-xs text-gray-600">
-                      {language === 'ar' 
-                        ? 'اختر مستوى التفاصيل للسيناريو التكتيكي'
-                        : 'Choose the level of detail for your tactical scenario'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button
-                    onClick={() => setScenarioComplexity('simple')}
-                    className={`group relative overflow-hidden px-5 py-6 rounded-xl font-bold text-sm transition-all ${
-                      scenarioComplexity === 'simple'
-                        ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/50 scale-105'
-                        : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-emerald-400 hover:shadow-md'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-3">
-                      <div className={`flex items-center justify-center size-14 rounded-full transition-colors ${
-                        scenarioComplexity === 'simple' 
-                          ? 'bg-white/20' 
-                          : 'bg-emerald-50 group-hover:bg-emerald-100'
-                      }`}>
-                        <AlertTriangle className={`size-7 ${
-                          scenarioComplexity === 'simple' ? 'text-white' : 'text-emerald-600'
-                        }`} />
-                      </div>
-                      <div className="text-center">
-                        <div className="font-bold text-base mb-1">
-                          {language === 'ar' ? 'سيناريو بسيط' : 'Simple Scenario'}
-                        </div>
-                        <div className={`text-xs leading-relaxed ${
-                          scenarioComplexity === 'simple' ? 'text-emerald-100' : 'text-gray-500'
-                        }`}>
-                          {language === 'ar' 
-                            ? 'هجوم على مستوى المنشأة'
-                            : 'Facility level attack'}
-                        </div>
-                      </div>
-                      {scenarioComplexity === 'simple' && (
-                        <div className="absolute top-3 right-3">
-                          <CheckCircle className="size-5 text-white" />
-                        </div>
-                      )}
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => setScenarioComplexity('detailed')}
-                    className={`group relative overflow-hidden px-5 py-6 rounded-xl font-bold text-sm transition-all ${
-                      scenarioComplexity === 'detailed'
-                        ? 'bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/50 scale-105'
-                        : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-violet-400 hover:shadow-md'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-3">
-                      <div className={`flex items-center justify-center size-14 rounded-full transition-colors ${
-                        scenarioComplexity === 'detailed' 
-                          ? 'bg-white/20' 
-                          : 'bg-violet-50 group-hover:bg-violet-100'
-                      }`}>
-                        <Clock className={`size-7 ${
-                          scenarioComplexity === 'detailed' ? 'text-white' : 'text-violet-600'
-                        }`} />
-                      </div>
-                      <div className="text-center">
-                        <div className="font-bold text-base mb-1">
-                          {language === 'ar' ? 'سيناريو مفصل' : 'Detailed Scenario'}
-                        </div>
-                        <div className={`text-xs leading-relaxed ${
-                          scenarioComplexity === 'detailed' ? 'text-violet-100' : 'text-gray-500'
-                        }`}>
-                          {language === 'ar' 
-                            ? 'مع مواقع الأجهزة المحددة'
-                            : 'With specific device locations'}
-                        </div>
-                      </div>
-                      {scenarioComplexity === 'detailed' && (
-                        <div className="absolute top-3 right-3">
-                          <CheckCircle className="size-5 text-white" />
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                </div>
-              </div>
-
               {/* Floor Selection Mode Card - Only show for detailed scenarios */}
               {scenarioComplexity === 'detailed' && (
                 <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl p-6">
@@ -989,10 +892,10 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-gray-900">
-            {language === 'en' ? 'Tactical Threat Drills' : 'تدريبات التهديدات التكتيكية'}
+            {language === 'en' ? 'Situation Simulations' : 'محاكاة الحالات'}
           </h2>
           <p className="text-gray-600 mt-1">
-            {language === 'en' ? 'Simulate emergency drills' : 'محاكاة تدريبات الطوارئ'}
+            {language === 'en' ? 'Simulate emergency situations' : 'محاكاة حالات الطوارئ'}
           </p>
         </div>
         <button

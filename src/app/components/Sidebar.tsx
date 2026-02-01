@@ -30,8 +30,8 @@ export function Sidebar({ isOpen, currentSection, onSectionChange, onToggle, lan
     {
       section: 'cbrne-attacks' as MainSection,
       icon: Shield,
-      label: language === 'en' ? 'CBRNe Attacks' : 'هجمات CBRNe',
-      description: language === 'en' ? 'View previous attack reports' : 'عرض تقارير الهجمات السابقة',
+      label: language === 'en' ? 'CBRNe Threats' : 'تهديدات CBRNe',
+      description: language === 'en' ? 'View previous threat reports' : 'عرض تقارير التهديدات السابقة',
     },
   ];
 
@@ -95,6 +95,11 @@ export function Sidebar({ isOpen, currentSection, onSectionChange, onToggle, lan
         className={`bg-white border-r border-gray-200 transition-all duration-300 flex-shrink-0 ${
           isOpen ? 'w-72' : 'w-20'
         }`}
+        style={{ 
+          width: isOpen ? '288px' : '80px',
+          minWidth: isOpen ? '288px' : '80px',
+          maxWidth: isOpen ? '288px' : '80px'
+        }}
       >
         <div className="flex flex-col h-full">
           {/* Menu Toggle Button */}
@@ -219,7 +224,7 @@ function NavItem({ item, isActive, isCollapsed, onClick, language }: any) {
     return (
       <button
         onClick={onClick}
-        className={`w-full p-3 rounded-lg transition-all ${
+        className={`w-full p-3 rounded-lg transition-all flex items-start gap-3 ${
           isActive
             ? 'bg-blue-50 text-blue-700 border border-blue-200'
             : 'text-gray-700 hover:bg-gray-100'

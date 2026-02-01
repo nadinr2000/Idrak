@@ -13,6 +13,7 @@ import { MapView } from './components/MapView';
 import { FloorPlanView } from './components/FloorPlanView';
 import { FloorRoomsListView } from './components/FloorRoomsListView';
 import { RoomView } from './components/RoomView';
+import { RoomsDashboard } from './components/RoomsDashboard';
 import { IncidentDetailView } from './components/IncidentDetailView';
 import { SensorDetailView } from './components/SensorDetailView';
 import { AutomationRulesView } from './components/AutomationRulesView';
@@ -115,6 +116,7 @@ export default function App() {
     '2': 'completed',
     '3': 'draft',
   });
+  const [summaryViewKey, setSummaryViewKey] = useState(0); // Force remount of summary view
 
   // When simulation starts, navigate to Dashboards tab
   const handleSimulationStateChange = (state: typeof simulationState) => {
@@ -236,6 +238,7 @@ export default function App() {
     setCurrentSection(section);
     if (section === 'dashboard') {
       setCurrentView('summary');
+      setSummaryViewKey(prev => prev + 1); // Increment to force remount
     }
     // Reset selections when changing sections
     setSelectedFloor(null);
@@ -283,14 +286,10 @@ export default function App() {
       );
     }
     if (currentSection === 'facility-rooms') {
-      // Show the same floors list view (which shows rooms for each floor)
+      // Show Rooms Dashboard with all rooms
       return (
-        <FloorRoomsListView
-          onFloorClick={navigateToFloor}
-          onBack={() => {
-            setCurrentSection('dashboard');
-            setCurrentView('summary');
-          }}
+        <RoomsDashboard
+          onRoomClick={navigateToRoom}
           language={language}
         />
       );
@@ -448,6 +447,7 @@ export default function App() {
     if (currentView === 'summary') {
       return (
         <SummaryDashboard
+          key={summaryViewKey} // Force remount of summary view
           viewMode={viewMode}
           onNavigateToFloors={() => setCurrentView('floors')}
           onNavigateToIncidents={() => setCurrentView('incidents')}
@@ -456,6 +456,8 @@ export default function App() {
           onIncidentClick={navigateToIncident}
           language={language}
           emergencyMode={emergencyMode}
+          currentSection={currentSection}
+          summaryViewKey={summaryViewKey}
         />
       );
     }

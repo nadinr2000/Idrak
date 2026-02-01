@@ -308,7 +308,9 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
                         <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
                           {incident.title}
                         </h3>
-                        <p className="text-sm text-gray-600">{incident.location}</p>
+                        <p className="text-sm text-gray-600">
+                          {incident.location.replace(/^Floor\s+\d+\s+-\s+/i, '')}
+                        </p>
                       </div>
                       <div className="flex items-center gap-3 ml-4">
                         {incident.matchedRule ? (

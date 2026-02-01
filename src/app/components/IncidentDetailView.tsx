@@ -329,69 +329,20 @@ export function IncidentDetailView({ incidentId, onSensorClick, onBack }: Incide
           )}
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column: Floor Plan View */}
-          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-            {/* Multi-Floor Selector */}
-            {hasMultipleSensors && uniqueFloors.length > 1 && (
-              <div className="mb-4 flex flex-wrap gap-2">
-                {uniqueFloors.map(floorId => {
-                  const floorNum = floorId.split('-')[2];
-                  const sensorsOnFloor = affectedSensors.filter(s => s.floorId === floorId).length;
-                  return (
-                    <button
-                      key={floorId}
-                      onClick={() => setSelectedFloorView(floorId)}
-                      className={`px-3 py-1.5 rounded-lg font-medium text-xs transition-all ${
-                        selectedFloorView === floorId
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      Floor {floorNum} ({sensorsOnFloor})
-                    </button>
-                  );
-                })}
+        {/* Sensor Readings */}
+        <div className="space-y-4">
+          {!hasMultipleSensors ? (
+            <SensorReadingCard sensor={affectedSensors[0]} incident={incident} />
+          ) : (
+            <>
+              <h4 className="font-medium text-gray-900">Affected Sensors ({affectedSensors.length})</h4>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {affectedSensors.map((sensor) => (
+                  <SensorReadingCard key={sensor.id} sensor={sensor} incident={incident} compact />
+                ))}
               </div>
-            )}
-            
-            <h4 className="font-medium text-gray-900 mb-4">
-              {hasMultipleSensors && uniqueFloors.length > 1 
-                ? `Floor Plan View - Floor ${selectedFloorView.split('-')[2]}` 
-                : 'Floor Plan View'}
-            </h4>
-            
-            <FloorPlanDiagram 
-              incident={incident} 
-              sensors={hasMultipleSensors ? affectedSensors.filter(s => s.floorId === selectedFloorView) : undefined}
-              sensor={!hasMultipleSensors ? affectedSensors[0] : undefined}
-              floorId={hasMultipleSensors ? selectedFloorView : undefined}
-            />
-            
-            {!hasMultipleSensors && (
-              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-900">
-                  <span className="font-semibold">Location:</span> {incident.location}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Right Column: Sensor Readings */}
-          <div className="space-y-4">
-            {!hasMultipleSensors ? (
-              <SensorReadingCard sensor={affectedSensors[0]} incident={incident} />
-            ) : (
-              <>
-                <h4 className="font-medium text-gray-900">Affected Sensors ({affectedSensors.length})</h4>
-                <div className="space-y-3 max-h-[800px] overflow-y-auto pr-2">
-                  {affectedSensors.map((sensor) => (
-                    <SensorReadingCard key={sensor.id} sensor={sensor} incident={incident} compact />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -1056,7 +1007,7 @@ function SensorReadingCard({ sensor, incident, compact }: { sensor: any, inciden
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="font-semibold text-gray-900 text-lg">{sensor.name}</p>
-          <p className="text-sm text-gray-600 mt-1">{sensor.location}</p>
+          <p className="text-sm text-gray-600 mt-1">{sensor.location.replace(/^Floor\s+\d+\s+-\s+/i, '')}</p>
         </div>
         <SeverityBadge severity={incident.severity} />
       </div>

@@ -15,7 +15,7 @@ export function EmergencyHeader({ language, onOpenArchitecturalView }: Emergency
           <div>
             <div className="flex items-center gap-2">
               <h2 className="font-semibold text-gray-900">
-                {language === 'en' ? 'Bunker Alpha-7' : 'المخبأ ألفا-7'}
+                {language === 'en' ? 'Site' : 'الموقع'}
               </h2>
               {/* Under Attack Badge */}
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-red-600 to-red-700 text-white text-xs font-bold rounded-md uppercase tracking-wide shadow-md border border-red-800">

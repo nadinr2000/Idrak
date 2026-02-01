@@ -46,9 +46,11 @@ interface SummaryDashboardProps {
   onIncidentClick: (incidentId: string) => void;
   language: Language;
   emergencyMode?: boolean;
+  currentSection: string;
+  summaryViewKey: number;
 }
 
-export function SummaryDashboard({ viewMode, onNavigateToFloors, onNavigateToIncidents, onNavigateToSensors, onFloorClick, onIncidentClick, language, emergencyMode }: SummaryDashboardProps) {
+export function SummaryDashboard({ viewMode, onNavigateToFloors, onNavigateToIncidents, onNavigateToSensors, onFloorClick, onIncidentClick, language, emergencyMode, currentSection, summaryViewKey }: SummaryDashboardProps) {
   const [incidentTimeRange, setIncidentTimeRange] = useState('30');
   const t = translations[language];
 
@@ -162,6 +164,7 @@ export function SummaryDashboard({ viewMode, onNavigateToFloors, onNavigateToInc
   // Always show the floor plan view directly
   return (
     <FloorPlanView
+      key={`facility-overview-${currentSection}-${summaryViewKey}`} // Force remount when navigating to dashboard
       floorId="floor-a-2"
       onRoomClick={() => {}}
       onIncidentClick={onIncidentClick}

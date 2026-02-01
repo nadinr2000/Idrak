@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Building2, MapPin, Layers, Activity, X, Info } from 'lucide-react';
 import { Language, translations } from '../translations';
-import floorPlanImage from 'figma:asset/74de286e0cae8bea131a1f8f26e3fa7e73d9f96a.png';
+
+// Use a placeholder for the floor plan image
+const floorPlanImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwMCIgaGVpZ2h0PSI4MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMDAiIGhlaWdodD0iODAwIiBmaWxsPSIjZjhmYWZjIi8+PC9zdmc+';
 
 interface Sensor {
   id: string;
