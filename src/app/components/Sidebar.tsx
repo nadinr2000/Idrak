@@ -24,13 +24,13 @@ export function Sidebar({ isOpen, currentSection, onSectionChange, onToggle, lan
     {
       section: 'incidents' as MainSection,
       icon: AlertTriangle,
-      label: t.incidents || 'Incidents',
+      label: language === 'en' ? 'Alarms' : 'الإنذارات',
       description: t.incidentsMenuDesc || 'Monitor and manage active facility incidents',
     },
     {
       section: 'cbrne-attacks' as MainSection,
       icon: Shield,
-      label: language === 'en' ? 'CBRNe Threats' : 'تهديدات CBRNe',
+      label: language === 'en' ? 'Threats' : 'التهديدات',
       description: language === 'en' ? 'View previous threat reports' : 'عرض تقارير التهديدات السابقة',
     },
   ];

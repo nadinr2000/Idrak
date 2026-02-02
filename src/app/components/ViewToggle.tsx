@@ -44,7 +44,7 @@ export function ViewToggle({ viewMode, onViewModeChange, buildingName, language,
               {emergencyMode === 'incident' && (
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-md uppercase tracking-wide shadow-sm border border-orange-200">
                   <AlertTriangle className="size-3" />
-                  <span>{language === 'en' ? 'Active Incident' : 'حادثة نشطة'}</span>
+                  <span>{language === 'en' ? 'Active Alarm' : 'إنذار نشط'}</span>
                 </div>
               )}
               {emergencyMode === 'emergency' && (

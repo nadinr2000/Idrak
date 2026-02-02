@@ -5,8 +5,8 @@ import { SensorDetailPanel } from './SensorDetailPanel';
 import { IncidentDetailView } from './IncidentDetailView';
 import { Language, translations } from '../translations';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import floorPlanImage from '@/assets/NewBG.png';
-
+import floorPlanImage from '@/assets/NewBG2.png';
+import { GaugeWidget } from './GaugeWidget';
 
 // Legend Component
 function FloorPlanLegend({ emergencyMode }: { emergencyMode: false | 'incident' | 'emergency' }) {
@@ -24,11 +24,10 @@ function FloorPlanLegend({ emergencyMode }: { emergencyMode: false | 'incident' 
     { symbol: 'AF', label: 'Airflow Sensors', color: '#139B48', shape: 'circle' },
     { symbol: 'F', label: 'Filter Sensors', color: '#139B48', shape: 'circle' },
     { symbol: 'GTV', label: 'Gastight Valve Sensors', color: '#139B48', shape: 'rectangle' },
-    { symbol: 'DOOR', label: 'Door Status', color: '#139B48', shape: 'rectangle' },
   ];
 
   const renderShape = (item: typeof legendItems[0]) => {
-    const baseClasses = "flex items-center justify-center text-[8px] font-bold text-black border border-black";
+    const baseClasses = "flex items-center justify-center text-[8px] font-bold text-white border border-black/20";
     
     if (item.shape === 'circle') {
       return (
@@ -41,16 +40,17 @@ function FloorPlanLegend({ emergencyMode }: { emergencyMode: false | 'incident' 
       );
     } else if (item.shape === 'triangle') {
       return (
-        <div className="w-5 h-5 relative flex items-center justify-center">
+        <div className="w-[23px] h-[23px] relative flex items-center justify-center">
           <svg className="absolute inset-0 w-full h-full" viewBox="0 0 16 16" fill="none">
             <path 
               d="M8 2 L14 14 L2 14 Z" 
               fill={item.color} 
               stroke="black" 
-              strokeWidth="1"
+              strokeWidth="0.5"
+              strokeOpacity="0.2"
             />
           </svg>
-          <span className="relative z-10 text-[8px] font-bold text-black mt-1">{item.symbol}</span>
+          <span className="relative z-10 text-[8px] font-bold text-white mt-1">{item.symbol}</span>
         </div>
       );
     } else {
@@ -108,7 +108,7 @@ interface Sensor {
   id: string;
   name: string;
   type: 'chemical' | 'temperature' | 'smoke' | 'motion' | 'pressure' | 'air-quality';
-  subType?: 'R' | 'B' | 'C' | 'CO2' | 'CO' | 'O2' | 'DP' | 'T' | 'H' | 'W' | 'AF' | 'F' | 'GTV' | 'DOOR';
+  subType?: 'R' | 'B' | 'C' | 'CO2' | 'CO' | 'O2' | 'DP' | 'T' | 'H' | 'W' | 'AF' | 'F' | 'GTV';
   status: 'operational' | 'warning' | 'critical';
   value: string;
   x: number;
@@ -156,6 +156,15 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
       try {
         const sensor = JSON.parse(clickedSensor);
         console.log('Parsed sensor:', sensor);
+        
+        // Don't restore warning/threat sensors in normal mode
+        const isWarningOrThreatSensor = sensor.id === 'warning-incident-001' || sensor.id === 'threat-emergency-001';
+        if (isWarningOrThreatSensor && emergencyMode === 'normal') {
+          console.log('Skipping restore of warning/threat sensor in normal mode');
+          localStorage.removeItem('clickedSensor');
+          return;
+        }
+        
         setSelectedSensor(sensor);
         if (viewMode === 'dashboard') {
           setIsRightPanelCollapsed(false);
@@ -165,13 +174,13 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
         localStorage.removeItem('clickedSensor');
       }
     }
-  }, [viewMode]);
+  }, [viewMode, emergencyMode]);
 
   // Helper function to get sensor shape based on subType
   const getSensorShape = (subType?: string) => {
     if (!subType) return 'circle';
     if (['R', 'B', 'C'].includes(subType)) return 'triangle';
-    if (['GTV', 'DOOR'].includes(subType)) return 'rectangle';
+    if (['GTV'].includes(subType)) return 'rectangle';
     return 'circle';
   };
 
@@ -277,7 +286,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
       // Create a warning sensor with AI insights
       const warningSensor: Sensor = {
         id: 'warning-incident-001',
-        name: 'Active Incident Alert',
+        name: 'Active Alarm Alert',
         type: 'warning',
         subType: 'AI',
         status: 'warning',
@@ -321,6 +330,23 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
       setSelectedSensor(threatSensor);
       setIsRightPanelCollapsed(false);
       localStorage.setItem('clickedSensor', JSON.stringify(threatSensor));
+    } else if (emergencyMode === 'normal') {
+      // Clear any active alerts whenever in normal mode, regardless of view
+      const clickedSensor = localStorage.getItem('clickedSensor');
+      if (clickedSensor) {
+        try {
+          const sensor = JSON.parse(clickedSensor);
+          const isWarningOrThreatSensor = sensor.id === 'warning-incident-001' || sensor.id === 'threat-emergency-001';
+          if (isWarningOrThreatSensor) {
+            setSelectedSensor(null);
+            setSelectedIncident(null);
+            localStorage.removeItem('clickedSensor');
+          }
+        } catch (e) {
+          // Invalid sensor data, clear it
+          localStorage.removeItem('clickedSensor');
+        }
+      }
     }
   }, [emergencyMode, viewMode]);
 
@@ -525,14 +551,16 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
   return (
     <div ref={containerRef} className={`h-full w-full overflow-hidden ${
-      emergencyMode === 'emergency' ? 'bg-red-50' : emergencyMode === 'incident' ? 'bg-orange-50/30' : 'bg-gray-50'
+      emergencyMode === 'emergency' ? 'bg-red-50' : emergencyMode === 'incident' ? 'bg-orange-50/30' : 'bg-green-50/50'
     }`}>
       {/* Floor Plan - Full Width */}
       <div className={`w-full h-full overflow-auto ${
-        emergencyMode === 'emergency' ? 'bg-red-50' : emergencyMode === 'incident' ? 'bg-orange-50/30' : 'bg-gray-100'
+        emergencyMode === 'emergency' ? 'bg-red-50' : emergencyMode === 'incident' ? 'bg-orange-50/30' : 'bg-green-50/50'
       }`}>
-        {/* Facility Header Bar */}
-        <div className="px-4 pt-4 pb-3">
+        {/* Facility Header Bar - Sticky */}
+        <div className={`sticky top-0 z-50 px-4 pt-4 pb-3 ${
+          emergencyMode === 'emergency' ? 'bg-red-50' : emergencyMode === 'incident' ? 'bg-orange-50' : 'bg-green-50'
+        }`}>
           <div className={`flex items-center justify-between gap-3 border rounded-lg px-4 py-1.5 ${
             emergencyMode === 'emergency' 
               ? 'bg-red-200 border-red-400' 
@@ -1083,48 +1111,6 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         </span>
                       </td>
                     </tr>
-
-                    <tr 
-                      className="border-b border-gray-300 hover:bg-blue-50 cursor-pointer transition-colors"
-                      onClick={() => handleSensorClick({
-                        id: 'DOOR-01',
-                        name: 'Door Sensor 01',
-                        type: 'motion',
-                        subType: 'DOOR',
-                        status: 'operational',
-                        value: 'Closed',
-                        x: 20,
-                        y: 80,
-                        lastUpdate: '02/01/2026 08:12:55'
-                      })}
-                    >
-                      <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-medium">
-                        02/01/2026 08:12:55
-                      </td>
-                      <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-semibold">
-                        Door Sensor Timeout
-                      </td>
-                      <td className="py-2 px-3 text-[10px] text-blue-600 border-r border-gray-300 font-semibold hover:underline">
-                        Entrance A / Sensor DOOR-01
-                      </td>
-                      <td className="py-2 px-3 border-r border-gray-300">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
-                          LOW
-                        </span>
-                      </td>
-                      <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300">
-                        <div className="font-semibold text-blue-600">Sensor Self-Diagnostic</div>
-                        <div className="text-[9px] text-gray-500 mt-0.5">Sensor reset and reconnected successfully</div>
-                      </td>
-                      <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-medium">
-                        12s
-                      </td>
-                      <td className="py-2 px-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-800 border border-green-300">
-                          ✓ RESOLVED
-                        </span>
-                      </td>
-                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -1201,6 +1187,39 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 </button>
               </div>
 
+              {/* Live Status Gauges - Below Zoom Controls */}
+              <div className="absolute top-20 right-8 z-10 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border border-gray-300 w-[240px] mt-4">
+                <h4 className="text-xs font-bold text-gray-800 mb-3 text-center border-b border-gray-300 pb-1.5">Live Status</h4>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <GaugeWidget 
+                    label="CO" 
+                    value={emergencyMode === 'emergency' ? 45 : emergencyMode === 'incident' ? 12 : 3} 
+                    unit="ppm" 
+                    maxValue={50} 
+                  />
+                  <GaugeWidget 
+                    label="CO₂" 
+                    value={emergencyMode === 'emergency' ? 1850 : emergencyMode === 'incident' ? 950 : 420} 
+                    unit="ppm" 
+                    maxValue={2000} 
+                  />
+                  <GaugeWidget 
+                    label="O₂" 
+                    value={emergencyMode === 'emergency' ? 18.2 : emergencyMode === 'incident' ? 19.8 : 20.9} 
+                    unit="%" 
+                    maxValue={21} 
+                    reverse={true}
+                  />
+                  <GaugeWidget 
+                    label="Water" 
+                    value={emergencyMode === 'emergency' ? 78 : emergencyMode === 'incident' ? 45 : 12} 
+                    unit="%" 
+                    maxValue={100} 
+                  />
+                </div>
+              </div>
+
               {/* Detailed Floor Plan Image */}
               <div
                 className="relative"
@@ -1217,7 +1236,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   style={{ 
                     width: viewMode === 'dashboard' 
                       ? '1800px'  // Fixed width for dashboard view
-                      : `${leftPanelWidth ? Math.min(Math.max(leftPanelWidth - 100, 600), 1800) : 600}px`,  // Responsive with min 600px, max 1800px
+                      : `${leftPanelWidth ? Math.min(Math.max(leftPanelWidth - 100, 600), 2400) : 600}px`,  // Responsive with min 600px, max 2400px
                     height: 'auto', 
                     display: 'block' 
                   }}
@@ -1230,7 +1249,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     style={{ 
                       width: viewMode === 'dashboard' 
                         ? '1800px'  // Fixed width for dashboard view
-                        : `${leftPanelWidth ? Math.min(Math.max(leftPanelWidth - 100, 600), 1800) : 600}px`,  // Responsive with min 600px, max 1800px
+                        : `${leftPanelWidth ? Math.min(Math.max(leftPanelWidth - 100, 600), 2400) : 600}px`,  // Responsive with min 600px, max 2400px
                     }}
                   >
                     {/* Vertical lines */}

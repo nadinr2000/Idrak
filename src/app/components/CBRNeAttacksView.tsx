@@ -195,12 +195,12 @@ export function CBRNeAttacksView({ language = 'en' }: CBRNeThreatsViewProps) {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {language === 'en' ? 'CBRNe Threat Reports' : 'تقارير تهديدات CBRNe'}
+                  {language === 'en' ? 'Threat Reports' : 'تقارير التهديدات'}
                 </h1>
                 <p className="text-sm text-gray-600">
                   {language === 'en' 
-                    ? 'Historical records of Chemical, Biological, Radiological, Nuclear, and Explosive incidents'
-                    : 'السجلات التاريخية للحوادث الكيميائية والبيولوجية والإشعاعية والنووية والمتفجرات'
+                    ? 'Archive of previous threat incidents and response procedures'
+                    : 'أرشيف حوادث التهديدات السابقة وإجراءات الاستجابة'
                   }
                 </p>
               </div>

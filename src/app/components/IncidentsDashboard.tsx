@@ -73,10 +73,10 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
           {/* Page Title */}
           <div className="mb-6">
             <h2 className="text-2xl font-semibold text-gray-900">
-              {language === 'en' ? 'Incidents' : 'الحوادث'}
+              {language === 'en' ? 'Alarms' : 'الإنذارات'}
             </h2>
             <p className="text-gray-600 mt-1">
-              {language === 'en' ? 'Monitor and manage active facility incidents' : 'مراقبة وإدارة حوادث المنشأة النشطة'}
+              {language === 'en' ? 'Monitor and manage active facility alarms' : 'مراقبة وإدارة إنذارات المنشأة النشطة'}
             </p>
           </div>
 
