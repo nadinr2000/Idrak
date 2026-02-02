@@ -2,8 +2,8 @@ import { Language, translations } from '../translations';
 
 interface DemoControlBarProps {
   language: Language;
-  emergencyMode: boolean;
-  onToggleEmergency: (mode: boolean) => void;
+  emergencyMode: false | 'incident' | 'emergency';
+  onToggleEmergency: (mode: false | 'incident' | 'emergency') => void;
 }
 
 export function DemoControlBar({ language, emergencyMode, onToggleEmergency }: DemoControlBarProps) {
@@ -36,24 +36,35 @@ export function DemoControlBar({ language, emergencyMode, onToggleEmergency }: D
           <div className="flex items-center gap-1.5 bg-white rounded-md p-0.5 shadow-sm border border-gray-200">
             <button
               onClick={() => onToggleEmergency(false)}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all ${
-                !emergencyMode
+              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all ${ 
+                emergencyMode === false
                   ? 'bg-green-500 text-white'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
-              <div className={`size-2 rounded-full ${!emergencyMode ? 'bg-white' : 'bg-green-500'}`}></div>
-              {language === 'en' ? 'Normal State' : 'حالة عادية'}
+              <div className={`size-2 rounded-full ${emergencyMode === false ? 'bg-white' : 'bg-green-500'}`}></div>
+              {language === 'en' ? 'Normal State' : 'yttuli'}
             </button>
             <button
-              onClick={() => onToggleEmergency(true)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
-                emergencyMode
+              onClick={() => onToggleEmergency('incident')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all ${ 
+                emergencyMode === 'incident'
+                  ? 'bg-orange-500 text-white'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <div className={`size-2 rounded-full ${emergencyMode === 'incident' ? 'bg-white' : 'bg-orange-500'}`}></div>
+              {language === 'en' ? 'Active Incident' : 'حادث نشط'}
+            </button>
+            <button
+              onClick={() => onToggleEmergency('emergency')}
+              className={`px-3 py-1 rounded text-xs font-medium transition-all flex items-center gap-1.5 ${ 
+                emergencyMode === 'emergency'
                   ? 'bg-red-600 text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <div className={`size-2 rounded-full ${emergencyMode ? 'bg-white' : 'bg-red-500'}`}></div>
+              <div className={`size-2 rounded-full ${emergencyMode === 'emergency' ? 'bg-white' : 'bg-red-500'}`}></div>
               {language === 'en' ? 'Emergency' : 'الطوارئ'}
             </button>
           </div>

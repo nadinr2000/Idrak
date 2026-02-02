@@ -4,7 +4,7 @@ export const translations = {
   en: {
     // TopBar
     appTitle: 'IDRAK',
-    appSubtitle: 'Intelligent CBRNe-aware BMS',
+    appSubtitle: 'Intelligent command and control',
     admin: 'Facility Commander',
     
     // Navigation
@@ -413,7 +413,7 @@ export const translations = {
     
     // FloorPlanView - Bunker & Legend
     bunkerAlpha7: 'Site',
-    underAttack: 'Under Attack',
+    underAttack: 'Threat Detected',
     warning: 'Warning',
     differentialPressure: 'Differential Pressure',
     cbrnDetectors: 'CBRN Detectors',

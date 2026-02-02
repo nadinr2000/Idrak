@@ -1,33 +1,5 @@
-import { rooms, incidents, buildings, floors } from './data/mockData';
-import { getRoomById } from './data/roomsData';
 import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
-import { SummaryDashboard } from './components/SummaryDashboard';
-import { EmergencyDashboard } from './components/EmergencyDashboard';
-import { BuildingsDashboard } from './components/BuildingsDashboard';
-import { BuildingDiagram } from './components/BuildingDiagram';
-import { BuildingDiagram3D } from './components/BuildingDiagram3D';
-import { IncidentsDashboard } from './components/IncidentsDashboard';
-import { SensorsDashboard } from './components/SensorsDashboard';
-import { MapView } from './components/MapView';
-import { FloorPlanView } from './components/FloorPlanView';
-import { FloorRoomsListView } from './components/FloorRoomsListView';
-import { RoomView } from './components/RoomView';
-import { RoomsDashboard } from './components/RoomsDashboard';
-import { IncidentDetailView } from './components/IncidentDetailView';
-import { SensorDetailView } from './components/SensorDetailView';
-import { AutomationRulesView } from './components/AutomationRulesView';
-import { AISettingsView } from './components/AISettingsView';
-import { TacticalCasesView } from './components/TacticalCasesView';
-import { ScenarioDetailView } from './components/ScenarioDetailView';
-import { DraftScenarioView } from './components/DraftScenarioView';
-import { ThresholdsView } from './components/ThresholdsView';
-import { AlarmsSetupView } from './components/AlarmsSetupView';
-import { EscalationPathsView } from './components/EscalationPathsView';
-import { UsersView } from './components/UsersView';
-import { NotificationsView } from './components/NotificationsView';
-import { PreferencesView } from './components/PreferencesView';
-import { CBRNeAttacksView } from './components/CBRNeAttacksView';
 import { TopBar } from './components/TopBar';
 import { DemoControlBar } from './components/DemoControlBar';
 import { EmergencyBar } from './components/EmergencyBar';
@@ -40,52 +12,37 @@ import { FloorSetupListView } from './components/FloorSetupListView';
 import { EquipmentDashboard } from './components/EquipmentDashboard';
 import { LandingPage } from './components/LandingPage';
 import { LoadingScreen } from './components/LoadingScreen';
+import { SummaryDashboard } from './components/SummaryDashboard';
+import { EmergencyDashboard } from './components/EmergencyDashboard';
+import { BuildingsDashboard } from './components/BuildingsDashboard';
+import { IncidentsDashboard } from './components/IncidentsDashboard';
+import { SensorsDashboard } from './components/SensorsDashboard';
+import { MapView } from './components/MapView';
+import { FloorPlanView } from './components/FloorPlanView';
+import { FloorRoomsListView } from './components/FloorRoomsListView';
+import { RoomView } from './components/RoomView';
+import { SensorDetailView } from './components/SensorDetailView';
+import { IncidentDetailView } from './components/IncidentDetailView';
+import { AutomationRulesView } from './components/AutomationRulesView';
+import { RoomsDashboard } from './components/RoomsDashboard';
+import { CBRNeAttacksView } from './components/CBRNeAttacksView';
+import { TacticalCasesView } from './components/TacticalCasesView';
+import { DraftScenarioView } from './components/DraftScenarioView';
+import { ScenarioDetailView } from './components/ScenarioDetailView';
+import { ThresholdsView } from './components/ThresholdsView';
+import { AlarmsSetupView } from './components/AlarmsSetupView';
+import { EscalationPathsView } from './components/EscalationPathsView';
+import { UsersView } from './components/UsersView';
+import { NotificationsView } from './components/NotificationsView';
+import { PreferencesView } from './components/PreferencesView';
 import { Language } from './translations';
+import { rooms } from '@/app/data/mockData';
+import { getRoomById } from '@/app/data/roomsData';
+import { ViewLevel, MainSection, Building, Incident, AffectedSensor } from './types';
 
 // IDRAK Building Management System - Main Application Entry Point  
 // Enhanced with emergency mode and architectural visualization
-export type ViewLevel = 'summary' | 'emergency' | 'floors' | 'incidents' | 'sensors' | 'map' | 'floor' | 'room' | 'incident' | 'sensor';
-export type MainSection = 'dashboard' | 'incidents' | 'cbrne-attacks' | 'automation' | 'tactical-cases' | 'layout-tests' | 'thresholds' | 'alarms' | 'escalation' | 'users' | 'notifications' | 'preferences' | 'facility-floors' | 'facility-rooms' | 'facility-sensors' | 'facility-equipment';
-
-export interface Building {
-  id: string;
-  name: string;
-  floors: number;
-  sensors: number;
-  incidents: number;
-  status: 'operational' | 'warning' | 'critical';
-}
-
-export interface Incident {
-  id: string;
-  title: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  location: string;
-  buildingId?: string;
-  floorId?: string;
-  roomId?: string;
-  timestamp: Date;
-  status: 'active' | 'resolving' | 'resolved';
-  aiPrediction?: string;
-  suggestedAction?: string;
-  autoActionApplied?: boolean;
-  matchedRule?: string;
-  ruleAction?: string;
-  sensorId?: string;
-  affectedSensors?: AffectedSensor[];
-}
-
-export interface AffectedSensor {
-  id: string;
-  name: string;
-  location: string;
-  floorId: string;
-  roomId: string;
-  reading: string;
-  normalRange: string;
-  deviation: string;
-  type: string;
-}
+export type { ViewLevel, MainSection, Building, Incident, AffectedSensor };
 
 export default function App() {
   const [showLandingPage, setShowLandingPage] = useState(true);
@@ -102,7 +59,7 @@ export default function App() {
   const [selectedFloorPlan, setSelectedFloorPlan] = useState<string | null>(null);
   const [isCreatingFloorPlan, setIsCreatingFloorPlan] = useState(false);
   const [language, setLanguage] = useState<Language>('en');
-  const [emergencyMode, setEmergencyMode] = useState(false);
+  const [emergencyMode, setEmergencyMode] = useState<false | 'incident' | 'emergency'>(false);
   const [architecturalViewOpen, setArchitecturalViewOpen] = useState(false);
   const [simulationState, setSimulationState] = useState<{
     drillName: string;
@@ -148,6 +105,33 @@ export default function App() {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
   }, [language]);
+
+  // Sync demo mode across browser tabs using localStorage
+  useEffect(() => {
+    // Load initial state from localStorage
+    const savedMode = localStorage.getItem('idrak-demo-mode');
+    if (savedMode && (savedMode === 'false' || savedMode === 'incident' || savedMode === 'emergency')) {
+      setEmergencyMode(savedMode === 'false' ? false : savedMode as 'incident' | 'emergency');
+    }
+
+    // Listen for changes from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'idrak-demo-mode' && e.newValue) {
+        const newMode = e.newValue;
+        if (newMode === 'false' || newMode === 'incident' || newMode === 'emergency') {
+          setEmergencyMode(newMode === 'false' ? false : newMode as 'incident' | 'emergency');
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Save demo mode to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('idrak-demo-mode', String(emergencyMode));
+  }, [emergencyMode]);
 
   // Auto-switch to Emergency Dashboard when emergency mode is activated
   useEffect(() => {
@@ -391,7 +375,7 @@ export default function App() {
               speed: 1,
             });
             // Activate emergency mode
-            setEmergencyMode(true);
+            setEmergencyMode('emergency');
             // Navigate to emergency dashboard
             setCurrentSection('dashboard');
             setCurrentView('emergency');
@@ -576,7 +560,9 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#f8fafc]">
+    <div className={`h-screen flex flex-col ${
+      emergencyMode === 'emergency' ? 'bg-red-50' : 'bg-[#f8fafc]'
+    }`}>
       {/* Show landing page first */}
       {showLandingPage ? (
         <LandingPage 
@@ -595,22 +581,23 @@ export default function App() {
             emergencyMode={emergencyMode}
             onToggleEmergency={(mode) => {
               setEmergencyMode(mode);
-              if (mode) {
+              if (mode === 'emergency') {
                 // When switching to Emergency mode, activate emergency dashboard
                 setCurrentSection('dashboard');
                 setCurrentView('emergency');
-              } else {
-                // When switching to Normal mode, stop simulation and return to summary
+              } else if (mode === false) {
+                // When switching to Operational mode, stop simulation and return to summary
                 setSimulationState(null);
                 if (currentView === 'emergency') {
                   setCurrentView('summary');
                 }
               }
+              // For incident mode, just set the mode without changing views
             }}
           />
           
-          {/* Emergency Bar - Shows below demo bar when simulation is active */}
-          {emergencyMode && simulationState && (
+          {/* Emergency Bar - Shows below demo bar when in emergency mode with simulation active */}
+          {emergencyMode === 'emergency' && simulationState && (
             <EmergencyBar
               scenarioName={simulationState.drillName}
               language={language}

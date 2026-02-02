@@ -20,7 +20,7 @@ export function EmergencyHeader({ language, onOpenArchitecturalView }: Emergency
               {/* Under Attack Badge */}
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-red-600 to-red-700 text-white text-xs font-bold rounded-md uppercase tracking-wide shadow-md border border-red-800">
                 <AlertTriangle className="size-3" />
-                <span>{language === 'en' ? 'Under Attack' : 'تحت هجوم'}</span>
+                <span>{language === 'en' ? 'Threat Detected' : 'تم اكتشاف تهديد'}</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">

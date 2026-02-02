@@ -2,7 +2,7 @@ import { Shield, Brain, Activity, AlertTriangle, Wind, Radio, CheckCircle, Arrow
 import { Language } from '../translations';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { IdrakLogo } from './IdrakLogo';
+import Group3Logo from '@/imports/Group3';
 
 interface LandingPageProps {
   language: Language;
@@ -31,16 +31,6 @@ const features = [
     shadow: 'shadow-purple-500/20',
   },
   {
-    icon: AlertTriangle,
-    titleEn: 'Enhanced Decision Making',
-    titleAr: 'تحسين صنع القرار',
-    descEn: 'Automated emergency protocols with real-time timeline tracking, personnel evacuation, and tactical case management.',
-    descAr: 'بروتوكولات طوارئ تلقائية مع تتبع الجدول الزمني الفوري، إخلاء الموظفين، وإدارة الحالات التكتيكية.',
-    gradient: 'from-indigo-500 to-blue-600',
-    border: 'border-indigo-500',
-    shadow: 'shadow-indigo-500/20',
-  },
-  {
     icon: Radio,
     titleEn: 'Threat Detection',
     titleAr: 'كشف التهديدات',
@@ -49,6 +39,16 @@ const features = [
     gradient: 'from-fuchsia-500 to-pink-600',
     border: 'border-fuchsia-500',
     shadow: 'shadow-fuchsia-500/20',
+  },
+  {
+    icon: AlertTriangle,
+    titleEn: 'Enhanced Decision Making',
+    titleAr: 'تحسين صنع القرار',
+    descEn: 'Automated emergency protocols with real-time timeline tracking, personnel evacuation, and tactical case management.',
+    descAr: 'بروتوكولات طوارئ تلقائية مع تتبع الجدول الزمني الفوري، إخلاء الموظفين، وإدارة الحالات التكتيكية.',
+    gradient: 'from-indigo-500 to-blue-600',
+    border: 'border-indigo-500',
+    shadow: 'shadow-indigo-500/20',
   },
   {
     icon: CheckCircle,
@@ -113,22 +113,14 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
       <div className="absolute bottom-0 right-1/4 size-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
 
-      {/* Top Bar */}
+      {/* Top Bar with Demo Button */}
       <div className="flex items-center justify-between px-8 py-4 relative z-10">
-        {/* Empty spacer for balance */}
+        {/* Left spacer for balance */}
         <div className="w-32"></div>
-
-        {/* Logo - Centered */}
-        <div className="flex flex-col items-center justify-center flex-1 gap-0">
-          <div className="relative group cursor-pointer">
-            <IdrakLogo className="w-48 h-48 drop-shadow-2xl" />
-          </div>
-          {/* Tagline */}
-          <h1 className="text-lg font-light text-slate-300 -mt-16 tracking-widest">
-            {language === 'en' ? 'Intelligent Command & Control' : 'القيادة والسيطرة الذكية'}
-          </h1>
-        </div>
-
+        
+        {/* Center spacer */}
+        <div className="flex-1"></div>
+        
         {/* Enter Dashboard Button */}
         <button
           onClick={onEnter}
@@ -143,23 +135,31 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
           </div>
         </button>
       </div>
-
+      
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 pb-16 relative z-10 pt-24">
-        {/* Catchy Summary Line */}
-        <div className="mb-12 text-center -mt-12 max-w-5xl mx-auto">
-          <p className="text-3xl text-white tracking-wide font-semibold leading-relaxed">
+      <div className="flex-1 flex flex-col items-center justify-center px-8 pb-16 relative z-10">
+        {/* Logo - Centered */}
+        <div className="flex flex-col items-center justify-center mb-4">
+          <div className="relative group cursor-pointer">
+            <Group3Logo className="w-64 h-64 drop-shadow-2xl" />
+          </div>
+        </div>
+        
+        {/* Intelligent Command and Control heading */}
+        <div className="mb-12 text-center max-w-5xl mx-auto">
+          <h2 className="text-5xl text-white font-bold leading-tight">
             {language === 'en' ? (
               <>
-                <span className="bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">AI-powered</span>
-                {' '}analysis and anomaly detection, for enhanced Real-time monitoring and control,{' '}
-                <span className="bg-gradient-to-r from-blue-400 to-cyan-500 bg-clip-text text-transparent">smart</span>
-                {' '}decision making, and automated response systems.
+                <span className="block">Intelligent</span>
+                <span className="block">Command and Control</span>
               </>
             ) : (
-              'مراقبة وتحكم فوري مع تحليل مدعوم بالذكاء الاصطناعي وكشف التهديدات، اتخاذ قرارات ذكية، وأنظمة استجابة تلقائية'
+              <>
+                <span className="block">القيادة والسيطرة</span>
+                <span className="block">الذكية</span>
+              </>
             )}
-          </p>
+          </h2>
         </div>
         
         {/* Feature Carousel - All Visible with One Expanded */}
@@ -255,15 +255,7 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-700/50 bg-slate-900/80 backdrop-blur-xl py-4 relative z-10">
-        <div className="text-center">
-          <p className="text-slate-400 text-sm">
-            {language === 'en' 
-              ? '© 2026 IDRAK System. Military-Grade Facility Management Solution.'
-              : '© 2026 نظام إدراك. حل إدارة المنشآت بمستوى عسكري.'}
-          </p>
-        </div>
-      </div>
+      {/* ... remove this code ... */}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Building, Incident } from '../App';
+import { Building, Incident } from '../types';
 
 export const buildings: Building[] = [
   { id: 'building-a', name: 'Building A - North Wing', floors: 5, sensors: 142, incidents: 3, status: 'warning' },
