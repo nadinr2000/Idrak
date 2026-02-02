@@ -7,6 +7,7 @@ import { Language, translations } from '../translations';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import floorPlanImage from '@/assets/NewBG.png';
 
+
 // Legend Component
 function FloorPlanLegend({ emergencyMode }: { emergencyMode: false | 'incident' | 'emergency' }) {
   const legendItems = [
