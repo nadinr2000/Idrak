@@ -1195,26 +1195,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 <div className="grid grid-cols-2 gap-4">
                   <GaugeWidget 
                     label="CO" 
-                    value={emergencyMode === 'emergency' ? 45 : emergencyMode === 'incident' ? 12 : 3} 
+                    value={3} 
                     unit="ppm" 
                     maxValue={50} 
                   />
                   <GaugeWidget 
                     label="CO₂" 
-                    value={emergencyMode === 'emergency' ? 1850 : emergencyMode === 'incident' ? 950 : 420} 
+                    value={emergencyMode === 'incident' ? 950 : 420} 
                     unit="ppm" 
                     maxValue={2000} 
                   />
                   <GaugeWidget 
                     label="O₂" 
-                    value={emergencyMode === 'emergency' ? 18.2 : emergencyMode === 'incident' ? 19.8 : 20.9} 
+                    value={emergencyMode === 'emergency' ? 18.2 : 20.9} 
                     unit="%" 
                     maxValue={21} 
                     reverse={true}
                   />
                   <GaugeWidget 
                     label="Water" 
-                    value={emergencyMode === 'emergency' ? 78 : emergencyMode === 'incident' ? 45 : 12} 
+                    value={emergencyMode === 'emergency' ? 78 : 12} 
                     unit="%" 
                     maxValue={100} 
                   />
@@ -1324,7 +1324,11 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                     <div className="flex items-center gap-0">
                       {/* CO2 Sensor */}
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div className={`w-2.5 h-2.5 rounded-full border border-black/20 flex items-center justify-center relative ${
+                        emergencyMode === 'incident' 
+                          ? 'bg-orange-500 sensor-blink sensor-pulse-ring' 
+                          : 'bg-green-600'
+                      }`}>
                         <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
                       </div>
                       {/* CO Sensor */}
@@ -1918,7 +1922,9 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">B3</span>
                   </div>
                   {/* C3 - Chemical Detector */}
-                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                  <div className={`w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity ${
+                    emergencyMode === 'emergency' ? 'sensor-blink sensor-pulse-ring-red' : ''
+                  }`}
                     onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c3', name: 'Chemical Detector C3', status: 'operational', value: 'Normal', type: 'chemical' })}
                     onMouseLeave={handleSensorLeave}
                     onMouseDown={(e) => {
@@ -1940,7 +1946,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
                       <path 
                         d="M7 2 L12 12 L2 12 Z" 
-                        fill="#16a34a"
+                        fill={emergencyMode === 'emergency' ? '#dc2626' : '#16a34a'}
                         stroke="rgba(0,0,0,0.2)" 
                         strokeWidth="0.5"
                       />

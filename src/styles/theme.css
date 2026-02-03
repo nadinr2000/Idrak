@@ -188,4 +188,66 @@
   [dir="rtl"] * {
     direction: rtl;
   }
+
+  /* Blinking animation for alarm sensors */
+  @keyframes sensor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .sensor-blink {
+    animation: sensor-blink 1.5s ease-in-out infinite;
+  }
+
+  /* Pulsing ring animation for alarm sensors */
+  @keyframes sensor-pulse-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.8);
+      opacity: 0.3;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+  }
+
+  .sensor-pulse-ring::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid #fb923c;
+    animation: sensor-pulse-ring 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Red pulsing ring for emergency sensors */
+  @keyframes sensor-pulse-ring-red {
+    0% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.8);
+      opacity: 0.3;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+  }
+
+  .sensor-pulse-ring-red::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid #dc2626;
+    animation: sensor-pulse-ring-red 2s ease-in-out infinite;
+    pointer-events: none;
+  }
 }
