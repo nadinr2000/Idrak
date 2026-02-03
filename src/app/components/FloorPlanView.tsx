@@ -1214,9 +1214,10 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   />
                   <GaugeWidget 
                     label="Water" 
-                    value={emergencyMode === 'emergency' ? 78 : 12} 
+                    value={emergencyMode === 'emergency' ? 22 : 88} 
                     unit="%" 
                     maxValue={100} 
+                    reverse={true}
                   />
                 </div>
               </div>
@@ -1324,19 +1325,76 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                     <div className="flex items-center gap-0">
                       {/* CO2 Sensor */}
-                      <div className={`w-2.5 h-2.5 rounded-full border border-black/20 flex items-center justify-center relative ${
-                        emergencyMode === 'incident' 
-                          ? 'bg-orange-500 sensor-blink sensor-pulse-ring' 
-                          : 'bg-green-600'
-                      }`}>
+                      <div 
+                        className={`w-2.5 h-2.5 rounded-full border border-black/20 flex items-center justify-center relative cursor-pointer hover:opacity-80 transition-opacity ${
+                          emergencyMode === 'incident' 
+                            ? 'bg-orange-500 sensor-blink sensor-pulse-ring' 
+                            : 'bg-green-600'
+                        }`}
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co2-2', name: 'CO₂ Sensor - Group 2', status: emergencyMode === 'incident' ? 'warning' : 'operational', value: emergencyMode === 'incident' ? '950 ppm' : '420 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO2-02', 
+                            name: 'CO₂ Sensor - Group 2', 
+                            type: 'air-quality', 
+                            subType: 'CO2', 
+                            status: emergencyMode === 'incident' ? 'warning' : 'operational', 
+                            value: emergencyMode === 'incident' ? '950 ppm' : '420 ppm', 
+                            x: 25, 
+                            y: 18,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
                       </div>
                       {/* CO Sensor */}
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co-2', name: 'CO Sensor - Group 2', status: 'operational', value: '3 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO-02', 
+                            name: 'CO Sensor - Group 2', 
+                            type: 'air-quality', 
+                            subType: 'CO', 
+                            status: 'operational', 
+                            value: '3 ppm', 
+                            x: 25, 
+                            y: 18,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO</span>
                       </div>
                       {/* O₂ Sensor */}
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-o2-2', name: 'O₂ Sensor - Group 2', status: 'operational', value: '20.9%', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'O2-02', 
+                            name: 'O₂ Sensor - Group 2', 
+                            type: 'air-quality', 
+                            subType: 'O2', 
+                            status: 'operational', 
+                            value: '20.9%', 
+                            x: 25, 
+                            y: 18,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">O₂</span>
                       </div>
                     </div>
@@ -1361,15 +1419,72 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                     <div className="flex items-center gap-0">
                       {/* CO2 Sensor */}
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co2-1', name: 'CO₂ Sensor - Group 1', status: 'operational', value: '420 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO2-01', 
+                            name: 'CO₂ Sensor - Group 1', 
+                            type: 'air-quality', 
+                            subType: 'CO2', 
+                            status: 'operational', 
+                            value: '420 ppm', 
+                            x: 18, 
+                            y: 12,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
                       </div>
                       {/* CO Sensor */}
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co-1', name: 'CO Sensor - Group 1', status: 'operational', value: '3 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO-01', 
+                            name: 'CO Sensor - Group 1', 
+                            type: 'air-quality', 
+                            subType: 'CO', 
+                            status: 'operational', 
+                            value: '3 ppm', 
+                            x: 18, 
+                            y: 12,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO</span>
                       </div>
                       {/* O₂ Sensor */}
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-o2-1', name: 'O₂ Sensor - Group 1', status: 'operational', value: '20.9%', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'O2-01', 
+                            name: 'O₂ Sensor - Group 1', 
+                            type: 'air-quality', 
+                            subType: 'O2', 
+                            status: 'operational', 
+                            value: '20.9%', 
+                            x: 18, 
+                            y: 12,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">O₂</span>
                       </div>
                     </div>
@@ -1389,13 +1504,70 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       </svg>
                     </div>
                     <div className="flex items-center gap-0">
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co2-3', name: 'CO₂ Sensor - Group 3', status: 'operational', value: '415 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO2-03', 
+                            name: 'CO₂ Sensor - Group 3', 
+                            type: 'air-quality', 
+                            subType: 'CO2', 
+                            status: 'operational', 
+                            value: '415 ppm', 
+                            x: 32, 
+                            y: 17,
+                            lastUpdate: '2s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
                       </div>
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co-3', name: 'CO Sensor - Group 3', status: 'operational', value: '2 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO-03', 
+                            name: 'CO Sensor - Group 3', 
+                            type: 'air-quality', 
+                            subType: 'CO', 
+                            status: 'operational', 
+                            value: '2 ppm', 
+                            x: 32, 
+                            y: 17,
+                            lastUpdate: '2s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO</span>
                       </div>
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-o2-3', name: 'O₂ Sensor - Group 3', status: 'operational', value: '20.8%', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'O2-03', 
+                            name: 'O₂ Sensor - Group 3', 
+                            type: 'air-quality', 
+                            subType: 'O2', 
+                            status: 'operational', 
+                            value: '20.8%', 
+                            x: 32, 
+                            y: 17,
+                            lastUpdate: '2s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">O₂</span>
                       </div>
                     </div>
@@ -1415,13 +1587,70 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       </svg>
                     </div>
                     <div className="flex items-center gap-0">
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co2-4', name: 'CO₂ Sensor - Group 4', status: 'operational', value: '425 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO2-04', 
+                            name: 'CO₂ Sensor - Group 4', 
+                            type: 'air-quality', 
+                            subType: 'CO2', 
+                            status: 'operational', 
+                            value: '425 ppm', 
+                            x: 33, 
+                            y: 23,
+                            lastUpdate: '3s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
                       </div>
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co-4', name: 'CO Sensor - Group 4', status: 'operational', value: '3 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO-04', 
+                            name: 'CO Sensor - Group 4', 
+                            type: 'air-quality', 
+                            subType: 'CO', 
+                            status: 'operational', 
+                            value: '3 ppm', 
+                            x: 33, 
+                            y: 23,
+                            lastUpdate: '3s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO</span>
                       </div>
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-o2-4', name: 'O₂ Sensor - Group 4', status: 'operational', value: '20.9%', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'O2-04', 
+                            name: 'O₂ Sensor - Group 4', 
+                            type: 'air-quality', 
+                            subType: 'O2', 
+                            status: 'operational', 
+                            value: '20.9%', 
+                            x: 33, 
+                            y: 23,
+                            lastUpdate: '3s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">O₂</span>
                       </div>
                     </div>
@@ -1441,13 +1670,70 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       </svg>
                     </div>
                     <div className="flex items-center gap-0">
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co2-5', name: 'CO₂ Sensor - Group 5', status: 'operational', value: '418 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO2-05', 
+                            name: 'CO₂ Sensor - Group 5', 
+                            type: 'air-quality', 
+                            subType: 'CO2', 
+                            status: 'operational', 
+                            value: '418 ppm', 
+                            x: 33, 
+                            y: 27,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
                       </div>
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co-5', name: 'CO Sensor - Group 5', status: 'operational', value: '2 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO-05', 
+                            name: 'CO Sensor - Group 5', 
+                            type: 'air-quality', 
+                            subType: 'CO', 
+                            status: 'operational', 
+                            value: '2 ppm', 
+                            x: 33, 
+                            y: 27,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO</span>
                       </div>
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-o2-5', name: 'O₂ Sensor - Group 5', status: 'operational', value: '20.8%', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'O2-05', 
+                            name: 'O₂ Sensor - Group 5', 
+                            type: 'air-quality', 
+                            subType: 'O2', 
+                            status: 'operational', 
+                            value: '20.8%', 
+                            x: 33, 
+                            y: 27,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">O₂</span>
                       </div>
                     </div>
@@ -1467,13 +1753,70 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       </svg>
                     </div>
                     <div className="flex items-center gap-0">
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co2-6', name: 'CO₂ Sensor - Group 6', status: 'operational', value: '422 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO2-06', 
+                            name: 'CO₂ Sensor - Group 6', 
+                            type: 'air-quality', 
+                            subType: 'CO2', 
+                            status: 'operational', 
+                            value: '422 ppm', 
+                            x: 20, 
+                            y: 26,
+                            lastUpdate: '2s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
                       </div>
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co-6', name: 'CO Sensor - Group 6', status: 'operational', value: '3 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO-06', 
+                            name: 'CO Sensor - Group 6', 
+                            type: 'air-quality', 
+                            subType: 'CO', 
+                            status: 'operational', 
+                            value: '3 ppm', 
+                            x: 20, 
+                            y: 26,
+                            lastUpdate: '2s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO</span>
                       </div>
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-o2-6', name: 'O₂ Sensor - Group 6', status: 'operational', value: '20.9%', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'O2-06', 
+                            name: 'O₂ Sensor - Group 6', 
+                            type: 'air-quality', 
+                            subType: 'O2', 
+                            status: 'operational', 
+                            value: '20.9%', 
+                            x: 20, 
+                            y: 26,
+                            lastUpdate: '2s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">O₂</span>
                       </div>
                     </div>
@@ -1493,13 +1836,70 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       </svg>
                     </div>
                     <div className="flex items-center gap-0">
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co2-7', name: 'CO₂ Sensor - Group 7', status: 'operational', value: '417 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO2-07', 
+                            name: 'CO₂ Sensor - Group 7', 
+                            type: 'air-quality', 
+                            subType: 'CO2', 
+                            status: 'operational', 
+                            value: '417 ppm', 
+                            x: 20, 
+                            y: 21,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
                       </div>
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-co-7', name: 'CO Sensor - Group 7', status: 'operational', value: '3 ppm', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'CO-07', 
+                            name: 'CO Sensor - Group 7', 
+                            type: 'air-quality', 
+                            subType: 'CO', 
+                            status: 'operational', 
+                            value: '3 ppm', 
+                            x: 20, 
+                            y: 21,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">CO</span>
                       </div>
-                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                      <div 
+                        className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                        onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-o2-7', name: 'O₂ Sensor - Group 7', status: 'operational', value: '20.9%', type: 'air-quality' })}
+                        onMouseLeave={handleSensorLeave}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleSensorClick({ 
+                            id: 'O2-07', 
+                            name: 'O₂ Sensor - Group 7', 
+                            type: 'air-quality', 
+                            subType: 'O2', 
+                            status: 'operational', 
+                            value: '20.9%', 
+                            x: 20, 
+                            y: 21,
+                            lastUpdate: '1s ago'
+                          });
+                        }}
+                      >
                         <span className="text-white text-[4px] font-bold leading-none">O₂</span>
                       </div>
                     </div>
@@ -1508,35 +1908,130 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
                 {/* Door 1 - Simple green rectangle */}
                 <div className="absolute" style={{ left: '49%', top: '6%' }}>
-                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'door-1', name: 'Door 1', status: 'operational', value: 'Closed', type: 'access-control' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DOOR-01', 
+                        name: 'Door 1', 
+                        type: 'access-control', 
+                        subType: 'Door', 
+                        status: 'operational', 
+                        value: 'Closed', 
+                        x: 19, 
+                        y: 2,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">Door 1</span>
                   </div>
                 </div>
 
                 {/* DP1 - Differential Pressure Sensor */}
                 <div className="absolute" style={{ left: '44%', top: '6%' }}>
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'dp-1', name: 'Differential Pressure Sensor DP1', status: 'operational', value: '+2.5 Pa', type: 'pressure' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DP-01', 
+                        name: 'Differential Pressure Sensor DP1', 
+                        type: 'pressure', 
+                        subType: 'DP', 
+                        status: 'operational', 
+                        value: '+2.5 Pa', 
+                        x: 17, 
+                        y: 2,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">DP1</span>
                   </div>
                 </div>
 
                 {/* Door 2 - Simple green rectangle */}
                 <div className="absolute" style={{ left: '49%', top: '20%' }}>
-                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'door-2', name: 'Door 2', status: 'operational', value: 'Closed', type: 'access-control' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DOOR-02', 
+                        name: 'Door 2', 
+                        type: 'access-control', 
+                        subType: 'Door', 
+                        status: 'operational', 
+                        value: 'Closed', 
+                        x: 19, 
+                        y: 8,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">Door 2</span>
                   </div>
                 </div>
 
                 {/* DP2 - Differential Pressure Sensor */}
                 <div className="absolute" style={{ left: '44%', top: '20%' }}>
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'dp-2', name: 'Differential Pressure Sensor DP2', status: 'operational', value: '+2.3 Pa', type: 'pressure' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DP-02', 
+                        name: 'Differential Pressure Sensor DP2', 
+                        type: 'pressure', 
+                        subType: 'DP', 
+                        status: 'operational', 
+                        value: '+2.3 Pa', 
+                        x: 17, 
+                        y: 8,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">DP2</span>
                   </div>
                 </div>
 
                 {/* Door 3 - Simple green rectangle */}
                 <div className="absolute" style={{ left: '71.5%', top: '39.5%' }}>
-                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'door-3', name: 'Door 3', status: 'operational', value: 'Closed', type: 'access-control' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DOOR-03', 
+                        name: 'Door 3', 
+                        type: 'access-control', 
+                        subType: 'Door', 
+                        status: 'operational', 
+                        value: 'Closed', 
+                        x: 28, 
+                        y: 15,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">Door 3</span>
                   </div>
                 </div>
@@ -1544,11 +2039,49 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 {/* T1 and H1 sensors at grid position 35,16 */}
                 <div className="absolute flex items-center gap-0" style={{ left: '87.75%', top: '39.25%' }}>
                   {/* T1 - Temperature Sensor */}
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-t1', name: 'Temperature Sensor T1', status: 'operational', value: '22.5°C', type: 'temperature' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'T-01', 
+                        name: 'Temperature Sensor T1', 
+                        type: 'temperature', 
+                        subType: 'T', 
+                        status: 'operational', 
+                        value: '22.5°C', 
+                        x: 35, 
+                        y: 16,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">T1</span>
                   </div>
                   {/* H1 - Humidity Sensor */}
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-h1', name: 'Humidity Sensor H1', status: 'operational', value: '45%', type: 'humidity' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'H-01', 
+                        name: 'Humidity Sensor H1', 
+                        type: 'humidity', 
+                        subType: 'H', 
+                        status: 'operational', 
+                        value: '45%', 
+                        x: 35, 
+                        y: 16,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">H1</span>
                   </div>
                 </div>
@@ -1556,11 +2089,49 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 {/* T2 and H2 sensors at grid position 35,22 */}
                 <div className="absolute flex items-center gap-0" style={{ left: '87.75%', top: '54.25%' }}>
                   {/* T2 - Temperature Sensor */}
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-t2', name: 'Temperature Sensor T2', status: 'operational', value: '23.1°C', type: 'temperature' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'T-02', 
+                        name: 'Temperature Sensor T2', 
+                        type: 'temperature', 
+                        subType: 'T', 
+                        status: 'operational', 
+                        value: '23.1°C', 
+                        x: 35, 
+                        y: 22,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">T2</span>
                   </div>
                   {/* H2 - Humidity Sensor */}
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-h2', name: 'Humidity Sensor H2', status: 'operational', value: '46%', type: 'humidity' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'H-02', 
+                        name: 'Humidity Sensor H2', 
+                        type: 'humidity', 
+                        subType: 'H', 
+                        status: 'operational', 
+                        value: '46%', 
+                        x: 35, 
+                        y: 22,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">H2</span>
                   </div>
                 </div>
@@ -1568,11 +2139,49 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 {/* T3 and H3 sensors at grid position 35,26 */}
                 <div className="absolute flex items-center gap-0" style={{ left: '87.75%', top: '64.25%' }}>
                   {/* T3 - Temperature Sensor */}
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-t3', name: 'Temperature Sensor T3', status: 'operational', value: '22.8°C', type: 'temperature' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'T-03', 
+                        name: 'Temperature Sensor T3', 
+                        type: 'temperature', 
+                        subType: 'T', 
+                        status: 'operational', 
+                        value: '22.8°C', 
+                        x: 35, 
+                        y: 26,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">T3</span>
                   </div>
                   {/* H3 - Humidity Sensor */}
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-h3', name: 'Humidity Sensor H3', status: 'operational', value: '44%', type: 'humidity' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'H-03', 
+                        name: 'Humidity Sensor H3', 
+                        type: 'humidity', 
+                        subType: 'H', 
+                        status: 'operational', 
+                        value: '44%', 
+                        x: 35, 
+                        y: 26,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">H3</span>
                   </div>
                 </div>
@@ -1580,11 +2189,49 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 {/* T5 and H5 sensors at grid position 18,21 */}
                 <div className="absolute flex items-center gap-0" style={{ left: '44.75%', top: '52.75%' }}>
                   {/* T5 - Temperature Sensor */}
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-t5', name: 'Temperature Sensor T5', status: 'operational', value: '23.4°C', type: 'temperature' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'T-05', 
+                        name: 'Temperature Sensor T5', 
+                        type: 'temperature', 
+                        subType: 'T', 
+                        status: 'operational', 
+                        value: '23.4°C', 
+                        x: 18, 
+                        y: 21,
+                        lastUpdate: '3s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">T5</span>
                   </div>
                   {/* H5 - Humidity Sensor */}
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-h5', name: 'Humidity Sensor H5', status: 'operational', value: '47%', type: 'humidity' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'H-05', 
+                        name: 'Humidity Sensor H5', 
+                        type: 'humidity', 
+                        subType: 'H', 
+                        status: 'operational', 
+                        value: '47%', 
+                        x: 18, 
+                        y: 21,
+                        lastUpdate: '3s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">H5</span>
                   </div>
                 </div>
@@ -1592,82 +2239,316 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 {/* T6 and H6 sensors at grid position 18,25 */}
                 <div className="absolute flex items-center gap-0" style={{ left: '44.75%', top: '62.75%' }}>
                   {/* T6 - Temperature Sensor */}
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-t6', name: 'Temperature Sensor T6', status: 'operational', value: '22.9°C', type: 'temperature' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'T-06', 
+                        name: 'Temperature Sensor T6', 
+                        type: 'temperature', 
+                        subType: 'T', 
+                        status: 'operational', 
+                        value: '22.9°C', 
+                        x: 18, 
+                        y: 25,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">T6</span>
                   </div>
                   {/* H6 - Humidity Sensor */}
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-h6', name: 'Humidity Sensor H6', status: 'operational', value: '43%', type: 'humidity' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'H-06', 
+                        name: 'Humidity Sensor H6', 
+                        type: 'humidity', 
+                        subType: 'H', 
+                        status: 'operational', 
+                        value: '43%', 
+                        x: 18, 
+                        y: 25,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">H6</span>
                   </div>
                 </div>
 
                 {/* Door 4 - Simple green rectangle */}
                 <div className="absolute" style={{ left: '59.5%', top: '92.5%' }}>
-                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'door-4', name: 'Door 4', status: 'operational', value: 'Closed', type: 'access-control' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DOOR-04', 
+                        name: 'Door 4', 
+                        type: 'access-control', 
+                        subType: 'Door', 
+                        status: 'operational', 
+                        value: 'Closed', 
+                        x: 23, 
+                        y: 37,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">Door 4</span>
                   </div>
                 </div>
 
                 {/* Door 5 - Simple green rectangle */}
                 <div className="absolute" style={{ left: '59.5%', top: '78.5%' }}>
-                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'door-5', name: 'Door 5', status: 'operational', value: 'Closed', type: 'access-control' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DOOR-05', 
+                        name: 'Door 5', 
+                        type: 'access-control', 
+                        subType: 'Door', 
+                        status: 'operational', 
+                        value: 'Closed', 
+                        x: 23, 
+                        y: 31,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">Door 5</span>
                   </div>
                 </div>
 
                 {/* Door 6 - Simple green rectangle */}
                 <div className="absolute" style={{ left: '39%', top: '40%' }}>
-                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'door-6', name: 'Door 6', status: 'operational', value: 'Closed', type: 'access-control' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DOOR-06', 
+                        name: 'Door 6', 
+                        type: 'access-control', 
+                        subType: 'Door', 
+                        status: 'operational', 
+                        value: 'Closed', 
+                        x: 15, 
+                        y: 16,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">Door 6</span>
                   </div>
                 </div>
 
                 {/* Door 7 - Simple green rectangle */}
                 <div className="absolute" style={{ left: '29%', top: '40%' }}>
-                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'door-7', name: 'Door 7', status: 'operational', value: 'Closed', type: 'access-control' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DOOR-07', 
+                        name: 'Door 7', 
+                        type: 'access-control', 
+                        subType: 'Door', 
+                        status: 'operational', 
+                        value: 'Closed', 
+                        x: 11, 
+                        y: 16,
+                        lastUpdate: '3s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">Door 7</span>
                   </div>
                 </div>
 
                 {/* Door 8 - Simple green rectangle */}
                 <div className="absolute" style={{ left: '19%', top: '40%' }}>
-                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'door-8', name: 'Door 8', status: 'operational', value: 'Closed', type: 'access-control' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DOOR-08', 
+                        name: 'Door 8', 
+                        type: 'access-control', 
+                        subType: 'Door', 
+                        status: 'operational', 
+                        value: 'Closed', 
+                        x: 7, 
+                        y: 16,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">Door 8</span>
                   </div>
                 </div>
 
                 {/* DP3 - Differential Pressure Sensor */}
                 <div className="absolute" style={{ left: '65.5%', top: '78.5%' }}>
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'dp-3', name: 'Differential Pressure Sensor DP3', status: 'operational', value: '+2.7 Pa', type: 'pressure' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DP-03', 
+                        name: 'Differential Pressure Sensor DP3', 
+                        type: 'pressure', 
+                        subType: 'DP', 
+                        status: 'operational', 
+                        value: '+2.7 Pa', 
+                        x: 26, 
+                        y: 31,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">DP3</span>
                   </div>
                 </div>
 
                 {/* DP4 - Differential Pressure Sensor */}
                 <div className="absolute" style={{ left: '65.5%', top: '92.5%' }}>
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'dp-4', name: 'Differential Pressure Sensor DP4', status: 'operational', value: '+2.4 Pa', type: 'pressure' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DP-04', 
+                        name: 'Differential Pressure Sensor DP4', 
+                        type: 'pressure', 
+                        subType: 'DP', 
+                        status: 'operational', 
+                        value: '+2.4 Pa', 
+                        x: 26, 
+                        y: 37,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">DP4</span>
                   </div>
                 </div>
 
                 {/* DP5 - Differential Pressure Sensor */}
                 <div className="absolute" style={{ left: '29%', top: '42.5%' }}>
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'dp-5', name: 'Differential Pressure Sensor DP5', status: 'operational', value: '+2.6 Pa', type: 'pressure' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DP-05', 
+                        name: 'Differential Pressure Sensor DP5', 
+                        type: 'pressure', 
+                        subType: 'DP', 
+                        status: 'operational', 
+                        value: '+2.6 Pa', 
+                        x: 11, 
+                        y: 17,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">DP5</span>
                   </div>
                 </div>
 
                 {/* DP6 - Differential Pressure Sensor */}
                 <div className="absolute" style={{ left: '19%', top: '42.5%' }}>
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'dp-6', name: 'Differential Pressure Sensor DP6', status: 'operational', value: '+2.8 Pa', type: 'pressure' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'DP-06', 
+                        name: 'Differential Pressure Sensor DP6', 
+                        type: 'pressure', 
+                        subType: 'DP', 
+                        status: 'operational', 
+                        value: '+2.8 Pa', 
+                        x: 7, 
+                        y: 17,
+                        lastUpdate: '3s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">DP6</span>
                   </div>
                 </div>
 
                 {/* W - Water Level Sensor */}
                 <div className="absolute" style={{ left: '16%', top: '25.5%' }}>
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
-                    <span className="text-white text-[4px] font-bold leading-none">W</span>
+                  <div className="relative">
+                    {/* Pulsing ring in emergency mode */}
+                    {emergencyMode === 'emergency' && (
+                      <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-red-600 animate-ping opacity-75" />
+                    )}
+                    <div 
+                      className={`w-2.5 h-2.5 ${emergencyMode === 'emergency' ? 'bg-red-600' : 'bg-green-600'} rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative`}
+                      onMouseEnter={(e) => handleSensorHover(e, { id: 'w-1', name: 'Water Level Sensor', status: emergencyMode === 'emergency' ? 'critical' : 'operational', value: emergencyMode === 'emergency' ? '22%' : '88%', type: 'water-level' })}
+                      onMouseLeave={handleSensorLeave}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleSensorClick({ 
+                          id: 'W-01', 
+                          name: 'Water Level Sensor', 
+                          type: 'water-level', 
+                          subType: 'W', 
+                          status: emergencyMode === 'emergency' ? 'critical' : 'operational', 
+                          value: emergencyMode === 'emergency' ? '22%' : '88%', 
+                          x: 6, 
+                          y: 10,
+                          lastUpdate: '2s ago'
+                        });
+                      }}
+                    >
+                      <span className="text-white text-[4px] font-bold leading-none">W</span>
+                    </div>
                   </div>
                 </div>
 
@@ -1925,7 +2806,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   <div className={`w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity ${
                     emergencyMode === 'emergency' ? 'sensor-blink sensor-pulse-ring-red' : ''
                   }`}
-                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c3', name: 'Chemical Detector C3', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c3', name: 'Chemical Detector C3', status: emergencyMode === 'emergency' ? 'critical' : 'operational', value: emergencyMode === 'emergency' ? 'Detected' : 'Normal', type: 'chemical' })}
                     onMouseLeave={handleSensorLeave}
                     onMouseDown={(e) => {
                       e.stopPropagation();
@@ -1935,8 +2816,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         name: 'Chemical Detector C3', 
                         type: 'chemical', 
                         subType: 'C', 
-                        status: 'operational', 
-                        value: 'Normal', 
+                        status: emergencyMode === 'emergency' ? 'critical' : 'operational', 
+                        value: emergencyMode === 'emergency' ? 'Detected' : 'Normal', 
                         x: 27, 
                         y: 20,
                         lastUpdate: '2s ago'
@@ -2623,35 +3504,130 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
                 {/* F - Filter Sensor */}
                 <div className="absolute" style={{ left: '13.8%', top: '57.5%' }}>
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'f-1', name: 'Filter Sensor', status: 'operational', value: '92% Efficiency', type: 'filter' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'F-01', 
+                        name: 'Filter Sensor', 
+                        type: 'filter', 
+                        subType: 'F', 
+                        status: 'operational', 
+                        value: '92% Efficiency', 
+                        x: 5, 
+                        y: 23,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">F</span>
                   </div>
                 </div>
 
                 {/* AF - Airflow Sensor */}
                 <div className="absolute" style={{ left: '13.8%', top: '65%' }}>
-                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'af-1', name: 'Airflow Sensor', status: 'operational', value: '450 CFM', type: 'airflow' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'AF-01', 
+                        name: 'Airflow Sensor', 
+                        type: 'airflow', 
+                        subType: 'AF', 
+                        status: 'operational', 
+                        value: '450 CFM', 
+                        x: 5, 
+                        y: 26,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">AF</span>
                   </div>
                 </div>
 
                 {/* GTV 1 - Gas Tight Valve */}
                 <div className="absolute" style={{ left: '11%', top: '55%' }}>
-                  <div className="w-4 h-2 bg-green-600 border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-4 h-2 bg-green-600 border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'gtv-1', name: 'Gas Tight Valve 1', status: 'operational', value: 'Open', type: 'valve' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'GTV-01', 
+                        name: 'Gas Tight Valve 1', 
+                        type: 'valve', 
+                        subType: 'GTV', 
+                        status: 'operational', 
+                        value: 'Open', 
+                        x: 4, 
+                        y: 22,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">GTV 1</span>
                   </div>
                 </div>
 
                 {/* GTV 2 - Gas Tight Valve */}
                 <div className="absolute" style={{ left: '11%', top: '57.5%' }}>
-                  <div className="w-4 h-2 bg-green-600 border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-4 h-2 bg-green-600 border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'gtv-2', name: 'Gas Tight Valve 2', status: 'operational', value: 'Open', type: 'valve' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'GTV-02', 
+                        name: 'Gas Tight Valve 2', 
+                        type: 'valve', 
+                        subType: 'GTV', 
+                        status: 'operational', 
+                        value: 'Open', 
+                        x: 4, 
+                        y: 23,
+                        lastUpdate: '1s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">GTV 2</span>
                   </div>
                 </div>
 
                 {/* GTV 3 - Gas Tight Valve */}
                 <div className="absolute" style={{ left: '11%', top: '62.5%' }}>
-                  <div className="w-4 h-2 bg-green-600 border border-black/20 flex items-center justify-center">
+                  <div 
+                    className="w-4 h-2 bg-green-600 border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'gtv-3', name: 'Gas Tight Valve 3', status: 'operational', value: 'Open', type: 'valve' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'GTV-03', 
+                        name: 'Gas Tight Valve 3', 
+                        type: 'valve', 
+                        subType: 'GTV', 
+                        status: 'operational', 
+                        value: 'Open', 
+                        x: 4, 
+                        y: 25,
+                        lastUpdate: '3s ago'
+                      });
+                    }}
+                  >
                     <span className="text-white text-[4px] font-bold leading-none">GTV 3</span>
                   </div>
                 </div>
