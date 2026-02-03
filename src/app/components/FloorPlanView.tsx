@@ -24,6 +24,7 @@ function FloorPlanLegend({ emergencyMode }: { emergencyMode: false | 'incident' 
     { symbol: 'AF', label: 'Airflow Sensors', color: '#139B48', shape: 'circle' },
     { symbol: 'F', label: 'Filter Sensors', color: '#139B48', shape: 'circle' },
     { symbol: 'GTV', label: 'Gastight Valve Sensors', color: '#139B48', shape: 'rectangle' },
+    { symbol: 'Door', label: 'Door Status', color: '#16a34a', shape: 'rectangle' },
   ];
 
   const renderShape = (item: typeof legendItems[0]) => {
@@ -126,7 +127,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   const [leftPanelWidth, setLeftPanelWidth] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1.0);
   const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(-120);
+  const [panY, setPanY] = useState(-80);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(true);
@@ -146,6 +147,18 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const currentHoverElementRef = useRef<HTMLElement | null>(null);
+
+  // Helper functions for sensor hover events
+  const handleSensorHover = (e: React.MouseEvent, sensor: { id: string; name: string; status: string; value: string; type: string }) => {
+    e.stopPropagation();
+    setHoveredFloorSensor(sensor);
+    setTooltipPosition({ x: e.clientX + 10, y: e.clientY + 10 });
+  };
+
+  const handleSensorLeave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setHoveredFloorSensor(null);
+  };
 
   // Check localStorage for clicked sensor on mount and when switching to dashboard view
   useEffect(() => {
@@ -443,49 +456,37 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
   // Track mouse position for tooltip and clear when not hovering
   useEffect(() => {
+    const updateTooltipPosition = (e: MouseEvent) => {
+      const tooltipWidth = tooltipRef.current?.offsetWidth || 200;
+      const tooltipHeight = tooltipRef.current?.offsetHeight || 80;
+      const offset = 10;
+      const padding = 10;
+      
+      let x = e.clientX + offset;
+      let y = e.clientY + offset;
+      
+      if (x + tooltipWidth + padding > window.innerWidth) {
+        x = e.clientX - tooltipWidth - offset;
+      }
+      
+      if (y + tooltipHeight + padding > window.innerHeight) {
+        y = e.clientY - tooltipHeight - offset;
+      }
+      
+      if (x < padding) {
+        x = padding;
+      }
+      
+      if (y < padding) {
+        y = e.clientY + offset;
+      }
+      
+      setTooltipPosition({ x, y });
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
       if (hoveredFloorSensor) {
-        // Check if mouse is still over the sensor element
-        const target = e.target as HTMLElement;
-        const isOverSensor = currentHoverElementRef.current && 
-                            (currentHoverElementRef.current === target || 
-                             currentHoverElementRef.current.contains(target));
-        
-        if (!isOverSensor) {
-          // Mouse moved away from sensor, clear tooltip
-          setHoveredFloorSensor(null);
-          currentHoverElementRef.current = null;
-          return;
-        }
-        
-        // Update tooltip position
-        if (tooltipRef.current) {
-          const tooltipWidth = tooltipRef.current.offsetWidth || 200;
-          const tooltipHeight = tooltipRef.current.offsetHeight || 80;
-          const offset = 10;
-          const padding = 10;
-          
-          let x = e.clientX + offset;
-          let y = e.clientY + offset;
-          
-          if (x + tooltipWidth + padding > window.innerWidth) {
-            x = e.clientX - tooltipWidth - offset;
-          }
-          
-          if (y + tooltipHeight + padding > window.innerHeight) {
-            y = e.clientY - tooltipHeight - offset;
-          }
-          
-          if (x < padding) {
-            x = padding;
-          }
-          
-          if (y < padding) {
-            y = e.clientY + offset;
-          }
-          
-          setTooltipPosition({ x, y });
-        }
+        updateTooltipPosition(e);
       }
     };
 
@@ -1143,7 +1144,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               onMouseDown={handleMouseDown}
             >
               {/* Legend - Top Left Overlay */}
-              <div className="absolute top-4 left-4 z-10">
+              <div className="absolute top-4 left-6 z-10">
                 <FloorPlanLegend emergencyMode={emergencyMode} />
               </div>
 
@@ -1305,168 +1306,1348 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 
 
 
-                {/* Sample Sensor Markers - Zone B Environmental Sensors */}
-                <div className="absolute" style={{ left: '65%', top: '45%' }}>
-                  <div className="flex flex-col items-center gap-px">
+                {/* Sample Sensor Markers - Zone B Environmental Sensors - Group 2 */}
+                <div className="absolute" style={{ left: '63.5%', top: '45%' }}>
+                  <div className="flex flex-col items-center gap-px relative">
+                    {/* Number label above sensors with connecting lines */}
+                    <div className="relative flex flex-col items-center mb-0.5">
+                      <div className="w-2 h-2 bg-white rounded-full border border-black/40 flex items-center justify-center">
+                        <span className="text-black text-[5px] font-bold leading-none">2</span>
+                      </div>
+                      {/* Umbrella-style curved connecting lines */}
+                      <svg className="absolute" style={{ top: '6px', left: '50%', transform: 'translateX(-50%)' }} width="28" height="6" xmlns="http://www.w3.org/2000/svg">
+                        {/* Left curve - from left edge of circle to top of CO₂ sensor */}
+                        <path d="M 10 0 Q 6 3, 2 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                        {/* Right curve - from right edge of circle to top of O₂ sensor */}
+                        <path d="M 18 0 Q 22 3, 26 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                      </svg>
+                    </div>
                     <div className="flex items-center gap-0">
-                      {/* CO2 Sensor - Warning in incident mode */}
-                      <SensorMarker
-                        subType="CO2"
-                        label="CO₂"
-                        status={emergencyMode === 'incident' ? 'warning' : 'operational'}
-                        onMouseEnter={() => setHoveredFloorSensor({ 
-                          id: 'sensor-co2-1', 
-                          name: 'CO₂ Sensor Zone B', 
-                          status: emergencyMode === 'incident' ? 'warning' : 'operational', 
-                          value: emergencyMode === 'incident' ? '483 ppm' : '420 ppm',
-                          type: 'air-quality'
-                        })}
-                        onMouseLeave={() => setHoveredFloorSensor(null)}
-                        onClick={() => handleSensorClick({ 
-                          id: 'S-F2-CO2-1', 
-                          name: 'CO₂ Sensor Zone B', 
-                          type: 'air-quality', 
-                          subType: 'CO2', 
-                          status: emergencyMode === 'incident' ? 'warning' : 'operational', 
-                          value: emergencyMode === 'incident' ? '483 ppm' : '420 ppm', 
-                          x: 65, 
-                          y: 45,
-                          lastUpdate: '2s ago'
-                        })}
-                      />
-                      {/* Airflow Sensor - Warning in incident mode */}
-                      <SensorMarker
-                        subType="AF"
-                        label="AF"
-                        status={emergencyMode === 'incident' ? 'warning' : 'operational'}
-                        onMouseEnter={() => setHoveredFloorSensor({ 
-                          id: 'sensor-af-1', 
-                          name: 'Airflow Sensor Zone B', 
-                          status: emergencyMode === 'incident' ? 'warning' : 'operational', 
-                          value: emergencyMode === 'incident' ? '0.88 m/s (-12%)' : '1.0 m/s',
-                          type: 'air-quality'
-                        })}
-                        onMouseLeave={() => setHoveredFloorSensor(null)}
-                        onClick={() => handleSensorClick({ 
-                          id: 'S-F2-AF-1', 
-                          name: 'Airflow Sensor Zone B', 
-                          type: 'air-quality', 
-                          subType: 'AF', 
-                          status: emergencyMode === 'incident' ? 'warning' : 'operational', 
-                          value: emergencyMode === 'incident' ? '0.88 m/s (-12%)' : '1.0 m/s', 
-                          x: 66, 
-                          y: 45,
-                          lastUpdate: '1s ago'
-                        })}
-                      />
-                      {/* Humidity Sensor - Warning in incident mode */}
-                      <SensorMarker
-                        subType="H"
-                        label="H"
-                        status={emergencyMode === 'incident' ? 'warning' : 'operational'}
-                        onMouseEnter={() => setHoveredFloorSensor({ 
-                          id: 'sensor-h-1', 
-                          name: 'Humidity Sensor Zone B', 
-                          status: emergencyMode === 'incident' ? 'warning' : 'operational', 
-                          value: emergencyMode === 'incident' ? '49% (+8%)' : '45%',
-                          type: 'air-quality'
-                        })}
-                        onMouseLeave={() => setHoveredFloorSensor(null)}
-                        onClick={() => handleSensorClick({ 
-                          id: 'S-F2-H-1', 
-                          name: 'Humidity Sensor Zone B', 
-                          type: 'air-quality', 
-                          subType: 'H', 
-                          status: emergencyMode === 'incident' ? 'warning' : 'operational', 
-                          value: emergencyMode === 'incident' ? '49% (+8%)' : '45%', 
-                          x: 67, 
-                          y: 45,
-                          lastUpdate: '1s ago'
-                        })}
-                      />
+                      {/* CO2 Sensor */}
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
+                      </div>
+                      {/* CO Sensor */}
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO</span>
+                      </div>
+                      {/* O₂ Sensor */}
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">O₂</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="absolute" style={{ left: '70%', top: '48%' }}>
-                  <SensorMarker
-                    subType="R"
-                    label="R"
-                    status="operational"
-                    onMouseEnter={() => setHoveredFloorSensor({ 
-                      id: 'sensor-r-1', 
-                      name: 'Radiological Detector', 
-                      status: 'operational', 
-                      value: 'Normal',
-                      type: 'chemical'
-                    })}
-                    onMouseLeave={() => setHoveredFloorSensor(null)}
-                    onClick={() => handleSensorClick({ 
-                      id: 'S-F2-R-1', 
-                      name: 'Radiological Detector 1', 
-                      type: 'chemical', 
-                      subType: 'R', 
-                      status: 'operational', 
-                      value: 'Normal', 
-                      x: 70, 
-                      y: 48,
-                      lastUpdate: '1s ago'
-                    })}
-                  />
+                {/* Sample Sensor Markers - Zone A Environmental Sensors - Group 1 */}
+                <div className="absolute" style={{ left: '45.25%', top: '31.25%' }}>
+                  <div className="flex flex-col items-center gap-px relative">
+                    {/* Number label above sensors with connecting lines */}
+                    <div className="relative flex flex-col items-center mb-0.5">
+                      <div className="w-2 h-2 bg-white rounded-full border border-black/40 flex items-center justify-center">
+                        <span className="text-black text-[5px] font-bold leading-none">1</span>
+                      </div>
+                      {/* Umbrella-style curved connecting lines */}
+                      <svg className="absolute" style={{ top: '6px', left: '50%', transform: 'translateX(-50%)' }} width="28" height="6" xmlns="http://www.w3.org/2000/svg">
+                        {/* Left curve - from left edge of circle to top of CO₂ sensor */}
+                        <path d="M 10 0 Q 6 3, 2 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                        {/* Right curve - from right edge of circle to top of O₂ sensor */}
+                        <path d="M 18 0 Q 22 3, 26 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                      </svg>
+                    </div>
+                    <div className="flex items-center gap-0">
+                      {/* CO2 Sensor */}
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
+                      </div>
+                      {/* CO Sensor */}
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO</span>
+                      </div>
+                      {/* O₂ Sensor */}
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">O₂</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Chemical Detector - Red and blinking in emergency mode */}
-                <div className="absolute" style={{ left: '73%', top: '50%' }}>
-                  <SensorMarker
-                    subType="C"
-                    label="C"
-                    status={emergencyMode === 'emergency' ? 'critical' : 'operational'}
-                    onMouseEnter={() => setHoveredFloorSensor({ 
-                      id: 'sensor-c-1', 
-                      name: 'Chemical Agent Detector', 
-                      status: emergencyMode === 'emergency' ? 'critical' : 'operational', 
-                      value: emergencyMode === 'emergency' ? 'CHEMICAL AGENT DETECTED' : 'Normal',
-                      type: 'chemical'
-                    })}
-                    onMouseLeave={() => setHoveredFloorSensor(null)}
-                    onClick={() => handleSensorClick({ 
-                      id: 'S-F2-C-1', 
-                      name: 'Chemical Agent Detector 1', 
-                      type: 'chemical', 
-                      subType: 'C', 
-                      status: emergencyMode === 'emergency' ? 'critical' : 'operational', 
-                      value: emergencyMode === 'emergency' ? 'CHEMICAL AGENT DETECTED' : 'Normal', 
-                      x: 73, 
-                      y: 50,
-                      lastUpdate: '0s ago'
-                    })}
-                  />
+                {/* Environmental Sensors - Group 3 */}
+                <div className="absolute" style={{ left: '79.75%', top: '44.25%' }}>
+                  <div className="flex flex-col items-center gap-px relative">
+                    <div className="relative flex flex-col items-center mb-0.5">
+                      <div className="w-2 h-2 bg-white rounded-full border border-black/40 flex items-center justify-center">
+                        <span className="text-black text-[5px] font-bold leading-none">3</span>
+                      </div>
+                      <svg className="absolute" style={{ top: '6px', left: '50%', transform: 'translateX(-50%)' }} width="28" height="6" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 10 0 Q 6 3, 2 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                        <path d="M 18 0 Q 22 3, 26 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                      </svg>
+                    </div>
+                    <div className="flex items-center gap-0">
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">O₂</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="absolute" style={{ left: '67%', top: '52%' }}>
-                  <SensorMarker
-                    subType="DP"
-                    label="DP"
-                    onMouseEnter={() => setHoveredFloorSensor({ 
-                      id: 'sensor-dp-1', 
-                      name: 'Pressure Monitor', 
-                      status: 'operational', 
-                      value: '+8 Pa',
-                      type: 'pressure'
-                    })}
-                    onMouseLeave={() => setHoveredFloorSensor(null)}
-                    onClick={() => handleSensorClick({ 
-                      id: 'S-F2-DP-1', 
-                      name: 'Pressure Monitor 1', 
-                      type: 'pressure', 
-                      subType: 'DP', 
-                      status: 'operational', 
-                      value: '+8 Pa', 
-                      x: 67, 
-                      y: 52,
-                      lastUpdate: '3s ago'
-                    })}
-                  />
+                {/* Environmental Sensors - Group 4 */}
+                <div className="absolute" style={{ left: '82.25%', top: '59.25%' }}>
+                  <div className="flex flex-col items-center gap-px relative">
+                    <div className="relative flex flex-col items-center mb-0.5">
+                      <div className="w-2 h-2 bg-white rounded-full border border-black/40 flex items-center justify-center">
+                        <span className="text-black text-[5px] font-bold leading-none">4</span>
+                      </div>
+                      <svg className="absolute" style={{ top: '6px', left: '50%', transform: 'translateX(-50%)' }} width="28" height="6" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 10 0 Q 6 3, 2 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                        <path d="M 18 0 Q 22 3, 26 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                      </svg>
+                    </div>
+                    <div className="flex items-center gap-0">
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">O₂</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Environmental Sensors - Group 5 */}
+                <div className="absolute" style={{ left: '82.25%', top: '69.25%' }}>
+                  <div className="flex flex-col items-center gap-px relative">
+                    <div className="relative flex flex-col items-center mb-0.5">
+                      <div className="w-2 h-2 bg-white rounded-full border border-black/40 flex items-center justify-center">
+                        <span className="text-black text-[5px] font-bold leading-none">5</span>
+                      </div>
+                      <svg className="absolute" style={{ top: '6px', left: '50%', transform: 'translateX(-50%)' }} width="28" height="6" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 10 0 Q 6 3, 2 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                        <path d="M 18 0 Q 22 3, 26 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                      </svg>
+                    </div>
+                    <div className="flex items-center gap-0">
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">O₂</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Environmental Sensors - Group 6 */}
+                <div className="absolute" style={{ left: '49.75%', top: '66.25%' }}>
+                  <div className="flex flex-col items-center gap-px relative">
+                    <div className="relative flex flex-col items-center mb-0.5">
+                      <div className="w-2 h-2 bg-white rounded-full border border-black/40 flex items-center justify-center">
+                        <span className="text-black text-[5px] font-bold leading-none">6</span>
+                      </div>
+                      <svg className="absolute" style={{ top: '6px', left: '50%', transform: 'translateX(-50%)' }} width="28" height="6" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 10 0 Q 6 3, 2 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                        <path d="M 18 0 Q 22 3, 26 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                      </svg>
+                    </div>
+                    <div className="flex items-center gap-0">
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">O₂</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Environmental Sensors - Group 7 */}
+                <div className="absolute" style={{ left: '49.75%', top: '54.25%' }}>
+                  <div className="flex flex-col items-center gap-px relative">
+                    <div className="relative flex flex-col items-center mb-0.5">
+                      <div className="w-2 h-2 bg-white rounded-full border border-black/40 flex items-center justify-center">
+                        <span className="text-black text-[5px] font-bold leading-none">7</span>
+                      </div>
+                      <svg className="absolute" style={{ top: '6px', left: '50%', transform: 'translateX(-50%)' }} width="28" height="6" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 10 0 Q 6 3, 2 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                        <path d="M 18 0 Q 22 3, 26 6" stroke="black" strokeWidth="0.4" fill="none" opacity="0.5"/>
+                      </svg>
+                    </div>
+                    <div className="flex items-center gap-0">
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO₂</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">CO</span>
+                      </div>
+                      <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                        <span className="text-white text-[4px] font-bold leading-none">O₂</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Door 1 - Simple green rectangle */}
+                <div className="absolute" style={{ left: '49%', top: '6%' }}>
+                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">Door 1</span>
+                  </div>
+                </div>
+
+                {/* DP1 - Differential Pressure Sensor */}
+                <div className="absolute" style={{ left: '44%', top: '6%' }}>
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">DP1</span>
+                  </div>
+                </div>
+
+                {/* Door 2 - Simple green rectangle */}
+                <div className="absolute" style={{ left: '49%', top: '20%' }}>
+                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">Door 2</span>
+                  </div>
+                </div>
+
+                {/* DP2 - Differential Pressure Sensor */}
+                <div className="absolute" style={{ left: '44%', top: '20%' }}>
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">DP2</span>
+                  </div>
+                </div>
+
+                {/* Door 3 - Simple green rectangle */}
+                <div className="absolute" style={{ left: '71.5%', top: '39.5%' }}>
+                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">Door 3</span>
+                  </div>
+                </div>
+
+                {/* T1 and H1 sensors at grid position 35,16 */}
+                <div className="absolute flex items-center gap-0" style={{ left: '87.75%', top: '39.25%' }}>
+                  {/* T1 - Temperature Sensor */}
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">T1</span>
+                  </div>
+                  {/* H1 - Humidity Sensor */}
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">H1</span>
+                  </div>
+                </div>
+
+                {/* T2 and H2 sensors at grid position 35,22 */}
+                <div className="absolute flex items-center gap-0" style={{ left: '87.75%', top: '54.25%' }}>
+                  {/* T2 - Temperature Sensor */}
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">T2</span>
+                  </div>
+                  {/* H2 - Humidity Sensor */}
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">H2</span>
+                  </div>
+                </div>
+
+                {/* T3 and H3 sensors at grid position 35,26 */}
+                <div className="absolute flex items-center gap-0" style={{ left: '87.75%', top: '64.25%' }}>
+                  {/* T3 - Temperature Sensor */}
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">T3</span>
+                  </div>
+                  {/* H3 - Humidity Sensor */}
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">H3</span>
+                  </div>
+                </div>
+
+                {/* T5 and H5 sensors at grid position 18,21 */}
+                <div className="absolute flex items-center gap-0" style={{ left: '44.75%', top: '52.75%' }}>
+                  {/* T5 - Temperature Sensor */}
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">T5</span>
+                  </div>
+                  {/* H5 - Humidity Sensor */}
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">H5</span>
+                  </div>
+                </div>
+
+                {/* T6 and H6 sensors at grid position 18,25 */}
+                <div className="absolute flex items-center gap-0" style={{ left: '44.75%', top: '62.75%' }}>
+                  {/* T6 - Temperature Sensor */}
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">T6</span>
+                  </div>
+                  {/* H6 - Humidity Sensor */}
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">H6</span>
+                  </div>
+                </div>
+
+                {/* Door 4 - Simple green rectangle */}
+                <div className="absolute" style={{ left: '59.5%', top: '92.5%' }}>
+                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">Door 4</span>
+                  </div>
+                </div>
+
+                {/* Door 5 - Simple green rectangle */}
+                <div className="absolute" style={{ left: '59.5%', top: '78.5%' }}>
+                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">Door 5</span>
+                  </div>
+                </div>
+
+                {/* Door 6 - Simple green rectangle */}
+                <div className="absolute" style={{ left: '39%', top: '40%' }}>
+                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">Door 6</span>
+                  </div>
+                </div>
+
+                {/* Door 7 - Simple green rectangle */}
+                <div className="absolute" style={{ left: '29%', top: '40%' }}>
+                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">Door 7</span>
+                  </div>
+                </div>
+
+                {/* Door 8 - Simple green rectangle */}
+                <div className="absolute" style={{ left: '19%', top: '40%' }}>
+                  <div className="w-[0.95rem] h-2 bg-green-600 rounded-[1px] border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">Door 8</span>
+                  </div>
+                </div>
+
+                {/* DP3 - Differential Pressure Sensor */}
+                <div className="absolute" style={{ left: '65.5%', top: '78.5%' }}>
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">DP3</span>
+                  </div>
+                </div>
+
+                {/* DP4 - Differential Pressure Sensor */}
+                <div className="absolute" style={{ left: '65.5%', top: '92.5%' }}>
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">DP4</span>
+                  </div>
+                </div>
+
+                {/* DP5 - Differential Pressure Sensor */}
+                <div className="absolute" style={{ left: '29%', top: '42.5%' }}>
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">DP5</span>
+                  </div>
+                </div>
+
+                {/* DP6 - Differential Pressure Sensor */}
+                <div className="absolute" style={{ left: '19%', top: '42.5%' }}>
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">DP6</span>
+                  </div>
+                </div>
+
+                {/* W - Water Level Sensor */}
+                <div className="absolute" style={{ left: '16%', top: '25.5%' }}>
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">W</span>
+                  </div>
+                </div>
+
+                {/* R1, B1, C1 - CBRNe Detectors at grid position 17,4 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '43.5%', top: '10%' }}>
+                  {/* R1 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r1', name: 'Radiological Detector R1', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R1', 
+                        name: 'Radiological Detector R1', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 17, 
+                        y: 4,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R1</span>
+                  </div>
+                  {/* B1 - Biological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-b1', name: 'Biological Detector B1', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-B1', 
+                        name: 'Biological Detector B1', 
+                        type: 'chemical', 
+                        subType: 'B', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 17, 
+                        y: 4,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">B1</span>
+                  </div>
+                  {/* C1 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c1', name: 'Chemical Detector C1', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C1', 
+                        name: 'Chemical Detector C1', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 17, 
+                        y: 4,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C1</span>
+                  </div>
+                </div>
+
+                {/* R2, B2, C2 - CBRNe Detectors at grid position 25,16 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '62.5%', top: '39.5%' }}>
+                  {/* R2 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r2', name: 'Radiological Detector R2', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R2', 
+                        name: 'Radiological Detector R2', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 25, 
+                        y: 16,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R2</span>
+                  </div>
+                  {/* B2 - Biological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-b2', name: 'Biological Detector B2', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-B2', 
+                        name: 'Biological Detector B2', 
+                        type: 'chemical', 
+                        subType: 'B', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 25, 
+                        y: 16,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">B2</span>
+                  </div>
+                  {/* C2 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c2', name: 'Chemical Detector C2', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C2', 
+                        name: 'Chemical Detector C2', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 25, 
+                        y: 16,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C2</span>
+                  </div>
+                </div>
+
+                {/* R3, B3, C3 - CBRNe Detectors at grid position 27,20 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '67.5%', top: '51.5%' }}>
+                  {/* R3 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r3', name: 'Radiological Detector R3', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R3', 
+                        name: 'Radiological Detector R3', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 27, 
+                        y: 20,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R3</span>
+                  </div>
+                  {/* B3 - Biological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-b3', name: 'Biological Detector B3', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-B3', 
+                        name: 'Biological Detector B3', 
+                        type: 'chemical', 
+                        subType: 'B', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 27, 
+                        y: 20,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">B3</span>
+                  </div>
+                  {/* C3 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c3', name: 'Chemical Detector C3', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C3', 
+                        name: 'Chemical Detector C3', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 27, 
+                        y: 20,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C3</span>
+                  </div>
+                </div>
+
+                {/* R4, B4, C4 - CBRNe Detectors at grid position 26,34 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '62%', top: '85%' }}>
+                  {/* R4 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r4', name: 'Radiological Detector R4', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R4', 
+                        name: 'Radiological Detector R4', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 26, 
+                        y: 34,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R4</span>
+                  </div>
+                  {/* B4 - Biological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-b4', name: 'Biological Detector B4', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-B4', 
+                        name: 'Biological Detector B4', 
+                        type: 'chemical', 
+                        subType: 'B', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 26, 
+                        y: 34,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">B4</span>
+                  </div>
+                  {/* C4 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c4', name: 'Chemical Detector C4', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C4', 
+                        name: 'Chemical Detector C4', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 26, 
+                        y: 34,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C4</span>
+                  </div>
+                </div>
+
+                {/* R5, B5, C5 - CBRNe Detectors at grid position 21,24 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '52.5%', top: '60%' }}>
+                  {/* R5 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r5', name: 'Radiological Detector R5', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R5', 
+                        name: 'Radiological Detector R5', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 21, 
+                        y: 24,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R5</span>
+                  </div>
+                  {/* B5 - Biological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-b5', name: 'Biological Detector B5', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-B5', 
+                        name: 'Biological Detector B5', 
+                        type: 'chemical', 
+                        subType: 'B', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 21, 
+                        y: 24,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">B5</span>
+                  </div>
+                  {/* C5 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c5', name: 'Chemical Detector C5', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C5', 
+                        name: 'Chemical Detector C5', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 21, 
+                        y: 24,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C5</span>
+                  </div>
+                </div>
+
+                {/* R6, B6, C6 - CBRNe Detectors at grid position 21,28 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '52.5%', top: '71.5%' }}>
+                  {/* R6 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r6', name: 'Radiological Detector R6', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R6', 
+                        name: 'Radiological Detector R6', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 21, 
+                        y: 28,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R6</span>
+                  </div>
+                  {/* B6 - Biological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-b6', name: 'Biological Detector B6', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-B6', 
+                        name: 'Biological Detector B6', 
+                        type: 'chemical', 
+                        subType: 'B', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 21, 
+                        y: 28,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">B6</span>
+                  </div>
+                  {/* C6 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c6', name: 'Chemical Detector C6', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C6', 
+                        name: 'Chemical Detector C6', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 21, 
+                        y: 28,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C6</span>
+                  </div>
+                </div>
+
+                {/* R7, C7 - CBRNe Detectors at grid position 32,9 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '80%', top: '22.5%' }}>
+                  {/* R7 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r7', name: 'Radiological Detector R7', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R7', 
+                        name: 'Radiological Detector R7', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 32, 
+                        y: 9,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R7</span>
+                  </div>
+                  {/* C7 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c7', name: 'Chemical Detector C7', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C7', 
+                        name: 'Chemical Detector C7', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 32, 
+                        y: 9,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C7</span>
+                  </div>
+                </div>
+
+                {/* R8, C8 - CBRNe Detectors at grid position 10,9 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '25%', top: '22.5%' }}>
+                  {/* R8 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r8', name: 'Radiological Detector R8', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R8', 
+                        name: 'Radiological Detector R8', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 10, 
+                        y: 9,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R8</span>
+                  </div>
+                  {/* C8 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c8', name: 'Chemical Detector C8', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C8', 
+                        name: 'Chemical Detector C8', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 10, 
+                        y: 9,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C8</span>
+                  </div>
+                </div>
+
+                {/* R9, C9 - CBRNe Detectors at grid position 9,30 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '22.5%', top: '75%' }}>
+                  {/* R9 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r9', name: 'Radiological Detector R9', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R9', 
+                        name: 'Radiological Detector R9', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 9, 
+                        y: 30,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R9</span>
+                  </div>
+                  {/* C9 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c9', name: 'Chemical Detector C9', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C9', 
+                        name: 'Chemical Detector C9', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 9, 
+                        y: 30,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C9</span>
+                  </div>
+                </div>
+
+                {/* R10, C10 - CBRNe Detectors at grid position 32,30 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '80%', top: '75%' }}>
+                  {/* R10 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r10', name: 'Radiological Detector R10', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R10', 
+                        name: 'Radiological Detector R10', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 32, 
+                        y: 30,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R10</span>
+                  </div>
+                  {/* C10 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c10', name: 'Chemical Detector C10', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C10', 
+                        name: 'Chemical Detector C10', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 32, 
+                        y: 30,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C10</span>
+                  </div>
+                </div>
+
+                {/* R11, C11 - CBRNe Detectors at grid position 1,19 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '1.5%', top: '47.5%' }}>
+                  {/* R11 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r11', name: 'Radiological Detector R11', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R11', 
+                        name: 'Radiological Detector R11', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 1, 
+                        y: 19,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R11</span>
+                  </div>
+                  {/* C11 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c11', name: 'Chemical Detector C11', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C11', 
+                        name: 'Chemical Detector C11', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 1, 
+                        y: 19,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C11</span>
+                  </div>
+                </div>
+
+                {/* R12, C12 - CBRNe Detectors at grid position 37,18 */}
+                <div className="absolute flex items-center -space-x-1" style={{ left: '92.5%', top: '45%' }}>
+                  {/* R12 - Radiological Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-r12', name: 'Radiological Detector R12', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-R12', 
+                        name: 'Radiological Detector R12', 
+                        type: 'chemical', 
+                        subType: 'R', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 37, 
+                        y: 18,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R12</span>
+                  </div>
+                  {/* C12 - Chemical Detector */}
+                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c12', name: 'Chemical Detector C12', status: 'operational', value: 'Normal', type: 'chemical' })}
+                    onMouseLeave={handleSensorLeave}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleSensorClick({ 
+                        id: 'S-F2-C12', 
+                        name: 'Chemical Detector C12', 
+                        type: 'chemical', 
+                        subType: 'C', 
+                        status: 'operational', 
+                        value: 'Normal', 
+                        x: 37, 
+                        y: 18,
+                        lastUpdate: '2s ago'
+                      });
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
+                      <path 
+                        d="M7 2 L12 12 L2 12 Z" 
+                        fill="#16a34a"
+                        stroke="rgba(0,0,0,0.2)" 
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">C12</span>
+                  </div>
+                </div>
+
+                {/* F - Filter Sensor */}
+                <div className="absolute" style={{ left: '13.8%', top: '57.5%' }}>
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">F</span>
+                  </div>
+                </div>
+
+                {/* AF - Airflow Sensor */}
+                <div className="absolute" style={{ left: '13.8%', top: '65%' }}>
+                  <div className="w-2.5 h-2.5 bg-green-600 rounded-full border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">AF</span>
+                  </div>
+                </div>
+
+                {/* GTV 1 - Gas Tight Valve */}
+                <div className="absolute" style={{ left: '11%', top: '55%' }}>
+                  <div className="w-4 h-2 bg-green-600 border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">GTV 1</span>
+                  </div>
+                </div>
+
+                {/* GTV 2 - Gas Tight Valve */}
+                <div className="absolute" style={{ left: '11%', top: '57.5%' }}>
+                  <div className="w-4 h-2 bg-green-600 border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">GTV 2</span>
+                  </div>
+                </div>
+
+                {/* GTV 3 - Gas Tight Valve */}
+                <div className="absolute" style={{ left: '11%', top: '62.5%' }}>
+                  <div className="w-4 h-2 bg-green-600 border border-black/20 flex items-center justify-center">
+                    <span className="text-white text-[4px] font-bold leading-none">GTV 3</span>
+                  </div>
                 </div>
               </div>
             </div>
