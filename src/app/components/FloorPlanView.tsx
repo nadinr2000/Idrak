@@ -2522,13 +2522,11 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
                 {/* W - Water Level Sensor */}
                 <div className="absolute" style={{ left: '16%', top: '25.5%' }}>
-                  <div className="relative">
-                    {/* Pulsing ring in emergency mode */}
-                    {emergencyMode === 'emergency' && (
-                      <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-red-600 animate-ping opacity-75" />
-                    )}
+                  <div className={`w-2.5 h-2.5 relative cursor-pointer hover:opacity-80 transition-opacity ${
+                    emergencyMode === 'emergency' ? 'sensor-blink sensor-pulse-ring-red' : ''
+                  }`}>
                     <div 
-                      className={`w-2.5 h-2.5 ${emergencyMode === 'emergency' ? 'bg-red-600' : 'bg-green-600'} rounded-full border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative`}
+                      className={`w-2.5 h-2.5 ${emergencyMode === 'emergency' ? 'bg-red-600' : 'bg-green-600'} rounded-full border border-black/20 flex items-center justify-center relative`}
                       onMouseEnter={(e) => handleSensorHover(e, { id: 'w-1', name: 'Water Level Sensor', status: emergencyMode === 'emergency' ? 'critical' : 'operational', value: emergencyMode === 'emergency' ? '22%' : '88%', type: 'water-level' })}
                       onMouseLeave={handleSensorLeave}
                       onMouseDown={(e) => {
