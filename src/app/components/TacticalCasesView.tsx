@@ -27,12 +27,10 @@ interface TacticalCase {
   name: string;
   description: string;
   threats: Threat[];
-  status: 'draft' | 'active' | 'completed' | 'archived';
   createdAt: string;
   createdBy: string;
-  duration?: string;
-  totalDuration?: string; // Total case duration (e.g., "72h", "30d")
-  results?: string;
+  totalRuns?: number; // Total number of times this scenario has been run
+  lastRunDate?: string; // Date of most recent run
 }
 
 interface TacticalCasesViewProps {
@@ -55,44 +53,42 @@ const threatTypes: ThreatType[] = [
 // Mock data
 const mockTacticalCases: TacticalCase[] = [
   {
+    id: '3',
+    name: 'Chemical Threat Scenario',
+    description: 'Chlorine gas breach in HVAC system - Floor 2 Sector B',
+    threats: [
+      { type: 'chemical', severity: 'critical', location: 'Chemical Detector 12' },
+      { type: 'chemical', severity: 'high', location: 'Chemical Detector 7' },
+    ],
+    createdAt: '2025-01-07T09:15:00',
+    createdBy: 'Facility Commander',
+    totalRuns: 2,
+    lastRunDate: '2026-01-11T10:00:00',
+  },
+  {
     id: '1',
     name: 'Extended Duration Scenario',
     description: 'Prolonged hostile force containment with resource management protocols',
     threats: [
-      { type: 'hostileForce', severity: 'critical', location: 'Perimeter - All Sectors' },
-      { type: 'cyber', severity: 'high', location: 'Floor 1 - Command Center' },
-      { type: 'structuralFailure', severity: 'medium', location: 'Floor 2' },
+      { type: 'structuralFailure', severity: 'medium', location: 'Infrastructure' },
     ],
-    status: 'completed',
     createdAt: '2024-12-20T08:00:00',
     createdBy: 'Facility Commander',
-    duration: '72 hours',
-    results: 'All defensive systems operational. Supply reserves at 72%',
+    totalRuns: 10,
+    lastRunDate: '2024-12-25T09:00:00',
   },
   {
     id: '2',
-    name: 'VIP Evacuation Protocol',
+    name: 'Evacuation Scenario',
     description: 'Emergency extraction of high-value personnel under threat conditions',
     threats: [
       { type: 'hostileForce', severity: 'critical', location: 'Floor 3 - Secure Wing' },
       { type: 'explosive', severity: 'high', location: 'Floor 1 - Exit Route Alpha' },
     ],
-    status: 'active',
     createdAt: '2025-01-06T14:20:00',
     createdBy: 'Facility Commander',
-  },
-  {
-    id: '3',
-    name: 'Chemical Agent Attack Response',
-    description: 'Chlorine gas breach in HVAC system - Floor 2 Sector B',
-    threats: [
-      { type: 'chemical', severity: 'critical', location: 'Floor 2 - Sector B' },
-    ],
-    status: 'draft',
-    createdAt: '2025-01-07T09:15:00',
-    createdBy: 'Facility Commander',
-    duration: '18 minutes',
-    results: 'HVAC breach sealed. Contamination contained. Air quality restored in 18 minutes',
+    totalRuns: 3,
+    lastRunDate: '2025-01-07T15:00:00',
   },
 ];
 
@@ -136,9 +132,7 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
       );
     }
     
-    if (status !== 'all') {
-      filtered = filtered.filter(c => c.status === status);
-    }
+    // Status filter removed since scenarios no longer have status
     
     setFilteredCases(filtered);
   };
@@ -180,7 +174,6 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
       name: newCaseName,
       description: newCaseDescription,
       threats: selectedThreats,
-      status: 'draft',
       createdAt: new Date().toISOString(),
       createdBy: 'Facility Commander',
       duration: newCaseDuration,
@@ -206,7 +199,6 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
       name: newCaseName,
       description: newCaseDescription,
       threats: selectedThreats,
-      status: 'active',
       createdAt: new Date().toISOString(),
       createdBy: 'Facility Commander',
       duration: newCaseDuration,
@@ -462,7 +454,7 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
             { value: '', label: language === 'ar' ? 'اختر نوع الجهاز' : 'Select device type' },
             { value: 'tactical', label: language === 'ar' ? 'تكتيكي (< 1 kt)' : 'Tactical (< 1 kt)' },
             { value: 'strategic', label: language === 'ar' ? 'استراتيجي (1-100 kt)' : 'Strategic (1-100 kt)' },
-            { value: 'thermonuclear', label: language === 'ar' ? 'نووي حراري (> 100 kt)' : 'Thermonuclear (> 100 kt)' },
+            { value: 'thermonuclear', label: language === 'ar' ? 'نوي حراري (> 100 kt)' : 'Thermonuclear (> 100 kt)' },
           ],
           thresholdLabel: t.blastYield,
           thresholdOptions: [
@@ -674,7 +666,7 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900 text-base">
-                        {language === 'ar' ? 'نوع الطابق للتهديدات' : 'Floor Type for Threats'}
+                        {language === 'ar' ? 'نو الطابق للتهديدات' : 'Floor Type for Threats'}
                       </h3>
                       <p className="text-xs text-gray-600">
                         {language === 'ar' 
@@ -909,34 +901,15 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder={t.searchCases}
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="flex items-center gap-2">
-            <Filter className="size-5 text-gray-600" />
-            <select
-              value={statusFilter}
-              onChange={(e) => handleStatusFilterChange(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">{t.allStatus}</option>
-              <option value="draft">{t.draft}</option>
-              <option value="active">{t.active}</option>
-              <option value="completed">{t.completed}</option>
-              <option value="archived">{t.archived}</option>
-            </select>
-          </div>
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder={t.searchCases}
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
         </div>
       </div>
 
@@ -957,17 +930,6 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
               <Shield className="size-6 text-blue-600 flex-shrink-0 ml-2" />
             </div>
 
-            {/* Status Badge */}
-            <div className="mb-4">
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(caseStatuses?.[tacticalCase.id] || tacticalCase.status)} uppercase`}>
-                {language === 'ar' 
-                  ? ((caseStatuses?.[tacticalCase.id] || tacticalCase.status) === 'draft' ? t.draft : 
-                     (caseStatuses?.[tacticalCase.id] || tacticalCase.status) === 'active' ? t.active : 
-                     (caseStatuses?.[tacticalCase.id] || tacticalCase.status) === 'completed' ? t.completed : t.archived)
-                  : (caseStatuses?.[tacticalCase.id] || tacticalCase.status)}
-              </span>
-            </div>
-
             {/* Footer */}
             <div className="pt-4 border-t border-gray-200">
               <div className="flex items-center justify-between text-xs text-gray-600">
@@ -975,10 +937,10 @@ export function TacticalCasesView({ language, onDrillClick, caseStatuses, onCase
                   <Calendar className="size-3" />
                   <span>{new Date(tacticalCase.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}</span>
                 </div>
-                {tacticalCase.duration && (
+                {tacticalCase.totalRuns && (
                   <div className="flex items-center gap-1">
-                    <Clock className="size-3" />
-                    <span>{getDurationText(tacticalCase.duration)}</span>
+                    <Play className="size-3" />
+                    <span>{tacticalCase.totalRuns} {language === 'ar' ? 'تجارب' : 'runs'}</span>
                   </div>
                 )}
               </div>

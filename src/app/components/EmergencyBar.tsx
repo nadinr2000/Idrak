@@ -2,6 +2,16 @@ import { AlertTriangle, Play, Pause, FastForward, Clock, X } from 'lucide-react'
 import { Language, translations } from '../translations';
 import { useState } from 'react';
 
+interface Threat {
+  id: string;
+  type: string;
+  severity: string;
+  location: string;
+  time: string;
+  timeValue: number;
+  description: string;
+}
+
 interface EmergencyBarProps {
   scenarioName: string;
   language: Language;
@@ -9,6 +19,7 @@ interface EmergencyBarProps {
   isPaused: boolean;
   currentTime: number;
   speed: 1 | 2 | 4;
+  threats?: Threat[];
   onTogglePause: () => void;
   onChangeSpeed: () => void;
   onClose: () => void;
@@ -22,6 +33,7 @@ export function EmergencyBar({
   isPaused,
   currentTime,
   speed,
+  threats = [],
   onTogglePause,
   onChangeSpeed,
   onClose,
@@ -151,9 +163,27 @@ export function EmergencyBar({
         {/* Next Event Button */}
         <button
           onClick={() => {
-            // This will be implemented to jump to next threat event
-            // For now, just demonstrate the button
-            console.log('Next Event clicked');
+            // Find the next threat after current time
+            const currentMinutes = Math.floor(currentTime / 60);
+            console.log('Next Event clicked!');
+            console.log('Current time (seconds):', currentTime);
+            console.log('Current time (minutes):', currentMinutes);
+            console.log('All threats:', threats);
+            
+            const nextThreat = threats
+              .filter(t => t.timeValue > currentMinutes)
+              .sort((a, b) => a.timeValue - b.timeValue)[0];
+            
+            console.log('Next threat found:', nextThreat);
+            
+            if (nextThreat && onTimeChange) {
+              const newTime = nextThreat.timeValue * 60;
+              console.log('Jumping to time (seconds):', newTime);
+              // Jump to the threat's time in seconds
+              onTimeChange(newTime);
+            } else {
+              console.log('No more events or onTimeChange not available');
+            }
           }}
           className="bg-blue-600 hover:bg-blue-500 rounded px-4 py-1.5 transition-colors border border-blue-500 text-xs font-semibold text-white flex items-center gap-1.5"
           title="Jump to next event"

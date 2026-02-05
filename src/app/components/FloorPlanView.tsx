@@ -1,4 +1,4 @@
-import { AlertCircle, ZoomIn, ZoomOut, RotateCcw, Grid3x3, LayoutGrid, Map, Activity, Thermometer, Wind, Droplets } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ZoomIn, ZoomOut, RotateCcw, Grid3x3, LayoutGrid, Map, Activity, Thermometer, Wind, Droplets, Radio, Filter, Gauge, Airplay, FlaskConical, CloudRain, Brain } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { RoomDetailPanel } from './RoomDetailPanel';
 import { SensorDetailPanel } from './SensorDetailPanel';
@@ -101,6 +101,8 @@ interface FloorPlanViewProps {
   onIncidentClick: (incidentId: string) => void;
   onBack?: () => void;
   emergencyMode?: false | 'incident' | 'emergency';
+  simulationTime?: number; // Time in seconds
+  scenarioId?: string; // ID of the running scenario
   hideBreadcrumbs?: boolean;
   language?: Language;
 }
@@ -117,7 +119,7 @@ interface Sensor {
   lastUpdate?: string;
 }
 
-export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, emergencyMode, hideBreadcrumbs, language = 'en' }: FloorPlanViewProps) {
+export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, emergencyMode, simulationTime = 0, scenarioId, hideBreadcrumbs, language = 'en' }: FloorPlanViewProps) {
   const t = translations[language];
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
@@ -172,7 +174,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
         
         // Don't restore warning/threat sensors in normal mode
         const isWarningOrThreatSensor = sensor.id === 'warning-incident-001' || sensor.id === 'threat-emergency-001';
-        if (isWarningOrThreatSensor && emergencyMode === 'normal') {
+        if (isWarningOrThreatSensor && emergencyMode === false) {
           console.log('Skipping restore of warning/threat sensor in normal mode');
           localStorage.removeItem('clickedSensor');
           return;
@@ -296,14 +298,14 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   // Auto-open incident warning panel in dashboard view during active incident mode
   useEffect(() => {
     if (emergencyMode === 'incident' && viewMode === 'dashboard') {
-      // Create a warning sensor with AI insights
+      // Create a warning sensor for CO2 level increase
       const warningSensor: Sensor = {
         id: 'warning-incident-001',
-        name: 'Active Alarm Alert',
-        type: 'warning',
-        subType: 'AI',
+        name: 'CO₂ Level Warning',
+        type: 'air-quality',
+        subType: 'CO2',
         status: 'warning',
-        value: 'Elevated Threat Level Detected',
+        value: '950 ppm',
         x: 0,
         y: 0,
         lastUpdate: new Date().toLocaleString('en-US', { 
@@ -317,7 +319,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
         })
       };
       setSelectedSensor(warningSensor);
-      setIsRightPanelCollapsed(false);
+      // Don't open the side panel in incident mode, we'll show a static card instead
+      // setIsRightPanelCollapsed(false);
       localStorage.setItem('clickedSensor', JSON.stringify(warningSensor));
     } else if (emergencyMode === 'emergency' && viewMode === 'dashboard') {
       // Create a critical threat sensor for emergency mode
@@ -343,7 +346,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
       setSelectedSensor(threatSensor);
       setIsRightPanelCollapsed(false);
       localStorage.setItem('clickedSensor', JSON.stringify(threatSensor));
-    } else if (emergencyMode === 'normal') {
+    } else if (emergencyMode === false) {
       // Clear any active alerts whenever in normal mode, regardless of view
       const clickedSensor = localStorage.getItem('clickedSensor');
       if (clickedSensor) {
@@ -412,6 +415,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
           console.error('Error parsing sensor from localStorage:', error);
         }
       }
+      // ViewMode sync removed - each tab maintains its own view independently
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -622,267 +626,1007 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
         {viewMode === 'dashboard' && (
           <div className="flex gap-0">
             {/* Left Panel - Dashboard Content */}
-            <div className={`px-6 pb-4 transition-all duration-300 ${selectedSensor ? 'w-[70%]' : 'w-full'}`}>
-            {/* Quick Stats Tiles */}
-            <div className="grid grid-cols-4 gap-3 mb-6">
-              {/* Total Sensors */}
-              <div className="bg-white rounded-lg border-2 border-gray-300 p-3 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="p-1.5 bg-blue-100 rounded-lg">
-                    <Activity className="w-4 h-4 text-blue-600" />
+            <div className={`px-6 pb-4 transition-all duration-300 ${emergencyMode === 'emergency' ? 'w-full' : (selectedSensor && emergencyMode === 'incident' ? 'w-[70%]' : 'w-full')}`}>
+            
+            {emergencyMode === 'emergency' ? (
+              <>
+            {/* Chemical Threat Detected and Emergency Response Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {/* Chemical Threat Detected Card */}
+              <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
+                <h3 className="text-sm font-bold text-red-600 mb-3">Chemical Threat Detected</h3>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Threat Type:</span>
+                    <span className="text-[10px] text-gray-900 font-semibold">Chemical Agent C3 Detection</span>
                   </div>
-                  <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Total Sensors</span>
-                </div>
-                <div className="mt-2">
-                  <div className="text-2xl font-bold text-gray-900">248</div>
-                  <div className="text-[10px] text-green-600 font-semibold mt-0.5">↑ 100% Operational</div>
-                </div>
-              </div>
-
-              {/* Temperature */}
-              <div className="bg-white rounded-lg border-2 border-gray-300 p-3 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="p-1.5 bg-orange-100 rounded-lg">
-                    <Thermometer className="w-4 h-4 text-orange-600" />
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Detector:</span>
+                    <div className="flex items-center gap-1.5">
+                      {scenarioId ? (
+                        <>
+                          <span className="px-2 py-0.5 bg-red-600 text-white text-[9px] font-bold rounded">C12</span>
+                          {simulationTime >= 900 && (
+                            <span className="px-2 py-0.5 bg-red-600 text-white text-[9px] font-bold rounded">C7</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="px-2 py-0.5 bg-red-600 text-white text-[9px] font-bold rounded">C3</span>
+                      )}
+                    </div>
                   </div>
-                  <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Temperature</span>
-                </div>
-                <div className="mt-2">
-                  <div className="text-2xl font-bold text-gray-900">22.5°C</div>
-                  <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Avg across facility</div>
-                </div>
-              </div>
-
-              {/* Air Quality */}
-              <div className={`rounded-lg border-2 p-3 shadow-sm hover:shadow-md transition-shadow ${
-                emergencyMode === 'incident' 
-                  ? 'bg-orange-50 border-orange-300' 
-                  : 'bg-white border-gray-300'
-              }`}>
-                <div className="flex items-center justify-between mb-1">
-                  <div className={`p-1.5 rounded-lg ${
-                    emergencyMode === 'incident' ? 'bg-orange-100' : 'bg-green-100'
-                  }`}>
-                    <Wind className={`w-4 h-4 ${
-                      emergencyMode === 'incident' ? 'text-orange-600' : 'text-green-600'
-                    }`} />
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Detection Time:</span>
+                    <span className="text-[10px] text-gray-900">02/03/2026 14:47:23</span>
                   </div>
-                  <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Air Quality</span>
-                </div>
-                <div className="mt-2">
-                  <div className={`text-2xl font-bold ${
-                    emergencyMode === 'incident' ? 'text-orange-600' : 'text-gray-900'
-                  }`}>
-                    {emergencyMode === 'incident' ? 'Elevated' : 'Good'}
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Severity:</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-red-600 text-white border border-red-700">
+                      CRITICAL
+                    </span>
                   </div>
-                  <div className={`text-[10px] font-semibold mt-0.5 ${
-                    emergencyMode === 'incident' ? 'text-orange-600' : 'text-green-600'
-                  }`}>
-                    CO₂: {emergencyMode === 'incident' ? '483 ppm ↑15%' : '420 ppm'}
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Source:</span>
+                    <span className="text-[10px] text-gray-900">External Contamination - Unknown Origin</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Affected Zones:</span>
+                    <span className="text-[10px] text-gray-900 font-semibold">A-2, A-3, B-1 (3 total)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Personnel at Risk:</span>
+                    <span className="text-[10px] text-gray-900 font-semibold">12 occupants</span>
                   </div>
                 </div>
               </div>
 
-              {/* Humidity */}
-              <div className={`rounded-lg border-2 p-3 shadow-sm hover:shadow-md transition-shadow ${
-                emergencyMode === 'incident' 
-                  ? 'bg-orange-50 border-orange-300' 
-                  : 'bg-white border-gray-300'
-              }`}>
-                <div className="flex items-center justify-between mb-1">
-                  <div className={`p-1.5 rounded-lg ${
-                    emergencyMode === 'incident' ? 'bg-orange-100' : 'bg-cyan-100'
-                  }`}>
-                    <Droplets className={`w-4 h-4 ${
-                      emergencyMode === 'incident' ? 'text-orange-600' : 'text-cyan-600'
-                    }`} />
+              {/* Automated Emergency Response Status */}
+              <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-900 mb-3">Automated Emergency Response Status</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* GTV System */}
+                  <div className="flex items-center gap-2">
+                    <div className="size-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <Wind className="size-4 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-[10px] text-gray-600 mb-0.5">GTV System</div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="size-1.5 rounded-full bg-green-500"></div>
+                        <span className="text-xs font-semibold text-gray-900">ON</span>
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Humidity</span>
+
+                  {/* Fresh Air Intake */}
+                  <div className="flex items-center gap-2">
+                    <div className="size-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                      <Airplay className="size-4 text-red-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-[10px] text-gray-600 mb-0.5">Fresh Air Intake</div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="size-1.5 rounded-full bg-red-500"></div>
+                        <span className="text-xs font-semibold text-gray-900">OFF</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* External Water Supply */}
+                  <div className="flex items-center gap-2">
+                    <div className="size-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                      <CloudRain className="size-4 text-red-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-[10px] text-gray-600 mb-0.5">External Water</div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="size-1.5 rounded-full bg-red-500"></div>
+                        <span className="text-xs font-semibold text-gray-900">OFF</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Filtration System */}
+                  <div className="flex items-center gap-2">
+                    <div className="size-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <Filter className="size-4 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-[10px] text-gray-600 mb-0.5">Filtration System</div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="size-1.5 rounded-full bg-green-500"></div>
+                        <span className="text-xs font-semibold text-gray-900">ON</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CO2 Removal */}
+                  <div className="flex items-center gap-2">
+                    <div className="size-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <FlaskConical className="size-4 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-[10px] text-gray-600 mb-0.5">CO₂ Removal</div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="size-1.5 rounded-full bg-green-500"></div>
+                        <span className="text-xs font-semibold text-gray-900">ON</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Oxygen Supply System */}
+                  <div className="flex items-center gap-2">
+                    <div className="size-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <Radio className="size-4 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-[10px] text-gray-600 mb-0.5">O₂ Supply System</div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="size-1.5 rounded-full bg-green-500"></div>
+                        <span className="text-xs font-semibold text-gray-900">ON</span>
+                      </div>
+                    </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-2">
-                  <div className={`text-2xl font-bold ${
-                    emergencyMode === 'incident' ? 'text-orange-600' : 'text-gray-900'
-                  }`}>
-                    {emergencyMode === 'incident' ? '49%' : '45%'}
-                  </div>
-                  <div className={`text-[10px] font-semibold mt-0.5 ${
-                    emergencyMode === 'incident' ? 'text-orange-600' : 'text-gray-500'
-                  }`}>
-                    {emergencyMode === 'incident' ? '↑8% above normal' : 'Optimal range'}
+              </div>
+
+            {/* AI Assessment and Predictions - Title Outside */}
+            <h3 className="text-sm font-bold text-gray-900 mb-3">AI Assessment and Predictions</h3>
+
+            {/* Three Separate Graphs */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {/* CO2 Graph */}
+              <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
+                <div className="flex items-center gap-4 mb-3">
+                  <h3 className="text-sm font-bold text-gray-900">CO₂ Level</h3>
+                  <div className="flex items-center gap-3 text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-0.5 bg-blue-600"></div>
+                      <span className="text-gray-600">Actual</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-0.5 border-t-2 border-dashed border-purple-600"></div>
+                      <span className="text-gray-600">AI Predicted</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-0.5 bg-orange-500"></div>
+                      <span className="text-gray-600">Warning (800)</span>
+                    </div>
                   </div>
                 </div>
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart
+                    data={emergencyMode === 'emergency' ? [
+                      { time: '-6h', value: 420, warning: 800 },
+                      { time: '-5h', value: 435, warning: 800 },
+                      { time: '-4h', value: 445, warning: 800 },
+                      { time: '-3h', value: 458, warning: 800 },
+                      { time: '-2h', value: 470, warning: 800 },
+                      { time: '-1h', value: 480, warning: 800 },
+                      { time: 'Now', value: 483, pred: 483, warning: 800 },
+                      { time: '+1h', pred: 495, warning: 800 },
+                      { time: '+2h', pred: 510, warning: 800 },
+                      { time: '+3h', pred: 525, warning: 800 },
+                      { time: '+4h', pred: 545, warning: 800 },
+                      { time: '+5h', pred: 558, warning: 800 },
+                      { time: '+6h', pred: 570, warning: 800 },
+                    ] : emergencyMode === 'incident' ? [
+                      { time: '-6h', value: 550, warning: 800 },
+                      { time: '-5h', value: 620, warning: 800 },
+                      { time: '-4h', value: 710, warning: 800 },
+                      { time: '-3h', value: 780, warning: 800 },
+                      { time: '-2h', value: 850, warning: 800 },
+                      { time: '-1h', value: 900, warning: 800 },
+                      { time: 'Now', value: 950, pred: 950, warning: 800 },
+                      { time: '+1h', pred: 975, warning: 800 },
+                      { time: '+2h', pred: 1000, warning: 800 },
+                      { time: '+3h', pred: 1025, warning: 800 },
+                      { time: '+4h', pred: 1050, warning: 800 },
+                      { time: '+5h', pred: 1080, warning: 800 },
+                      { time: '+6h', pred: 1100, warning: 800 },
+                    ] : [
+                      { time: '-6h', value: 410, warning: 800 },
+                      { time: '-5h', value: 415, warning: 800 },
+                      { time: '-4h', value: 418, warning: 800 },
+                      { time: '-3h', value: 420, warning: 800 },
+                      { time: '-2h', value: 422, warning: 800 },
+                      { time: '-1h', value: 420, warning: 800 },
+                      { time: 'Now', value: 420, pred: 420, warning: 800 },
+                      { time: '+1h', pred: 422, warning: 800 },
+                      { time: '+2h', pred: 425, warning: 800 },
+                      { time: '+3h', pred: 423, warning: 800 },
+                      { time: '+4h', pred: 420, warning: 800 },
+                      { time: '+5h', pred: 418, warning: 800 },
+                      { time: '+6h', pred: 415, warning: 800 },
+                    ]}
+                    margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="time" 
+                      tick={{ fontSize: 10, fill: '#6b7280' }}
+                      stroke="#9ca3af"
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 10, fill: '#6b7280' }}
+                      stroke="#9ca3af"
+                      label={{ value: 'ppm', angle: -90, position: 'insideLeft', style: { fontSize: 10, fill: '#6b7280' } }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '11px'
+                      }}
+                      formatter={(value: any, name: string) => {
+                        if (name === 'value') return [value + ' ppm', 'Actual'];
+                        if (name === 'pred') return [value + ' ppm', 'AI Predicted'];
+                        if (name === 'warning') return [value + ' ppm', 'Warning'];
+                        return [value, name];
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#2563eb"
+                      strokeWidth={2.5}
+                      dot={{ fill: '#2563eb', r: 3 }}
+                      connectNulls={false}
+                      name="value"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pred" 
+                      stroke="#9333ea"
+                      strokeWidth={2.5}
+                      strokeDasharray="5 5"
+                      dot={{ fill: '#9333ea', r: 3 }}
+                      connectNulls={false}
+                      name="pred"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="warning" 
+                      stroke="#f97316"
+                      strokeWidth={1.5}
+                      dot={false}
+                      connectNulls={false}
+                      name="warning"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* O2 Graph */}
+              <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
+                <div className="flex items-center gap-4 mb-3">
+                  <h3 className="text-sm font-bold text-gray-900">O₂ Level</h3>
+                  <div className="flex items-center gap-3 text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-0.5 bg-blue-600"></div>
+                      <span className="text-gray-600">Actual</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-0.5 border-t-2 border-dashed border-purple-600"></div>
+                      <span className="text-gray-600">AI Predicted</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-0.5 bg-orange-500"></div>
+                      <span className="text-gray-600">Critical (19.5%)</span>
+                    </div>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart
+                    data={emergencyMode === 'emergency' ? [
+                      { time: '-6h', value: 20.9, critical: 19.5 },
+                      { time: '-5h', value: 20.7, critical: 19.5 },
+                      { time: '-4h', value: 20.5, critical: 19.5 },
+                      { time: '-3h', value: 20.3, critical: 19.5 },
+                      { time: '-2h', value: 20.1, critical: 19.5 },
+                      { time: '-1h', value: 19.9, critical: 19.5 },
+                      { time: 'Now', value: 19.8, pred: 19.8, critical: 19.5 },
+                      { time: '+1h', pred: 19.5, critical: 19.5 },
+                      { time: '+2h', pred: 19.3, critical: 19.5 },
+                      { time: '+3h', pred: 19.0, critical: 19.5 },
+                      { time: '+4h', pred: 18.8, critical: 19.5 },
+                      { time: '+5h', pred: 18.6, critical: 19.5 },
+                      { time: '+6h', pred: 18.5, critical: 19.5 },
+                    ] : emergencyMode === 'incident' ? [
+                      { time: '-6h', value: 20.9, critical: 19.5 },
+                      { time: '-5h', value: 20.8, critical: 19.5 },
+                      { time: '-4h', value: 20.8, critical: 19.5 },
+                      { time: '-3h', value: 20.7, critical: 19.5 },
+                      { time: '-2h', value: 20.7, critical: 19.5 },
+                      { time: '-1h', value: 20.6, critical: 19.5 },
+                      { time: 'Now', value: 20.6, pred: 20.6, critical: 19.5 },
+                      { time: '+1h', pred: 20.5, critical: 19.5 },
+                      { time: '+2h', pred: 20.4, critical: 19.5 },
+                      { time: '+3h', pred: 20.3, critical: 19.5 },
+                      { time: '+4h', pred: 20.2, critical: 19.5 },
+                      { time: '+5h', pred: 20.1, critical: 19.5 },
+                      { time: '+6h', pred: 20.0, critical: 19.5 },
+                    ] : [
+                      { time: '-6h', value: 20.9, critical: 19.5 },
+                      { time: '-5h', value: 20.9, critical: 19.5 },
+                      { time: '-4h', value: 21.0, critical: 19.5 },
+                      { time: '-3h', value: 20.9, critical: 19.5 },
+                      { time: '-2h', value: 21.0, critical: 19.5 },
+                      { time: '-1h', value: 20.9, critical: 19.5 },
+                      { time: 'Now', value: 20.9, pred: 20.9, critical: 19.5 },
+                      { time: '+1h', pred: 20.9, critical: 19.5 },
+                      { time: '+2h', pred: 21.0, critical: 19.5 },
+                      { time: '+3h', pred: 20.9, critical: 19.5 },
+                      { time: '+4h', pred: 20.9, critical: 19.5 },
+                      { time: '+5h', pred: 20.8, critical: 19.5 },
+                      { time: '+6h', pred: 20.8, critical: 19.5 },
+                    ]}
+                    margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="time" 
+                      tick={{ fontSize: 10, fill: '#6b7280' }}
+                      stroke="#9ca3af"
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 10, fill: '#6b7280' }}
+                      stroke="#9ca3af"
+                      domain={emergencyMode === 'emergency' ? [18, 21] : [19, 21.5]}
+                      label={{ value: '%', angle: -90, position: 'insideLeft', style: { fontSize: 10, fill: '#6b7280' } }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '11px'
+                      }}
+                      formatter={(value: any, name: string) => {
+                        if (name === 'value') return [value + '%', 'Actual'];
+                        if (name === 'pred') return [value + '%', 'AI Predicted'];
+                        if (name === 'critical') return [value + '%', 'Critical'];
+                        return [value, name];
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#2563eb"
+                      strokeWidth={2.5}
+                      dot={{ fill: '#2563eb', r: 3 }}
+                      connectNulls={false}
+                      name="value"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pred" 
+                      stroke="#9333ea"
+                      strokeWidth={2.5}
+                      strokeDasharray="5 5"
+                      dot={{ fill: '#9333ea', r: 3 }}
+                      connectNulls={false}
+                      name="pred"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="critical" 
+                      stroke="#f97316"
+                      strokeWidth={1.5}
+                      dot={false}
+                      connectNulls={false}
+                      name="critical"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Water Level Graph */}
+              <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
+                <div className="flex items-center gap-4 mb-3">
+                  <h3 className="text-sm font-bold text-gray-900">Water Level</h3>
+                  <div className="flex items-center gap-3 text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-0.5 bg-blue-600"></div>
+                      <span className="text-gray-600">Actual</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-0.5 border-t-2 border-dashed border-purple-600"></div>
+                      <span className="text-gray-600">AI Predicted</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-6 h-0.5 bg-orange-500"></div>
+                      <span className="text-gray-600">Low (20%)</span>
+                    </div>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart
+                    data={emergencyMode === 'emergency' ? [
+                      { time: '-6h', value: 88, low: 20 },
+                      { time: '-5h', value: 75, low: 20 },
+                      { time: '-4h', value: 60, low: 20 },
+                      { time: '-3h', value: 48, low: 20 },
+                      { time: '-2h', value: 35, low: 20 },
+                      { time: '-1h', value: 28, low: 20 },
+                      { time: 'Now', value: 22, pred: 22, low: 20 },
+                      { time: '+1h', pred: 18, low: 20 },
+                      { time: '+2h', pred: 14, low: 20 },
+                      { time: '+3h', pred: 10, low: 20 },
+                      { time: '+4h', pred: 6, low: 20 },
+                      { time: '+5h', pred: 4, low: 20 },
+                      { time: '+6h', pred: 2, low: 20 },
+                    ] : emergencyMode === 'incident' ? [
+                      { time: '-6h', value: 87, low: 20 },
+                      { time: '-5h', value: 88, low: 20 },
+                      { time: '-4h', value: 87, low: 20 },
+                      { time: '-3h', value: 88, low: 20 },
+                      { time: '-2h', value: 87, low: 20 },
+                      { time: '-1h', value: 88, low: 20 },
+                      { time: 'Now', value: 88, pred: 88, low: 20 },
+                      { time: '+1h', pred: 87, low: 20 },
+                      { time: '+2h', pred: 87, low: 20 },
+                      { time: '+3h', pred: 86, low: 20 },
+                      { time: '+4h', pred: 86, low: 20 },
+                      { time: '+5h', pred: 85, low: 20 },
+                      { time: '+6h', pred: 85, low: 20 },
+                    ] : [
+                      { time: '-6h', value: 87, low: 20 },
+                      { time: '-5h', value: 88, low: 20 },
+                      { time: '-4h', value: 87, low: 20 },
+                      { time: '-3h', value: 88, low: 20 },
+                      { time: '-2h', value: 88, low: 20 },
+                      { time: '-1h', value: 87, low: 20 },
+                      { time: 'Now', value: 88, pred: 88, low: 20 },
+                      { time: '+1h', pred: 88, low: 20 },
+                      { time: '+2h', pred: 87, low: 20 },
+                      { time: '+3h', pred: 87, low: 20 },
+                      { time: '+4h', pred: 88, low: 20 },
+                      { time: '+5h', pred: 88, low: 20 },
+                      { time: '+6h', pred: 87, low: 20 },
+                    ]}
+                    margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="time" 
+                      tick={{ fontSize: 10, fill: '#6b7280' }}
+                      stroke="#9ca3af"
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 10, fill: '#6b7280' }}
+                      stroke="#9ca3af"
+                      domain={[0, 100]}
+                      label={{ value: '%', angle: -90, position: 'insideLeft', style: { fontSize: 10, fill: '#6b7280' } }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '11px'
+                      }}
+                      formatter={(value: any, name: string) => {
+                        if (name === 'value') return [value + '%', 'Actual'];
+                        if (name === 'pred') return [value + '%', 'AI Predicted'];
+                        if (name === 'low') return [value + '%', 'Low'];
+                        return [value, name];
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#2563eb"
+                      strokeWidth={2.5}
+                      dot={{ fill: '#2563eb', r: 3 }}
+                      connectNulls={false}
+                      name="value"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pred" 
+                      stroke="#9333ea"
+                      strokeWidth={2.5}
+                      strokeDasharray="5 5"
+                      dot={{ fill: '#9333ea', r: 3 }}
+                      connectNulls={false}
+                      name="pred"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="low" 
+                      stroke="#f97316"
+                      strokeWidth={1.5}
+                      dot={false}
+                      connectNulls={false}
+                      name="low"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
-            {/* Trend Graph - Historical + AI Prediction */}
-            <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-gray-900">Environmental Trends (Last 6h + AI Prediction 6h)</h3>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-0.5 bg-orange-600"></div>
-                    <span className="text-[10px] text-gray-600">Temperature (Past)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-0.5 bg-orange-300"></div>
-                    <span className="text-[10px] text-gray-600">Temperature (AI)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-0.5 bg-green-600"></div>
-                    <span className="text-[10px] text-gray-600">Air Quality (Past)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-0.5 bg-green-300"></div>
-                    <span className="text-[10px] text-gray-600">Air Quality (AI)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-0.5 bg-cyan-600"></div>
-                    <span className="text-[10px] text-gray-600">Humidity (Past)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-0.5 bg-cyan-300"></div>
-                    <span className="text-[10px] text-gray-600">Humidity (AI)</span>
-                  </div>
+            {/* AI Assessment and Recommendations - Two Columns */}
+            <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm mb-6">
+              <div className="grid grid-cols-2 gap-6">
+                {/* Left Column - AI Assessment Notes */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-900 mb-3">AI Analysis</h4>
+                  {emergencyMode === 'emergency' ? (
+                    <div className="space-y-2">
+                      {/* Key Metric Cards */}
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-md p-2 shadow-sm">
+                          <div className="text-[8px] text-red-50 font-semibold uppercase tracking-wide mb-0.5">Predicted Failure</div>
+                          <div className="text-white text-lg font-bold">4.2h</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-md p-2 shadow-sm">
+                          <div className="text-[8px] text-orange-50 font-semibold uppercase tracking-wide mb-0.5">CBRN Filter</div>
+                          <div className="text-white text-lg font-bold">2.8h</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-red-600 to-red-700 rounded-md p-2 shadow-sm">
+                          <div className="text-[8px] text-red-50 font-semibold uppercase tracking-wide mb-0.5">CO₂ Filter</div>
+                          <div className="text-white text-lg font-bold">1.5h</div>
+                          <div className="text-[8px] text-red-100">Critical</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-md p-2 shadow-sm">
+                          <div className="text-[8px] text-red-50 font-semibold uppercase tracking-wide mb-0.5">Water Reserve</div>
+                          <div className="text-white text-lg font-bold">3.1h</div>
+                        </div>
+                      </div>
+                      
+                      {/* Additional Status Items */}
+                      <div className="space-y-1.5">
+                        <div className="bg-orange-50 border border-orange-200 rounded px-2 py-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-[10px] font-bold text-orange-800">O₂ Level Status:</span>
+                            <span className="text-[10px] text-orange-700 font-semibold">19.8%</span>
+                          </div>
+                          <div className="text-[8px] text-orange-600 mt-0.5">Declining (Safe: &gt;19.5%)</div>
+                        </div>
+                        <div className="bg-yellow-50 border border-yellow-200 rounded px-2 py-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-[10px] font-bold text-yellow-800">GTV System Load:</span>
+                            <span className="text-[10px] text-yellow-700 font-semibold">92%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold text-gray-700 w-36 flex-shrink-0">System Status:</span>
+                        <span className="text-[10px] text-green-600 font-semibold">All Systems Optimal</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold text-gray-700 w-36 flex-shrink-0">CBRN Filter Capacity:</span>
+                        <span className="text-[10px] text-green-600 font-semibold">168+ hours remaining</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold text-gray-700 w-36 flex-shrink-0">CO₂ Filter Capacity:</span>
+                        <span className="text-[10px] text-green-600 font-semibold">Normal - 72+ hours</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold text-gray-700 w-36 flex-shrink-0">Water Reserve Level:</span>
+                        <span className="text-[10px] text-green-600 font-semibold">88% - 96+ hours supply</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold text-gray-700 w-36 flex-shrink-0">O₂ Level Status:</span>
+                        <span className="text-[10px] text-green-600 font-semibold">Optimal - 20.9%</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold text-gray-700 w-36 flex-shrink-0">GTV System Load:</span>
+                        <span className="text-[10px] text-green-600 font-semibold">18% capacity</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold text-gray-700 w-36 flex-shrink-0">Threat Level:</span>
+                        <span className="text-[10px] text-green-600 font-semibold">None Detected</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold text-gray-700 w-36 flex-shrink-0">6-Hour Forecast:</span>
+                        <span className="text-[10px] text-green-600 font-semibold">Stable Conditions Expected</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column - AI Recommendations */}
+                <div>
+                  <h4 className="text-sm font-bold text-gray-900 mb-3">AI Recommendations</h4>
+                  {emergencyMode === 'emergency' ? (
+                    <div className="space-y-2">
+                      {/* Recommendation 1 - IMMEDIATE */}
+                      <div className="bg-white border-l-4 border-red-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[10px] font-bold">1</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[8px] font-bold text-red-700 uppercase tracking-wide mb-0.5">IMMEDIATE</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              Establish external water supply connection
+                            </p>
+                            <p className="text-[9px] text-gray-600 mt-0.5">
+                              Prevent reserve depletion
+                            </p>
+                          </div>
+                          <button className="bg-red-600 hover:bg-red-700 text-white text-[9px] font-semibold py-1.5 px-2.5 rounded transition-colors whitespace-nowrap flex-shrink-0">
+                            Execute
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Recommendation 2 - CRITICAL */}
+                      <div className="bg-white border-l-4 border-red-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[10px] font-bold">2</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[8px] font-bold text-red-700 uppercase tracking-wide mb-0.5">CRITICAL</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              Replace CBRN filter within 2 hours
+                            </p>
+                            <p className="text-[9px] text-gray-600 mt-0.5">
+                              Maintain contamination protection
+                            </p>
+                          </div>
+                          <button className="bg-red-600 hover:bg-red-700 text-white text-[9px] font-semibold py-1.5 px-2.5 rounded transition-colors whitespace-nowrap flex-shrink-0">
+                            Execute
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Recommendation 3 - HIGH */}
+                      <div className="bg-white border-l-4 border-orange-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[10px] font-bold">3</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[8px] font-bold text-orange-700 uppercase tracking-wide mb-0.5">HIGH</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              Reduce facility occupancy by 30%
+                            </p>
+                            <p className="text-[9px] text-gray-600 mt-0.5">
+                              Decrease O₂ consumption rate
+                            </p>
+                          </div>
+                          <button className="bg-orange-600 hover:bg-orange-700 text-white text-[9px] font-semibold py-1.5 px-2.5 rounded transition-colors whitespace-nowrap flex-shrink-0">
+                            Execute
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Recommendation 4 - HIGH */}
+                      <div className="bg-white border-l-4 border-orange-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[10px] font-bold">4</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[8px] font-bold text-orange-700 uppercase tracking-wide mb-0.5">HIGH</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              Replace CO₂ scrubber cartridge
+                            </p>
+                            <p className="text-[9px] text-gray-600 mt-0.5">
+                              Maintain air quality
+                            </p>
+                          </div>
+                          <button className="bg-orange-600 hover:bg-orange-700 text-white text-[9px] font-semibold py-1.5 px-2.5 rounded transition-colors whitespace-nowrap flex-shrink-0">
+                            Execute
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Recommendation 5 - MEDIUM */}
+                      <div className="bg-white border-l-4 border-yellow-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[10px] font-bold">5</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[8px] font-bold text-yellow-700 uppercase tracking-wide mb-0.5">MEDIUM</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              Monitor GTV system temperature
+                            </p>
+                            <p className="text-[9px] text-gray-600 mt-0.5">
+                              Operating near thermal limits
+                            </p>
+                          </div>
+                          <button className="bg-yellow-600 hover:bg-yellow-700 text-white text-[9px] font-semibold py-1.5 px-2.5 rounded transition-colors whitespace-nowrap flex-shrink-0">
+                            Execute
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Automated Action - INFO */}
+                      <div className="bg-white border-l-4 border-blue-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[8px] font-bold">AI</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-[8px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">AUTOMATED</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              GTV and filtration systems activated
+                            </p>
+                            <p className="text-[9px] text-gray-600 mt-0.5">
+                              Recovery time: 6-8 hours with external water
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {/* Status - Green */}
+                      <div className="bg-white border-l-4 border-green-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[8px] font-bold">✓</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-[8px] font-bold text-green-700 uppercase tracking-wide mb-0.5">STATUS</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              All systems operating within normal parameters - no intervention required
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Routine 1 */}
+                      <div className="bg-white border-l-4 border-blue-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[10px] font-bold">1</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[8px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">ROUTINE</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              Schedule CBRN filter inspection in 30 days
+                            </p>
+                            <p className="text-[9px] text-gray-600 mt-0.5">
+                              Next: 03/05/2026
+                            </p>
+                          </div>
+                          <button className="bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-semibold py-1.5 px-2.5 rounded transition-colors whitespace-nowrap flex-shrink-0">
+                            Execute
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Routine 2 */}
+                      <div className="bg-white border-l-4 border-blue-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[10px] font-bold">2</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[8px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">ROUTINE</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              CO₂ scrubber maintenance due in 14 days
+                            </p>
+                            <p className="text-[9px] text-gray-600 mt-0.5">
+                              Next: 02/17/2026
+                            </p>
+                          </div>
+                          <button className="bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-semibold py-1.5 px-2.5 rounded transition-colors whitespace-nowrap flex-shrink-0">
+                            Execute
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Optimal */}
+                      <div className="bg-white border-l-4 border-blue-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[10px] font-bold">3</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-[8px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">OPTIMAL</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              Water reserves adequate - continue normal consumption patterns
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* AI Forecast */}
+                      <div className="bg-white border-l-4 border-blue-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[8px] font-bold">AI</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-[8px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">FORECAST</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              Minor CO₂ fluctuations expected (±15 ppm) due to occupancy patterns
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* AI Prediction */}
+                      <div className="bg-white border-l-4 border-blue-500 rounded-lg p-2.5 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <div className="size-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-[8px] font-bold">AI</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-[8px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">PREDICTION</div>
+                            <p className="text-[10px] text-gray-900 font-semibold">
+                              All environmental metrics will remain stable over next 6 hours
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart
-                  data={emergencyMode === 'incident' ? [
-                    // Historical data (last 6 hours) - Incident Mode
-                    { time: '-6h', tempPast: 21.8, airQualityPast: 410, humidityPast: 43 },
-                    { time: '-5h', tempPast: 22.0, airQualityPast: 415, humidityPast: 44 },
-                    { time: '-4h', tempPast: 22.1, airQualityPast: 420, humidityPast: 44 },
-                    { time: '-3h', tempPast: 22.3, airQualityPast: 435, humidityPast: 45 },
-                    { time: '-2h', tempPast: 22.4, airQualityPast: 455, humidityPast: 47 },
-                    { time: '-1h', tempPast: 22.5, airQualityPast: 470, humidityPast: 48 },
-                    { time: 'Now', tempPast: 22.5, airQualityPast: 483, humidityPast: 49, tempForecast: 22.5, airQualityForecast: 483, humidityForecast: 49 },
-                    // AI Predicted data (next 6 hours) - Continuing elevation
-                    { time: '+1h', tempForecast: 22.6, airQualityForecast: 495, humidityForecast: 50 },
-                    { time: '+2h', tempForecast: 22.7, airQualityForecast: 510, humidityForecast: 51 },
-                    { time: '+3h', tempForecast: 22.8, airQualityForecast: 525, humidityForecast: 52 },
-                    { time: '+4h', tempForecast: 22.9, airQualityForecast: 540, humidityForecast: 53 },
-                    { time: '+5h', tempForecast: 23.0, airQualityForecast: 555, humidityForecast: 54 },
-                    { time: '+6h', tempForecast: 23.1, airQualityForecast: 570, humidityForecast: 55 },
-                  ] : [
-                    // Historical data (last 6 hours) - Normal Mode
-                    { time: '-6h', tempPast: 21.8, airQualityPast: 410, humidityPast: 43 },
-                    { time: '-5h', tempPast: 22.0, airQualityPast: 415, humidityPast: 44 },
-                    { time: '-4h', tempPast: 22.1, airQualityPast: 418, humidityPast: 44 },
-                    { time: '-3h', tempPast: 22.3, airQualityPast: 420, humidityPast: 45 },
-                    { time: '-2h', tempPast: 22.4, airQualityPast: 422, humidityPast: 45 },
-                    { time: '-1h', tempPast: 22.5, airQualityPast: 420, humidityPast: 45 },
-                    { time: 'Now', tempPast: 22.5, airQualityPast: 420, humidityPast: 45, tempForecast: 22.5, airQualityForecast: 420, humidityForecast: 45 },
-                    // AI Predicted data (next 6 hours) - Normal Mode
-                    { time: '+1h', tempForecast: 22.6, airQualityForecast: 425, humidityForecast: 46 },
-                    { time: '+2h', tempForecast: 22.7, airQualityForecast: 428, humidityForecast: 46 },
-                    { time: '+3h', tempForecast: 22.8, airQualityForecast: 430, humidityForecast: 47 },
-                    { time: '+4h', tempForecast: 22.9, airQualityForecast: 432, humidityForecast: 47 },
-                    { time: '+5h', tempForecast: 23.0, airQualityForecast: 435, humidityForecast: 48 },
-                    { time: '+6h', tempForecast: 23.1, airQualityForecast: 438, humidityForecast: 48 },
-                  ]}
-                  margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="time" 
-                    tick={{ fontSize: 11, fill: '#6b7280' }}
-                    stroke="#9ca3af"
-                  />
-                  <YAxis 
-                    yAxisId="left"
-                    tick={{ fontSize: 11, fill: '#6b7280' }}
-                    stroke="#9ca3af"
-                    label={{ value: 'Temp (°C) / Humidity (%)', angle: -90, position: 'insideLeft', style: { fontSize: 10, fill: '#6b7280' } }}
-                  />
-                  <YAxis 
-                    yAxisId="right"
-                    orientation="right"
-                    tick={{ fontSize: 11, fill: '#6b7280' }}
-                    stroke="#9ca3af"
-                    label={{ value: 'Air Quality (ppm)', angle: 90, position: 'insideRight', style: { fontSize: 10, fill: '#6b7280' } }}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                      border: '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      fontSize: '11px'
-                    }}
-                    formatter={(value: any, name: string) => {
-                      if (name === 'tempPast' || name === 'tempForecast') return [value + '°C', name === 'tempPast' ? 'Temperature (Past)' : 'Temperature (AI Forecast)'];
-                      if (name === 'airQualityPast' || name === 'airQualityForecast') return [value + ' ppm', name === 'airQualityPast' ? 'Air Quality (Past)' : 'Air Quality (AI Forecast)'];
-                      if (name === 'humidityPast' || name === 'humidityForecast') return [value + '%', name === 'humidityPast' ? 'Humidity (Past)' : 'Humidity (AI Forecast)'];
-                      return [value, name];
-                    }}
-                  />
-                  
-                  {/* Temperature Lines */}
-                  <Line 
-                    yAxisId="left"
-                    type="monotone" 
-                    dataKey="tempPast" 
-                    stroke="#ea580c" 
-                    strokeWidth={2.5}
-                    dot={{ fill: '#ea580c', r: 3 }}
-                    connectNulls={false}
-                  />
-                  <Line 
-                    yAxisId="left"
-                    type="monotone" 
-                    dataKey="tempForecast" 
-                    stroke="#fdba74" 
-                    strokeWidth={2.5}
-                    dot={{ fill: '#fdba74', r: 3 }}
-                    connectNulls={false}
-                    strokeDasharray="5 5"
-                  />
-                  
-                  {/* Air Quality Lines */}
-                  <Line 
-                    yAxisId="right"
-                    type="monotone" 
-                    dataKey="airQualityPast" 
-                    stroke="#15803d" 
-                    strokeWidth={2.5}
-                    dot={{ fill: '#15803d', r: 3 }}
-                    connectNulls={false}
-                  />
-                  <Line 
-                    yAxisId="right"
-                    type="monotone" 
-                    dataKey="airQualityForecast" 
-                    stroke="#86efac" 
-                    strokeWidth={2.5}
-                    dot={{ fill: '#86efac', r: 3 }}
-                    connectNulls={false}
-                    strokeDasharray="5 5"
-                  />
-                  
-                  {/* Humidity Lines */}
-                  <Line 
-                    yAxisId="left"
-                    type="monotone" 
-                    dataKey="humidityPast" 
-                    stroke="#0e7490" 
-                    strokeWidth={2.5}
-                    dot={{ fill: '#0e7490', r: 3 }}
-                    connectNulls={false}
-                  />
-                  <Line 
-                    yAxisId="left"
-                    type="monotone" 
-                    dataKey="humidityForecast" 
-                    stroke="#67e8f9" 
-                    strokeWidth={2.5}
-                    dot={{ fill: '#67e8f9', r: 3 }}
-                    connectNulls={false}
-                    strokeDasharray="5 5"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
             </div>
+              </>
+            ) : (
+              <>
+                {/* NORMAL/ALARM MODE - Original Layout */}
+                {/* Environmental Metrics Tiles */}
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                  {/* Temperature Tile */}
+                  <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
+                    <div className="text-[10px] text-gray-600 mb-1">Temperature</div>
+                    <div className="text-2xl font-bold text-gray-900">22.5°C</div>
+                    <div className="text-[10px] text-green-600 mt-1">Normal</div>
+                  </div>
 
-            {/* Recent Auto-Resolved Alerts */}
+                  {/* Air Quality Tile */}
+                  <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
+                    <div className="text-[10px] text-gray-600 mb-1">Air Quality</div>
+                    <div className="text-2xl font-bold text-gray-900">420 ppm</div>
+                    <div className="text-[10px] text-green-600 mt-1">Excellent</div>
+                  </div>
+
+                  {/* Humidity Tile */}
+                  <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
+                    <div className="text-[10px] text-gray-600 mb-1">Humidity</div>
+                    <div className="text-2xl font-bold text-gray-900">45%</div>
+                    <div className="text-[10px] text-green-600 mt-1">Optimal</div>
+                  </div>
+
+                  {/* Water Level Tile */}
+                  <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
+                    <div className="text-[10px] text-gray-600 mb-1">Water Level</div>
+                    <div className="text-2xl font-bold text-gray-900">88%</div>
+                    <div className="text-[10px] text-green-600 mt-1">Full</div>
+                  </div>
+                </div>
+
+                {/* Environmental Trends Graph + AI Prediction */}
+                <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm mb-6">
+                  <h3 className="text-sm font-bold text-gray-900 mb-4">Environmental Trends (Last 6h) + AI Prediction (Next 6h)</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart
+                      data={[
+                        { time: '-6h', temp: 21.8, airQuality: 410, humidity: 43, tempPred: null, airQualityPred: null, humidityPred: null },
+                        { time: '-5h', temp: 22.0, airQuality: 415, humidity: 44, tempPred: null, airQualityPred: null, humidityPred: null },
+                        { time: '-4h', temp: 22.1, airQuality: 418, humidity: 44, tempPred: null, airQualityPred: null, humidityPred: null },
+                        { time: '-3h', temp: 22.3, airQuality: 420, humidity: 45, tempPred: null, airQualityPred: null, humidityPred: null },
+                        { time: '-2h', temp: 22.4, airQuality: 422, humidity: 45, tempPred: null, airQualityPred: null, humidityPred: null },
+                        { time: '-1h', temp: 22.5, airQuality: 420, humidity: 45, tempPred: null, airQualityPred: null, humidityPred: null },
+                        { time: 'Now', temp: 22.5, airQuality: 420, humidity: 45, tempPred: 22.5, airQualityPred: 420, humidityPred: 45 },
+                        { time: '+1h', temp: null, airQuality: null, humidity: null, tempPred: 22.5, airQualityPred: 422, humidityPred: 45 },
+                        { time: '+2h', temp: null, airQuality: null, humidity: null, tempPred: 22.6, airQualityPred: 425, humidityPred: 46 },
+                        { time: '+3h', temp: null, airQuality: null, humidity: null, tempPred: 22.7, airQualityPred: 423, humidityPred: 46 },
+                        { time: '+4h', temp: null, airQuality: null, humidity: null, tempPred: 22.6, airQualityPred: 421, humidityPred: 45 },
+                        { time: '+5h', temp: null, airQuality: null, humidity: null, tempPred: 22.5, airQualityPred: 419, humidityPred: 45 },
+                        { time: '+6h', temp: null, airQuality: null, humidity: null, tempPred: 22.4, airQualityPred: 418, humidityPred: 44 },
+                      ]}
+                      margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis 
+                        dataKey="time" 
+                        tick={{ fontSize: 11, fill: '#6b7280' }}
+                        stroke="#9ca3af"
+                      />
+                      <YAxis 
+                        yAxisId="left"
+                        tick={{ fontSize: 11, fill: '#6b7280' }}
+                        stroke="#9ca3af"
+                        label={{ value: 'Temp (°C) / Humidity (%)', angle: -90, position: 'insideLeft', style: { fontSize: 10, fill: '#6b7280' } }}
+                      />
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        tick={{ fontSize: 11, fill: '#6b7280' }}
+                        stroke="#9ca3af"
+                        label={{ value: 'Air Quality (ppm)', angle: 90, position: 'insideRight', style: { fontSize: 10, fill: '#6b7280' } }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          fontSize: '11px'
+                        }}
+                        formatter={(value: any, name: string) => {
+                          if (name === 'temp' || name === 'tempPred') return [value + '°C', 'Temperature'];
+                          if (name === 'airQuality' || name === 'airQualityPred') return [value + ' ppm', 'Air Quality'];
+                          if (name === 'humidity' || name === 'humidityPred') return [value + '%', 'Humidity'];
+                          return [value, name];
+                        }}
+                      />
+                      {/* Historical data - solid lines */}
+                      <Line 
+                        yAxisId="left"
+                        type="monotone" 
+                        dataKey="temp" 
+                        stroke="#ea580c" 
+                        strokeWidth={2.5}
+                        dot={{ fill: '#ea580c', r: 3 }}
+                        connectNulls={false}
+                      />
+                      <Line 
+                        yAxisId="right"
+                        type="monotone" 
+                        dataKey="airQuality" 
+                        stroke="#15803d" 
+                        strokeWidth={2.5}
+                        dot={{ fill: '#15803d', r: 3 }}
+                        connectNulls={false}
+                      />
+                      <Line 
+                        yAxisId="left"
+                        type="monotone" 
+                        dataKey="humidity" 
+                        stroke="#0e7490" 
+                        strokeWidth={2.5}
+                        dot={{ fill: '#0e7490', r: 3 }}
+                        connectNulls={false}
+                      />
+                      {/* Predicted data - dashed lines */}
+                      <Line 
+                        yAxisId="left"
+                        type="monotone" 
+                        dataKey="tempPred" 
+                        stroke="#ea580c" 
+                        strokeWidth={2.5}
+                        strokeDasharray="5 5"
+                        dot={{ fill: '#ea580c', r: 3 }}
+                        connectNulls={false}
+                      />
+                      <Line 
+                        yAxisId="right"
+                        type="monotone" 
+                        dataKey="airQualityPred" 
+                        stroke="#15803d" 
+                        strokeWidth={2.5}
+                        strokeDasharray="5 5"
+                        dot={{ fill: '#15803d', r: 3 }}
+                        connectNulls={false}
+                      />
+                      <Line 
+                        yAxisId="left"
+                        type="monotone" 
+                        dataKey="humidityPred" 
+                        stroke="#0e7490" 
+                        strokeWidth={2.5}
+                        strokeDasharray="5 5"
+                        dot={{ fill: '#0e7490', r: 3 }}
+                        connectNulls={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+
+              </>
+            )}
+
+            {/* Recent Auto-Resolved Alerts - Only show in Normal and Alarm modes */}
+            {emergencyMode !== 'emergency' && (
             <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm mt-6">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-gray-900">Recent Auto-Resolved Alerts</h3>
@@ -1116,19 +1860,131 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 </table>
               </div>
             </div>
+            )}
           </div>
 
-          {/* Right Panel - Sensor Details */}
-          {selectedSensor && (
-            <div className="w-[30%] transition-all duration-300 border-l-2 border-gray-300 bg-gray-50 px-6 pb-4">
-              <SensorDetailPanel 
-                sensor={selectedSensor}
-                onClose={() => {
-                  localStorage.removeItem('clickedSensor');
-                  setSelectedSensor(null);
-                }}
-                language={language}
-              />
+          {/* Right Panel - Warning Card for Active Alarm mode ONLY */}
+          {selectedSensor && emergencyMode === 'incident' && (
+            <div className="w-[30%] transition-all duration-300 border-l-2 border-gray-300 bg-gray-50 overflow-y-auto px-6 pb-4 pt-4">
+              {emergencyMode === 'incident' ? (
+                /* Warning Card for Active Alarm Mode */
+                <div className="sticky top-4">
+                  <div className="bg-orange-50 rounded-lg border-2 border-orange-400 shadow-lg p-5">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-orange-300">
+                      <div className="size-12 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0">
+                        <AlertTriangle className="size-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-bold text-orange-900 mb-1">
+                          {language === 'en' ? 'CO₂ Level Warning' : 'تحذير مستوى ثاني أكسيد الكربون'}
+                        </h4>
+                        <span className="px-2 py-1 bg-orange-500 text-white text-xs font-bold uppercase rounded">
+                          {language === 'en' ? 'WARNING' : 'تحذير'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Warning Details */}
+                    <div className="space-y-3 mb-4">
+                      <div>
+                        <div className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                          {language === 'en' ? 'ID' : 'المعرف'}
+                        </div>
+                        <div className="text-sm font-semibold text-slate-900">
+                          warning-incident-001
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                          {language === 'en' ? 'Current Reading' : 'القراءة الحالية'}
+                        </div>
+                        <div className="text-2xl font-bold text-orange-600">950 ppm</div>
+                        <div className="text-xs text-orange-700 mt-1">
+                          {language === 'en' ? 'Above normal threshold (800 ppm)' : 'أعلى من العتبة الطبيعية (800 جزء في المليون)'}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                          {language === 'en' ? 'Affected Zones' : 'المناطق المتأثرة'}
+                        </div>
+                        <div className="text-sm font-semibold text-slate-900">
+                          {language === 'en' ? 'Multiple areas' : 'مناطق متعددة'}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                          {language === 'en' ? 'Detection Time' : 'وقت الكشف'}
+                        </div>
+                        <div className="text-sm font-semibold text-slate-900">
+                          {selectedSensor.lastUpdate}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                          {language === 'en' ? 'Status' : 'الحالة'}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="size-2 rounded-full bg-orange-500 animate-pulse"></div>
+                          <span className="text-sm font-semibold text-orange-700 uppercase">
+                            {language === 'en' ? 'ACTIVE' : 'نشط'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* AI Assessment */}
+                    <div className="bg-white rounded-lg border border-orange-300 p-4 mt-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Brain className="size-4 text-purple-600" />
+                        <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                          {language === 'en' ? 'AI Assessment' : 'تقييم الذكاء الاصطناعي'}
+                        </h5>
+                      </div>
+                      <div className="space-y-2 text-xs text-slate-700 leading-relaxed">
+                        <div className="flex items-start gap-2">
+                          <div className="size-1.5 rounded-full bg-orange-600 mt-1.5 flex-shrink-0"></div>
+                          <p>
+                            {language === 'en'
+                              ? 'CO₂ levels are elevated above safe thresholds. Ventilation system automatically activated.'
+                              : 'مستويات ثاني أكسيد الكربون مرتفعة فوق العتبات الآمنة. تم تفعيل نظام التهوية تلقائياً.'}
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <div className="size-1.5 rounded-full bg-blue-600 mt-1.5 flex-shrink-0"></div>
+                          <p>
+                            {language === 'en'
+                              ? 'HVAC systems working to reduce CO₂ concentration. Expected normalization in 15-20 minutes.'
+                              : 'أنظمة التهوية تعمل على تقليل تركيز ثاني أكسيد الكربون. التطبيع المتوقع في 15-20 دقيقة.'}
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <div className="size-1.5 rounded-full bg-green-600 mt-1.5 flex-shrink-0"></div>
+                          <p>
+                            {language === 'en'
+                              ? 'No immediate health risk. Monitoring continues.'
+                              : 'لا يوجد خطر صحي فوري. المراقبة مستمرة.'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Normal Sensor Detail Panel */
+                <SensorDetailPanel 
+                  sensor={selectedSensor}
+                  onClose={() => {
+                    localStorage.removeItem('clickedSensor');
+                    setSelectedSensor(null);
+                  }}
+                  language={language}
+                />
+              )}
             </div>
           )}
           </div>
@@ -2802,9 +3658,9 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                   </div>
                   {/* C3 - Chemical Detector */}
                   <div className={`w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity ${
-                    emergencyMode === 'emergency' ? 'sensor-blink sensor-pulse-ring-red' : ''
+                    emergencyMode === 'emergency' && !scenarioId ? 'sensor-blink sensor-pulse-ring-red' : ''
                   }`}
-                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c3', name: 'Chemical Detector C3', status: emergencyMode === 'emergency' ? 'critical' : 'operational', value: emergencyMode === 'emergency' ? 'Detected' : 'Normal', type: 'chemical' })}
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c3', name: 'Chemical Detector C3', status: emergencyMode === 'emergency' && !scenarioId ? 'critical' : 'operational', value: emergencyMode === 'emergency' && !scenarioId ? 'Detected' : 'Normal', type: 'chemical' })}
                     onMouseLeave={handleSensorLeave}
                     onMouseDown={(e) => {
                       e.stopPropagation();
@@ -2814,8 +3670,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         name: 'Chemical Detector C3', 
                         type: 'chemical', 
                         subType: 'C', 
-                        status: emergencyMode === 'emergency' ? 'critical' : 'operational', 
-                        value: emergencyMode === 'emergency' ? 'Detected' : 'Normal', 
+                        status: emergencyMode === 'emergency' && !scenarioId ? 'critical' : 'operational', 
+                        value: emergencyMode === 'emergency' && !scenarioId ? 'Detected' : 'Normal', 
                         x: 27, 
                         y: 20,
                         lastUpdate: '2s ago'
@@ -2825,7 +3681,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
                       <path 
                         d="M7 2 L12 12 L2 12 Z" 
-                        fill={emergencyMode === 'emergency' ? '#dc2626' : '#16a34a'}
+                        fill={emergencyMode === 'emergency' && !scenarioId ? '#dc2626' : '#16a34a'}
                         stroke="rgba(0,0,0,0.2)" 
                         strokeWidth="0.5"
                       />
@@ -3149,8 +4005,10 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R7</span>
                   </div>
                   {/* C7 - Chemical Detector */}
-                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
-                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c7', name: 'Chemical Detector C7', status: 'operational', value: 'Normal', type: 'chemical' })}
+                  <div className={`w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity ${
+                    emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 900 ? 'sensor-blink sensor-pulse-ring-red' : ''
+                  }`}
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c7', name: 'Chemical Detector C7', status: emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 900 ? 'critical' : 'operational', value: emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 900 ? 'Detected' : 'Normal', type: 'chemical' })}
                     onMouseLeave={handleSensorLeave}
                     onMouseDown={(e) => {
                       e.stopPropagation();
@@ -3160,8 +4018,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         name: 'Chemical Detector C7', 
                         type: 'chemical', 
                         subType: 'C', 
-                        status: 'operational', 
-                        value: 'Normal', 
+                        status: emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 900 ? 'critical' : 'operational', 
+                        value: emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 900 ? 'Detected' : 'Normal', 
                         x: 32, 
                         y: 9,
                         lastUpdate: '2s ago'
@@ -3171,7 +4029,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
                       <path 
                         d="M7 2 L12 12 L2 12 Z" 
-                        fill="#16a34a"
+                        fill={emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 900 ? '#dc2626' : '#16a34a'}
                         stroke="rgba(0,0,0,0.2)" 
                         strokeWidth="0.5"
                       />
@@ -3469,8 +4327,10 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     <span className="absolute inset-0 flex items-center justify-center text-[4px] text-white leading-none font-bold z-10 pt-1">R12</span>
                   </div>
                   {/* C12 - Chemical Detector */}
-                  <div className="w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity"
-                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c12', name: 'Chemical Detector C12', status: 'operational', value: 'Normal', type: 'chemical' })}
+                  <div className={`w-3.5 h-3.5 relative cursor-pointer hover:opacity-80 transition-opacity ${
+                    emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 0 ? 'sensor-blink sensor-pulse-ring-red' : ''
+                  }`}
+                    onMouseEnter={(e) => handleSensorHover(e, { id: 'sensor-c12', name: 'Chemical Detector C12', status: emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 0 ? 'critical' : 'operational', value: emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 0 ? 'Detected' : 'Normal', type: 'chemical' })}
                     onMouseLeave={handleSensorLeave}
                     onMouseDown={(e) => {
                       e.stopPropagation();
@@ -3480,8 +4340,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         name: 'Chemical Detector C12', 
                         type: 'chemical', 
                         subType: 'C', 
-                        status: 'operational', 
-                        value: 'Normal', 
+                        status: emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 0 ? 'critical' : 'operational', 
+                        value: emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 0 ? 'Detected' : 'Normal', 
                         x: 37, 
                         y: 18,
                         lastUpdate: '2s ago'
@@ -3491,7 +4351,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 14 14" fill="none">
                       <path 
                         d="M7 2 L12 12 L2 12 Z" 
-                        fill="#16a34a"
+                        fill={emergencyMode === 'emergency' && scenarioId === '3' && simulationTime >= 0 ? '#dc2626' : '#16a34a'}
                         stroke="rgba(0,0,0,0.2)" 
                         strokeWidth="0.5"
                       />

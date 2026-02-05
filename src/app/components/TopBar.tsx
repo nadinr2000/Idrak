@@ -1,11 +1,12 @@
 import { Bell, User, Menu, Languages, AlertTriangle, Settings, MapPin, Shield } from 'lucide-react';
 import { Language, translations } from '../translations';
 
-export function TopBar({ onMenuClick, language, onLanguageChange, emergencyMode = false }: { 
+export function TopBar({ onMenuClick, language, onLanguageChange, emergencyMode = false, onLogoClick }: { 
   onMenuClick: () => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
   emergencyMode?: boolean;
+  onLogoClick?: () => void;
 }) {
   const t = translations[language];
 
@@ -13,9 +14,12 @@ export function TopBar({ onMenuClick, language, onLanguageChange, emergencyMode 
     <div className="bg-white border-b border-gray-200 px-6 py-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="size-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20">
+          <button 
+            onClick={onLogoClick}
+            className="size-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20 hover:opacity-80 transition-opacity cursor-pointer"
+          >
             <Shield className="size-6 text-white" />
-          </div>
+          </button>
           <div>
             <h1 className="font-bold text-gray-900 text-lg">{language === 'en' ? 'IDRAK' : 'إدراك'}</h1>
             <p className="text-xs text-gray-500">{t.appSubtitle}</p>

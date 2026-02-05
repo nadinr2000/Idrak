@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { DemoControlBar } from './components/DemoControlBar';
@@ -27,7 +27,6 @@ import { AutomationRulesView } from './components/AutomationRulesView';
 import { RoomsDashboard } from './components/RoomsDashboard';
 import { CBRNeAttacksView } from './components/CBRNeAttacksView';
 import { TacticalCasesView } from './components/TacticalCasesView';
-import { DraftScenarioView } from './components/DraftScenarioView';
 import { ScenarioDetailView } from './components/ScenarioDetailView';
 import { ThresholdsView } from './components/ThresholdsView';
 import { AlarmsSetupView } from './components/AlarmsSetupView';
@@ -38,6 +37,7 @@ import { PreferencesView } from './components/PreferencesView';
 import { Language } from './translations';
 import { rooms } from '@/app/data/mockData';
 import { getRoomById } from '@/app/data/roomsData';
+import { getScenarioThreats } from '@/app/data/scenariosData';
 import { ViewLevel, MainSection, Building, Incident, AffectedSensor } from './types';
 
 // IDRAK Building Management System - Main Application Entry Point  
@@ -45,7 +45,11 @@ import { ViewLevel, MainSection, Building, Incident, AffectedSensor } from './ty
 export type { ViewLevel, MainSection, Building, Incident, AffectedSensor };
 
 export default function App() {
-  const [showLandingPage, setShowLandingPage] = useState(true);
+  const [showLandingPage, setShowLandingPage] = useState(() => {
+    // Check if user has already entered the app
+    const hasEnteredApp = localStorage.getItem('idrak-has-entered-app');
+    return hasEnteredApp !== 'true';
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<MainSection>('dashboard');
@@ -59,10 +63,17 @@ export default function App() {
   const [selectedFloorPlan, setSelectedFloorPlan] = useState<string | null>(null);
   const [isCreatingFloorPlan, setIsCreatingFloorPlan] = useState(false);
   const [language, setLanguage] = useState<Language>('en');
-  const [emergencyMode, setEmergencyMode] = useState<false | 'incident' | 'emergency'>(false);
+  const [emergencyMode, setEmergencyMode] = useState<false | 'incident' | 'emergency'>(() => {
+    // Load initial emergency mode from localStorage synchronously
+    const savedMode = localStorage.getItem('idrak-demo-mode');
+    if (savedMode === 'incident') return 'incident';
+    if (savedMode === 'emergency') return 'emergency';
+    return false;
+  });
   const [architecturalViewOpen, setArchitecturalViewOpen] = useState(false);
   const [simulationState, setSimulationState] = useState<{
     drillName: string;
+    scenarioId?: string;
     isRunning: boolean;
     isPaused: boolean;
     currentTime: number;
@@ -74,6 +85,9 @@ export default function App() {
     '3': 'draft',
   });
   const [summaryViewKey, setSummaryViewKey] = useState(0); // Force remount of summary view
+  
+  // Track if this is the initial mount (to handle auto-view-switching on page load)
+  const isInitialMount = useRef(true);
 
   // When simulation starts, navigate to Dashboards tab
   const handleSimulationStateChange = (state: typeof simulationState) => {
@@ -133,19 +147,19 @@ export default function App() {
     localStorage.setItem('idrak-demo-mode', String(emergencyMode));
   }, [emergencyMode]);
 
-  // Auto-switch to Emergency Dashboard when emergency mode is activated
+  // On initial mount only: if emergency mode is loaded from localStorage, set appropriate view
+  // This ensures new tabs opened while emergency mode is active show the correct screen
   useEffect(() => {
-    if (emergencyMode && currentSection === 'dashboard') {
+    if (isInitialMount.current && emergencyMode === 'emergency' && currentSection === 'dashboard') {
       setCurrentView('emergency');
-      // In emergency mode, also set a default floor for quick access
+      // Set default floor for emergency view
       if (!selectedFloor) {
-        setSelectedFloor('floor-a-2'); // Default to Operations Level (Floor 2)
+        setSelectedFloor('floor-a-2');
       }
-    } else if (!emergencyMode && currentView === 'emergency') {
-      // When emergency mode ends, return to summary
-      setCurrentView('summary');
     }
-  }, [emergencyMode]);
+    // Mark that initial mount is complete (runs only once)
+    isInitialMount.current = false;
+  }, []); // Empty deps - only run once on mount since emergencyMode is loaded synchronously
 
   // Update simulation timer
   useEffect(() => {
@@ -334,19 +348,6 @@ export default function App() {
     }
     if (currentSection === 'tactical-cases') {
       if (selectedDrill) {
-        // Check if scenario is draft based on caseStatuses
-        if (caseStatuses[selectedDrill] === 'draft') {
-          return (
-            <DraftScenarioView 
-              scenarioId={selectedDrill} 
-              language={language}
-              onBack={() => setSelectedDrill(null)}
-              onEmergencyModeChange={setEmergencyMode}
-              onSimulationStateChange={handleSimulationStateChange}
-              onCloseSidebar={() => setSidebarOpen(false)}
-            />
-          );
-        }
         return (
           <ScenarioDetailView 
             scenarioId={selectedDrill} 
@@ -369,6 +370,7 @@ export default function App() {
             // Set simulation state
             setSimulationState({
               drillName: caseName,
+              scenarioId: caseId,
               isRunning: true,
               isPaused: false,
               currentTime: 0,
@@ -458,6 +460,8 @@ export default function App() {
               setCurrentView('summary');
             }}
             emergencyMode={emergencyMode}
+            simulationTime={simulationState?.currentTime || 0}
+            scenarioId={simulationState?.scenarioId}
             language={language}
           />
         );
@@ -465,6 +469,7 @@ export default function App() {
       return (
         <EmergencyDashboard
           language={language}
+          simulationState={simulationState}
         />
       );
     }
@@ -519,6 +524,8 @@ export default function App() {
               setCurrentView('floors');
             }}
             emergencyMode={emergencyMode}
+            simulationTime={simulationState?.currentTime || 0}
+            scenarioId={simulationState?.scenarioId}
           />
         );
       } else {
@@ -561,7 +568,7 @@ export default function App() {
 
   return (
     <div className={`h-screen flex flex-col ${
-      emergencyMode === 'emergency' ? 'bg-red-50' : 'bg-[#f8fafc]'
+      emergencyMode === 'emergency' && currentSection !== 'tactical-cases' ? 'bg-red-50' : 'bg-[#f8fafc]'
     }`}>
       {/* Show landing page first */}
       {showLandingPage ? (
@@ -569,34 +576,43 @@ export default function App() {
           language={language}
           onEnter={() => {
             setShowLandingPage(false);
+            // Mark user as having entered the app
+            localStorage.setItem('idrak-has-entered-app', 'true');
           }}
         />
       ) : isLoading ? (
         <LoadingScreen language={language} />
       ) : (
         <>
-          {/* Demo Control Bar - Always visible at the top */}
-          <DemoControlBar 
-            language={language}
-            emergencyMode={emergencyMode}
-            onToggleEmergency={(mode) => {
-              setEmergencyMode(mode);
-              if (mode === 'emergency') {
-                // When switching to Emergency mode, activate emergency dashboard
-                setCurrentSection('dashboard');
-                setCurrentView('emergency');
-              } else if (mode === false) {
-                // When switching to Operational mode, stop simulation and return to summary
-                setSimulationState(null);
-                if (currentView === 'emergency') {
-                  setCurrentView('summary');
+          {/* Demo Control Bar - Hidden when simulation is running */}
+          {!simulationState && (
+            <DemoControlBar 
+              language={language}
+              emergencyMode={emergencyMode}
+              onToggleEmergency={(mode) => {
+                // Set emergency mode (will sync to other tabs via localStorage)
+                setEmergencyMode(mode);
+                
+                // Only change views in THIS tab (where user clicked the button)
+                // Other tabs will only sync the emergencyMode state, not the views
+                if (mode === 'emergency') {
+                  // When switching to Emergency mode, don't force navigation
+                  // Just apply the emergency styling and animations to current view
+                  // Only navigate if we're not already on dashboard section
+                  // (User can stay on floor plan, other views with emergency styling)
+                } else if (mode === false) {
+                  // When switching to Operational mode, stop simulation and return to summary
+                  setSimulationState(null);
+                  if (currentView === 'emergency') {
+                    setCurrentView('summary');
+                  }
                 }
-              }
-              // For incident mode, just set the mode without changing views
-            }}
-          />
+                // For incident mode, just set the mode without changing views
+              }}
+            />
+          )}
           
-          {/* Emergency Bar - Shows below demo bar when in emergency mode with simulation active */}
+          {/* Emergency Bar - Shows when in emergency mode with simulation active */}
           {emergencyMode === 'emergency' && simulationState && (
             <EmergencyBar
               scenarioName={simulationState.drillName}
@@ -605,6 +621,7 @@ export default function App() {
               isPaused={simulationState.isPaused}
               currentTime={simulationState.currentTime}
               speed={simulationState.speed}
+              threats={simulationState.scenarioId ? getScenarioThreats(simulationState.scenarioId) : []}
               onTogglePause={() => {
                 setSimulationState(prev => prev ? { ...prev, isPaused: !prev.isPaused } : null);
               }}
@@ -630,16 +647,28 @@ export default function App() {
             language={language}
             onLanguageChange={setLanguage}
             emergencyMode={emergencyMode}
+            onLogoClick={() => {
+              // Navigate back to landing page
+              setShowLandingPage(true);
+              // Reset app state
+              setEmergencyMode(false);
+              setSimulationState(null);
+              setCurrentSection('dashboard');
+              setCurrentView('summary');
+            }}
           />
           
           <div className="flex flex-1 overflow-hidden">
-            <Sidebar
-              isOpen={sidebarOpen}
-              currentSection={currentSection}
-              onSectionChange={handleSectionChange}
-              onToggle={() => setSidebarOpen(!sidebarOpen)}
-              language={language}
-            />
+            {/* Sidebar - Hidden when simulation is running */}
+            {!simulationState && (
+              <Sidebar
+                isOpen={sidebarOpen}
+                currentSection={currentSection}
+                onSectionChange={handleSectionChange}
+                onToggle={() => setSidebarOpen(!sidebarOpen)}
+                language={language}
+              />
+            )}
             
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-auto">

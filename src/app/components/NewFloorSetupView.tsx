@@ -28,6 +28,7 @@ import {
   Layers
 } from 'lucide-react';
 import { Language } from '../translations';
+import floorPlanImage from '@/assets/NewBG2.png';
 
 interface DeviceType {
   id: string;
@@ -62,24 +63,25 @@ interface NewFloorSetupViewProps {
 }
 
 const DEVICE_LIBRARY: DeviceType[] = [
-  // Sensors
-  { id: 'temp-sensor', name: 'Temperature Sensor', icon: Thermometer, category: 'sensor', color: 'bg-blue-500' },
-  { id: 'humidity-sensor', name: 'Humidity Sensor', icon: Droplets, category: 'sensor', color: 'bg-cyan-500' },
-  { id: 'air-quality', name: 'Air Quality Sensor', icon: Wind, category: 'sensor', color: 'bg-green-500' },
-  { id: 'chemical-detector', name: 'Chemical Detector', icon: FlaskConical, category: 'sensor', color: 'bg-purple-500' },
-  { id: 'motion-sensor', name: 'Motion Sensor', icon: Activity, category: 'sensor', color: 'bg-orange-500' },
-  { id: 'radiation-sensor', name: 'Radiation Sensor', icon: Radio, category: 'sensor', color: 'bg-yellow-500' },
+  // Environmental Sensors (Circle)
+  { id: 'dp-sensor', name: 'Differential Pressure', icon: Activity, category: 'sensor', color: 'bg-green-600' },
+  { id: 'co2-sensor', name: 'CO₂ Sensors', icon: Wind, category: 'sensor', color: 'bg-green-600' },
+  { id: 'co-sensor', name: 'CO Sensors', icon: Wind, category: 'sensor', color: 'bg-green-600' },
+  { id: 'o2-sensor', name: 'O₂ Sensors', icon: Wind, category: 'sensor', color: 'bg-green-600' },
+  { id: 'temp-sensor', name: 'Temperature Sensors', icon: Thermometer, category: 'sensor', color: 'bg-green-600' },
+  { id: 'humidity-sensor', name: 'Humidity Sensors', icon: Droplets, category: 'sensor', color: 'bg-green-600' },
+  { id: 'water-sensor', name: 'Water Level Sensors', icon: Droplets, category: 'sensor', color: 'bg-green-600' },
+  { id: 'airflow-sensor', name: 'Airflow Sensors', icon: Fan, category: 'sensor', color: 'bg-green-600' },
+  { id: 'filter-sensor', name: 'Filter Sensors', icon: Wind, category: 'sensor', color: 'bg-green-600' },
   
-  // Equipment
-  { id: 'camera', name: 'Security Camera', icon: Camera, category: 'equipment', color: 'bg-gray-600' },
-  { id: 'hvac', name: 'HVAC Unit', icon: Fan, category: 'equipment', color: 'bg-indigo-500' },
-  { id: 'lighting', name: 'Smart Lighting', icon: Lightbulb, category: 'equipment', color: 'bg-amber-500' },
-  { id: 'access-control', name: 'Access Control', icon: Lock, category: 'equipment', color: 'bg-red-600' },
+  // Threat Detection Sensors (Triangle)
+  { id: 'rad-detector', name: 'Radiological Detectors', icon: Radio, category: 'sensor', color: 'bg-green-600' },
+  { id: 'bio-detector', name: 'Biological Detectors', icon: Activity, category: 'sensor', color: 'bg-green-600' },
+  { id: 'chemical-detector', name: 'Chemical Detectors', icon: FlaskConical, category: 'sensor', color: 'bg-green-600' },
   
-  // Safety
-  { id: 'fire-alarm', name: 'Fire Alarm', icon: Flame, category: 'safety', color: 'bg-red-500' },
-  { id: 'emergency-light', name: 'Emergency Light', icon: Zap, category: 'safety', color: 'bg-yellow-600' },
-  { id: 'gas-shutoff', name: 'Gas Shutoff Valve', icon: AlertTriangle, category: 'safety', color: 'bg-orange-600' },
+  // Equipment (Rectangle)
+  { id: 'gtv-sensor', name: 'Gastight Valve Sensors', icon: Zap, category: 'equipment', color: 'bg-green-600' },
+  { id: 'door-sensor', name: 'Door Status', icon: Lock, category: 'equipment', color: 'bg-green-700' },
 ];
 
 const FLOORS = [
@@ -136,18 +138,8 @@ const FLOOR_ROOMS: Record<string, Room[]> = {
 
 // Mock existing devices for each floor
 const EXISTING_DEVICES: Record<string, PlacedDevice[]> = {
-  'floor-a-2': [
-    { id: 'existing-1', deviceType: DEVICE_LIBRARY[0], position: { x: 150, y: 110 }, name: 'Temp Sensor 1' },
-    { id: 'existing-2', deviceType: DEVICE_LIBRARY[3], position: { x: 720, y: 110 }, name: 'Chemical Detector 1' },
-    { id: 'existing-3', deviceType: DEVICE_LIBRARY[6], position: { x: 180, y: 120 }, name: 'Security Camera 1' },
-    { id: 'existing-4', deviceType: DEVICE_LIBRARY[4], position: { x: 380, y: 110 }, name: 'Motion Sensor 1' },
-    { id: 'existing-5', deviceType: DEVICE_LIBRARY[10], position: { x: 200, y: 400 }, name: 'Fire Alarm 1' },
-  ],
-  'floor-a-1': [
-    { id: 'existing-1', deviceType: DEVICE_LIBRARY[6], position: { x: 150, y: 110 }, name: 'Security Camera 1' },
-    { id: 'existing-2', deviceType: DEVICE_LIBRARY[9], position: { x: 260, y: 110 }, name: 'Access Control 1' },
-    { id: 'existing-3', deviceType: DEVICE_LIBRARY[0], position: { x: 600, y: 100 }, name: 'Temp Sensor 1' },
-  ],
+  'floor-a-2': [],
+  'floor-a-1': [],
 };
 
 // Draggable device from library
@@ -346,67 +338,13 @@ function FloorPlanCanvas({
         className="w-full h-full"
         style={{ maxHeight: 'calc(100vh - 300px)' }}
       >
-        {/* Background */}
-        <rect x="0" y="0" width="920" height="570" fill="#f8fafc" />
-        
-        {/* Grid pattern */}
+        {/* Floor plan background image */}
         <defs>
-          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" strokeWidth="0.5"/>
+          <pattern id="floorPlanBg" patternUnits="userSpaceOnUse" width="920" height="570">
+            <image href={floorPlanImage} x="0" y="0" width="920" height="570" preserveAspectRatio="xMidYMid slice" />
           </pattern>
         </defs>
-        <rect width="920" height="570" fill="url(#grid)" />
-
-        {/* Outer walls */}
-        <path
-          d="M 50 50 L 860 50 L 860 520 L 50 520 Z"
-          fill="none"
-          stroke="#64748b"
-          strokeWidth="4"
-        />
-
-        {/* Rooms */}
-        {rooms.map((room) => (
-          <g 
-            key={room.id}
-            onMouseEnter={() => setHoveredRoom(room.id)}
-            onMouseLeave={() => setHoveredRoom(null)}
-          >
-            <rect
-              x={room.x}
-              y={room.y}
-              width={room.width}
-              height={room.height}
-              fill={getRoomFill(room)}
-              stroke={getRoomStroke(room)}
-              strokeWidth={room.type === 'Hallway' ? 2 : 2}
-              className="transition-all"
-            />
-            
-            {/* Room label */}
-            <text
-              x={room.x + room.width / 2}
-              y={room.y + room.height / 2 - 8}
-              fontSize="11"
-              fontWeight="600"
-              fill="#374151"
-              textAnchor="middle"
-              className="pointer-events-none"
-            >
-              {room.name}
-            </text>
-            <text
-              x={room.x + room.width / 2}
-              y={room.y + room.height / 2 + 6}
-              fontSize="9"
-              fill="#6b7280"
-              textAnchor="middle"
-              className="pointer-events-none"
-            >
-              {room.type}
-            </text>
-          </g>
-        ))}
+        <rect x="0" y="0" width="920" height="570" fill="url(#floorPlanBg)" />
 
         {/* Placed devices */}
         {placedDevices.map((device) => (
@@ -450,7 +388,6 @@ export function NewFloorSetupView({ language = 'en', planId = null, onBack = () 
   const [selectedFloor, setSelectedFloor] = useState<string>('floor-a-2'); // Default to Operations floor
   const [placedDevices, setPlacedDevices] = useState<PlacedDevice[]>(EXISTING_DEVICES['floor-a-2'] || []);
   const [deviceCounter, setDeviceCounter] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'sensor' | 'equipment' | 'safety'>('all');
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [layoutName, setLayoutName] = useState('');
   const [layoutDescription, setLayoutDescription] = useState('');
@@ -470,19 +407,19 @@ export function NewFloorSetupView({ language = 'en', planId = null, onBack = () 
       position,
       name: `${device.name} ${deviceCounter}`,
     };
-    setPlacedDevices([...placedDevices, newDevice]);
+    setPlacedDevices(prevDevices => [...prevDevices, newDevice]);
     setDeviceCounter(deviceCounter + 1);
     setSelectedDevice(newDevice.id);
   };
 
   const handleDeviceMove = (deviceId: string, position: { x: number; y: number }) => {
-    setPlacedDevices(placedDevices.map(d => 
+    setPlacedDevices(prevDevices => prevDevices.map(d => 
       d.id === deviceId ? { ...d, position } : d
     ));
   };
 
   const handleDeviceRemove = (id: string) => {
-    setPlacedDevices(placedDevices.filter(d => d.id !== id));
+    setPlacedDevices(prevDevices => prevDevices.filter(d => d.id !== id));
     if (selectedDevice === id) {
       setSelectedDevice(null);
     }
@@ -508,10 +445,6 @@ export function NewFloorSetupView({ language = 'en', planId = null, onBack = () 
     }
     alert(`Running tactical drill with ${placedDevices.length} devices on ${FLOORS.find(f => f.id === selectedFloor)?.name}...\n\nThis will launch the Live Tactical Simulation System with your custom floor configuration.`);
   };
-
-  const filteredDevices = selectedCategory === 'all' 
-    ? DEVICE_LIBRARY 
-    : DEVICE_LIBRARY.filter(d => d.category === selectedCategory);
 
   const selectedDeviceData = selectedDevice ? placedDevices.find(d => d.id === selectedDevice) : null;
 
@@ -593,59 +526,15 @@ export function NewFloorSetupView({ language = 'en', planId = null, onBack = () 
               </h3>
               
               {/* Drag & Drop Instructions */}
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-xs text-gray-500">
                 Drag devices from library to floor plan. Click existing devices to select and delete.
               </p>
-              
-              {/* Category Filter */}
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setSelectedCategory('all')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
-                    selectedCategory === 'all'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setSelectedCategory('sensor')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
-                    selectedCategory === 'sensor'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Sensors
-                </button>
-                <button
-                  onClick={() => setSelectedCategory('equipment')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
-                    selectedCategory === 'equipment'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Equipment
-                </button>
-                <button
-                  onClick={() => setSelectedCategory('safety')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
-                    selectedCategory === 'safety'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Safety
-                </button>
-              </div>
             </div>
 
             {/* Device List */}
             <div className="p-4 pb-6">
               <div className="space-y-2">
-                {filteredDevices.map((device) => (
+                {DEVICE_LIBRARY.map((device) => (
                   <DraggableDevice key={device.id} device={device} />
                 ))}
               </div>

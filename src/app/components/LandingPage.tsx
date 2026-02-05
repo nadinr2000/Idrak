@@ -1,8 +1,10 @@
-import { Shield, Brain, Activity, AlertTriangle, Wind, Radio, CheckCircle, ArrowRight, ChevronLeft, ChevronRight, Zap, Sparkles } from 'lucide-react';
+import { Shield, Brain, Activity, AlertTriangle, Wind, Radio, CheckCircle, ArrowRight, ChevronLeft, ChevronRight, Zap, Sparkles, Map } from 'lucide-react';
 import { Language } from '../translations';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import Group3Logo from '@/imports/Group3';
+import { KSAMapLandingPage } from './KSAMapLandingPage';
+import idrakLogo from '@/assets/IdrakLogo.png';
+// import promoImage from '@/assets/ksamap.png';
 
 interface LandingPageProps {
   language: Language;
@@ -76,6 +78,7 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showMapView, setShowMapView] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -103,6 +106,17 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
   const currentFeature = features[currentSlide];
   const Icon = currentFeature.icon;
 
+  // Show KSA Map Landing Page if selected
+  if (showMapView) {
+    return (
+      <KSAMapLandingPage
+        language={language}
+        onBack={() => setShowMapView(false)}
+        onEnterDemo={onEnter}
+      />
+    );
+  }
+
   return (
     <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden relative">
       {/* Animated Grid Background */}
@@ -121,19 +135,28 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
         {/* Center spacer */}
         <div className="flex-1"></div>
         
-        {/* Enter Dashboard Button */}
-        <button
-          onClick={onEnter}
-          className="group relative px-4 py-3 bg-gradient-to-br from-slate-800/80 to-slate-900/80 hover:from-blue-600 hover:to-blue-700 text-slate-300 hover:text-white border border-slate-700 hover:border-blue-400 rounded-xl shadow-xl transition-all duration-300 hover:shadow-blue-500/50 hover:scale-105 overflow-hidden"
-          title={language === 'en' ? 'Enter Dashboard' : 'الدخول إلى لوحة التحكم'}
-        >
-          {/* Button shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-          <div className="flex items-center gap-2 relative z-10">
-            <span className="text-sm font-semibold">Demo</span>
-            <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </button>
+        {/* Map Icon and Enter Dashboard Button */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowMapView(true)}
+            className="group relative p-2 bg-gradient-to-br from-slate-800/80 to-slate-900/80 hover:from-blue-600 hover:to-blue-700 text-slate-400 hover:text-white border border-slate-700 hover:border-blue-400 rounded-xl shadow-xl transition-all duration-300 hover:shadow-blue-500/50 hover:scale-110"
+            title={language === 'en' ? 'View Facilities Map' : 'عرض خريطة المنشآت'}
+          >
+            <Map className="size-5 transition-all" />
+          </button>
+          <button
+            onClick={onEnter}
+            className="group relative px-4 py-3 bg-gradient-to-br from-slate-800/80 to-slate-900/80 hover:from-blue-600 hover:to-blue-700 text-slate-300 hover:text-white border border-slate-700 hover:border-blue-400 rounded-xl shadow-xl transition-all duration-300 hover:shadow-blue-500/50 hover:scale-105 overflow-hidden"
+            title={language === 'en' ? 'Enter Dashboard' : 'الدخول إلى لوحة التحكم'}
+          >
+            {/* Button shine effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+            <div className="flex items-center gap-2 relative z-10">
+              <span className="text-sm font-semibold">Demo</span>
+              <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </button>
+        </div>
       </div>
       
       {/* Main Content */}
@@ -141,7 +164,7 @@ export function LandingPage({ language, onEnter }: LandingPageProps) {
         {/* Logo - Centered */}
         <div className="flex flex-col items-center justify-center mb-4">
           <div className="relative group cursor-pointer">
-            <Group3Logo className="w-64 h-64 drop-shadow-2xl" />
+            <img src={idrakLogo} className="w-64 h-auto drop-shadow-2xl" />
           </div>
         </div>
         

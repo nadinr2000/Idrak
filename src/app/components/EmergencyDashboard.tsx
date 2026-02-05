@@ -4,15 +4,109 @@ import { useState } from 'react';
 
 interface EmergencyDashboardProps {
   language: Language;
+  simulationState?: {
+    drillName: string;
+    scenarioId?: string;
+    isRunning: boolean;
+    isPaused: boolean;
+    currentTime: number;
+    speed: 1 | 2 | 4;
+  } | null;
 }
 
-export function EmergencyDashboard({ language }: EmergencyDashboardProps) {
+export function EmergencyDashboard({ language, simulationState }: EmergencyDashboardProps) {
   const t = translations[language];
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
+
+  // Determine which threats are currently active based on simulation time
+  const currentTime = simulationState?.currentTime || 0;
+  const currentMinutes = Math.floor(currentTime / 60);
+  
+  // For Chemical Threat Scenario (ID '3'):
+  // - Threat 1 (Chemical Detector 12): activates at 0m
+  // - Threat 2 (Chemical Detector 7): activates at 15m
+  const isScenario3 = simulationState?.scenarioId === '3';
+  const threat1Active = isScenario3 && currentMinutes >= 0;
+  const threat2Active = isScenario3 && currentMinutes >= 15;
 
   return (
     <div className="flex-1 overflow-auto bg-slate-50">
       <div className="max-w-[1800px] mx-auto p-8">
+        {/* Automated Emergency Response Status Section */}
+        <div className="mb-6">
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2 mb-4">
+            <Zap className="size-4" />
+            {language === 'en' ? 'Automated Emergency Response Status' : 'حالة الاستجابة التلقائية للطوارئ'}
+          </h3>
+          <div className="bg-white rounded-lg shadow-lg border border-slate-200 p-6">
+            <div className="grid grid-cols-4 gap-6">
+              {/* GTV System */}
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Wind className="size-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-slate-600 mb-0.5">
+                    {language === 'en' ? 'GTV System' : 'نظام GTV'}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="size-2 rounded-full bg-green-500"></div>
+                    <span className="font-semibold text-slate-900">{language === 'en' ? 'ON' : 'مفعل'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Air Intake */}
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <Radio className="size-5 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-slate-600 mb-0.5">
+                    {language === 'en' ? 'Air Intake' : 'مدخل الهواء'}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="size-2 rounded-full bg-red-500"></div>
+                    <span className="font-semibold text-slate-900">{language === 'en' ? 'OFF' : 'متوقف'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filtration System */}
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Filter className="size-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-slate-600 mb-0.5">
+                    {language === 'en' ? 'Filtration System' : 'نظام الترشيح'}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="size-2 rounded-full bg-green-500"></div>
+                    <span className="font-semibold text-slate-900">{language === 'en' ? 'ON' : 'مفعل'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pressure Control */}
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Gauge className="size-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-slate-600 mb-0.5">
+                    {language === 'en' ? 'Pressure Control' : 'التحكم بالضغط'}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="size-2 rounded-full bg-green-500"></div>
+                    <span className="font-semibold text-slate-900">{language === 'en' ? 'ACTIVE' : 'نشط'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Three Column Layout */}
         <div className="grid grid-cols-3 gap-6">
           
@@ -42,9 +136,27 @@ export function EmergencyDashboard({ language }: EmergencyDashboardProps) {
                     <span className="text-slate-600">{language === 'en' ? 'Concentration:' : 'التركيز:'}</span>
                     <span className="font-semibold text-red-600">15.7 ppm</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-600">{language === 'en' ? 'Location:' : 'الموقع:'}</span>
-                    <span className="font-semibold text-slate-900">{language === 'en' ? 'Floor 2 - Sector B' : 'الطابق 2 - القطاع ب'}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600">{language === 'en' ? 'Detector:' : 'الكاشف:'}</span>
+                    <div className="flex items-center gap-1.5">
+                      {/* Show C3 when not in simulation, C12/C7 during simulation */}
+                      {simulationState?.isRunning ? (
+                        <>
+                          <span className="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded">
+                            C12
+                          </span>
+                          {threat2Active && (
+                            <span className="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded">
+                              C7
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded">
+                          C3
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -357,6 +469,43 @@ export function EmergencyDashboard({ language }: EmergencyDashboardProps) {
                     </div>
                   </div>
                 </div>
+
+                {/* Timeline Event 3.5 - Secondary Chemical Detector (shows when threat2Active) */}
+                {threat2Active && (
+                  <div className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="size-8 rounded-full bg-red-100 border-2 border-red-600 flex items-center justify-center flex-shrink-0 animate-pulse">
+                        <AlertTriangle className="size-4 text-red-600" />
+                      </div>
+                      <div className="w-0.5 h-full bg-red-200 mt-2"></div>
+                    </div>
+                    <div className="flex-1 pb-6">
+                      <div className="text-xs text-slate-500 mb-1">14:43:45 • {language === 'en' ? '15m 0s' : '15د 0ث'}</div>
+                      <h4 className="font-semibold text-slate-900 mb-1">{language === 'en' ? 'Secondary Detection - Chemical Detector 7' : 'كشف ثانوي - كاشف كيميائي 7'}</h4>
+                      <p className="text-sm text-slate-600 mb-2">
+                        {language === 'en' 
+                          ? 'Chemical agent detected in adjacent zone. Gas has spread to secondary location via HVAC system.' 
+                          : 'تم الكشف عن عامل كيميائي في المنطقة المجاورة. انتشر الغاز إلى موقع ثانوي عبر نظام التهوية.'}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded">
+                            {language === 'en' ? 'HIGH' : 'عالي'}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {language === 'en' ? 'Concentration: 8.2 ppm' : 'التركيز: 8.2 جزء في المليون'}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setSelectedEvent(6)}
+                          className="text-xs text-red-600 hover:text-red-800 font-semibold underline"
+                        >
+                          {language === 'en' ? 'Read more details' : 'اقرأ المزيد من التفاصيل'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Timeline Event 3 */}
                 <div className="flex gap-3">
@@ -1182,17 +1331,66 @@ export function EmergencyDashboard({ language }: EmergencyDashboardProps) {
                         {language === 'en' ? 'AI Predictions' : 'تنبؤات الذكاء الاصطناعي'}
                       </h5>
                     </div>
-                    <div className="space-y-3 text-sm text-slate-700">
-                      <p>
-                        {language === 'en'
-                          ? '• If all 3 recommended actions executed immediately: 98% personnel survival rate, 87% containment success, full facility restoration in 36-48 hours.'
-                          : '• إذا تم تنفيذ جميع الإجراءات الموصى بها الثلاثة فورًا: معدل بقاء الموظفين 98٪، نجاح الاحتواء 87٪، استعادة كاملة للمنشأة في 36-48 ساعة.'}
-                      </p>
-                      <p>
-                        {language === 'en'
-                          ? '• Threat neutralization timeline: With CBRN team deployment in 2 minutes, source control in 8-10 minutes, gas concentration below hazardous levels in 25-30 minutes.'
-                          : '• جدول تحييد التهديد: مع نشر فريق CBRN في دقيقتين، السيطرة على المصدر في 8-10 دقائق، تركيز الغاز أقل من المستويات الخطرة في 25-30 دقيقة.'}
-                      </p>
+                    
+                    {/* Key Metrics Cards Grid */}
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      {/* Personnel Survival Rate */}
+                      <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 shadow-lg">
+                        <div className="text-green-50 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          {language === 'en' ? 'Survival Rate' : 'معدل البقاء'}
+                        </div>
+                        <div className="text-white text-3xl font-bold mb-1">98%</div>
+                        <div className="text-green-100 text-xs">
+                          {language === 'en' ? 'If actions executed now' : 'إذا تم تنفيذ الإجراءات الآن'}
+                        </div>
+                      </div>
+
+                      {/* Containment Success */}
+                      <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 shadow-lg">
+                        <div className="text-blue-50 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          {language === 'en' ? 'Containment Success' : 'نجاح الاحتواء'}
+                        </div>
+                        <div className="text-white text-3xl font-bold mb-1">87%</div>
+                        <div className="text-blue-100 text-xs">
+                          {language === 'en' ? 'With immediate action' : 'مع الإجراء الفوري'}
+                        </div>
+                      </div>
+
+                      {/* Restoration Time */}
+                      <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg p-4 shadow-lg">
+                        <div className="text-amber-50 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          {language === 'en' ? 'Restoration Time' : 'وقت الاستعادة'}
+                        </div>
+                        <div className="text-white text-3xl font-bold mb-1">36-48</div>
+                        <div className="text-amber-100 text-xs">
+                          {language === 'en' ? 'hours' : 'ساعة'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Timeline Cards */}
+                    <div className="space-y-2">
+                      <div className="bg-white rounded-lg p-3 border-l-4 border-blue-500 shadow-sm">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">
+                            {language === 'en' ? 'Threat Neutralization Timeline' : 'جدول تحييد التهديد'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-slate-900">2 min</div>
+                            <div className="text-xs text-slate-600">{language === 'en' ? 'CBRN Deploy' : 'نشر CBRN'}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-slate-900">8-10 min</div>
+                            <div className="text-xs text-slate-600">{language === 'en' ? 'Source Control' : 'السيطرة على المصدر'}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-slate-900">25-30 min</div>
+                            <div className="text-xs text-slate-600">{language === 'en' ? 'Safe Levels' : 'مستويات آمنة'}</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

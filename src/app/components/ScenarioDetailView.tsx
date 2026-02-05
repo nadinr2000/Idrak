@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, XCircle, TrendingUp, Shield, Users, Skull, Wifi, Building2, Brain, ListChecks, Wrench, Calendar, MapPin, ChevronRight, Zap, Activity, FileText, BarChart3, Play } from 'lucide-react';
+import { ArrowLeft, Clock, AlertTriangle, CheckCircle2, XCircle, TrendingUp, Shield, Users, Skull, Wifi, Building2, Brain, ListChecks, Wrench, Calendar, MapPin, ChevronRight, Zap, Activity, FileText, BarChart3, Play, Edit2, Eye, Wind, Airplay, CloudRain, Filter, FlaskConical, Radio } from 'lucide-react';
 import { Language, translations } from '../translations';
 
 interface ThreatEvent {
@@ -43,16 +43,38 @@ interface StrategicRecommendation {
   priority: 'critical' | 'high' | 'medium' | 'low';
 }
 
-interface ScenarioData {
+interface ScenarioRun {
+  id: string;
+  runNumber: number;
+  startTime: string;
+  endTime?: string;
+  duration?: string;
+  status: 'success' | 'failed' | 'in-progress';
+  outcome?: string;
+}
+
+interface ScenarioSetup {
   id: string;
   name: string;
   description: string;
-  status: 'completed' | 'active' | 'failed';
+  threats: ThreatEvent[];
+}
+
+interface ScenarioData {
+  setup: ScenarioSetup;
+  runs: ScenarioRun[];
+}
+
+interface ReportData {
+  runId: string;
+  scenarioName: string;
+  scenarioDescription: string;
   startTime: string;
   endTime?: string;
   duration: string;
-  threatEvents: ThreatEvent[];
+  status: 'success' | 'failed';
   assessmentCheckpoints: AssessmentCheckpoint[];
+  outcomeSummaryPoints?: Array<{ title: string; description: string }>;
   strategicRecommendations: StrategicRecommendation[];
   finalOutcome: string;
 }
@@ -61,9 +83,10 @@ interface ScenarioDetailViewProps {
   scenarioId: string;
   language: Language;
   onBack: () => void;
-  onEmergencyModeChange?: (emergencyMode: boolean) => void;
+  onEmergencyModeChange?: (emergencyMode: false | 'incident' | 'emergency') => void;
   onSimulationStateChange?: (state: {
-    scenarioName: string;
+    drillName: string;
+    scenarioId: string;
     isRunning: boolean;
     isPaused: boolean;
     currentTime: number;
@@ -72,19 +95,154 @@ interface ScenarioDetailViewProps {
   caseStatus?: 'draft' | 'active' | 'completed' | 'archived';
 }
 
-type TabType = 'summary' | 'details';
+type ViewMode = 'setup' | 'report';
 
-// Mock data for Extended Duration Scenario
+// Mock scenario data with setup and runs
 const mockScenarioData: { [key: string]: ScenarioData } = {
   '1': {
-    id: '1',
-    name: 'Extended Duration Scenario',
-    description: 'Prolonged hostile force containment with resource management protocols',
-    status: 'failed',
+    setup: {
+      id: '1',
+      name: 'Extended Duration Scenario',
+      description: 'Prolonged hostile force containment with resource management protocols',
+      threats: [
+        {
+          id: 't3',
+          type: 'structuralFailure',
+          severity: 'medium',
+          location: 'Infrastructure',
+          time: '48h',
+          timeValue: 48,
+          description: 'Structural integrity concerns'
+        },
+      ]
+    },
+    runs: [
+      {
+        id: 'run-1-2',
+        runNumber: 2,
+        startTime: '2025-01-10T14:00:00',
+        endTime: '2025-01-12T18:30:00',
+        duration: '52h 30m',
+        status: 'success',
+        outcome: 'All systems operational. Personnel performance excellent. Mission success achieved.'
+      },
+      {
+        id: 'run-1-1',
+        runNumber: 1,
+        startTime: '2024-12-20T08:00:00',
+        endTime: '2024-12-23T08:00:00',
+        duration: '72h',
+        status: 'failed',
+        outcome: 'Life support systems collapsed. Emergency evacuation required. Critical infrastructure failures.'
+      },
+    ]
+  },
+  '2': {
+    setup: {
+      id: '2',
+      name: 'Evacuation Scenario',
+      description: 'Emergency extraction of high-value personnel under threat conditions',
+      threats: [
+        {
+          id: 't1',
+          type: 'hostileForce',
+          severity: 'critical',
+          location: 'Floor 3 - Secure Wing',
+          time: '0m',
+          timeValue: 0,
+          description: 'Hostile force breach in secure wing'
+        },
+        {
+          id: 't2',
+          type: 'explosive',
+          severity: 'high',
+          location: 'Floor 1 - Exit Route Alpha',
+          time: '15m',
+          timeValue: 15,
+          description: 'Explosive device detected on evacuation route'
+        },
+      ]
+    },
+    runs: [
+      {
+        id: 'run-2-2',
+        runNumber: 2,
+        startTime: '2025-01-06T14:20:00',
+        endTime: '2025-01-06T16:50:00',
+        duration: '2h 30m',
+        status: 'success',
+        outcome: 'Evacuation completed successfully. Zero casualties. All systems performed within specifications.'
+      },
+      {
+        id: 'run-2-1',
+        runNumber: 1,
+        startTime: '2024-12-28T09:00:00',
+        endTime: '2024-12-28T11:15:00',
+        duration: '2h 15m',
+        status: 'success',
+        outcome: 'Primary evacuation successful. Minor delays in secondary routes. All personnel evacuated safely.'
+      },
+    ]
+  },
+  '3': {
+    setup: {
+      id: '3',
+      name: 'Chemical Threat Scenario',
+      description: 'Chlorine gas breach in HVAC system - Floor 2 Sector B',
+      threats: [
+        {
+          id: 't1',
+          type: 'chemical',
+          severity: 'critical',
+          location: 'Chemical Detector 12',
+          time: '0m',
+          timeValue: 0,
+          description: 'Chlorine gas detected in HVAC system'
+        },
+        {
+          id: 't2',
+          type: 'chemical',
+          severity: 'high',
+          location: 'Chemical Detector 7',
+          time: '15m',
+          timeValue: 15,
+          description: 'Secondary chemical leak detected in adjacent zone'
+        },
+      ]
+    },
+    runs: [
+      {
+        id: 'run-3-2',
+        runNumber: 2,
+        startTime: '2026-01-11T09:00:00',
+        endTime: '2026-01-11T09:45:00',
+        duration: '45m',
+        status: 'success',
+        outcome: 'Chemical threat successfully contained. Zero casualties. All containment protocols executed perfectly.'
+      },
+      {
+        id: 'run-3-1',
+        runNumber: 1,
+        startTime: '2025-11-18T14:00:00',
+        endTime: '2025-11-18T15:30:00',
+        duration: '1h 30m',
+        status: 'failed',
+        outcome: 'HVAC isolation delayed. Chemical spread to adjacent sectors. 12 personnel required medical treatment.'
+      },
+    ]
+  },
+};
+
+// Mock report data for completed runs
+const mockReportData: { [runId: string]: ReportData } = {
+  'run-1-1': {
+    runId: 'run-1-1',
+    scenarioName: 'Extended Duration Scenario',
+    scenarioDescription: 'Prolonged hostile force containment with resource management protocols',
     startTime: '2024-12-20T08:00:00',
     endTime: '2024-12-23T08:00:00',
-    duration: '72 hours',
-    threatEvents: [],
+    duration: '72h',
+    status: 'failed',
     assessmentCheckpoints: [
       {
         time: '24h',
@@ -185,12 +343,42 @@ const mockScenarioData: { [key: string]: ScenarioData } = {
         relatedThreats: []
       }
     ],
+    outcomeSummaryPoints: [
+      {
+        title: 'Power System Failure - 68 Hours',
+        description: 'Primary power systems failed after 68 hours under siege conditions. Backup generators proved insufficient for extended operations beyond 48 hours.'
+      },
+      {
+        title: 'Fuel Depletion - 24 Hours Early',
+        description: 'Fuel reserves depleted 24 hours earlier than specifications indicated. Actual consumption rate under full defensive posture exceeded planning assumptions by 35%.'
+      },
+      {
+        title: 'Life Support Vulnerabilities',
+        description: 'Air filtration and oxygen generation systems showed single-point failure vulnerabilities. When primary HVAC failed, backup systems could not maintain safe atmospheric conditions for full facility occupancy. 40% capacity reduction required to preserve breathable air.'
+      },
+      {
+        title: 'Automated Systems Override',
+        description: 'Automated load-shedding protocols failed to prioritize critical systems appropriately. Manual intervention required but communication delays caused cascade failures.'
+      },
+      {
+        title: 'Personnel Fatigue - Critical',
+        description: 'Personnel performance degraded significantly after 60 hours of continuous operations. Fatigue management protocols proved inadequate. Critical decision-making errors observed in final 12 hours.'
+      },
+      {
+        title: 'Evacuation Delays - 40% Over Target',
+        description: 'Evacuation protocols executed under degraded life support conditions revealed critical gaps. Personnel accountability systems failed when primary power was lost. Evacuation completion time exceeded acceptable parameters by 40%.'
+      },
+      {
+        title: 'Medical Response',
+        description: '23 personnel required medical treatment for heat exhaustion and respiratory distress. No fatalities recorded. All injuries classified as moderate severity.'
+      }
+    ],
     strategicRecommendations: [
       {
         id: 'siege-crit-1',
         category: 'infrastructure',
-        recommendation: 'Critical Power Infrastructure Upgrade Required',
-        impact: 'Primary power systems failed after 68 hours under siege conditions. Backup generators proved insufficient for extended operations beyond 48 hours. Fuel reserves depleted 24 hours earlier than specifications indicated. Immediate infrastructure overhaul required to prevent catastrophic failure in future extended scenarios.',
+        recommendation: 'Critical Power Infrastructure Upgrade',
+        impact: 'Immediate infrastructure overhaul required to prevent catastrophic failure in future extended scenarios. Enhanced backup generator capacity and fuel storage systems essential.',
         priority: 'critical',
         estimatedCost: '$2.8M - $4.2M',
         estimatedTime: '8-12 months'
@@ -199,7 +387,7 @@ const mockScenarioData: { [key: string]: ScenarioData } = {
         id: 'siege-crit-2',
         category: 'equipment',
         recommendation: 'Life Support System Redundancy Enhancement',
-        impact: 'Air filtration and oxygen generation systems showed single-point failure vulnerabilities. When primary HVAC failed, backup systems could not maintain safe atmospheric conditions for full facility occupancy. 40% capacity reduction required to preserve breathable air. Triple-redundant life support architecture essential.',
+        impact: 'Triple-redundant life support architecture essential to prevent single-point failures in air filtration and oxygen generation.',
         priority: 'critical',
         estimatedCost: '$1.5M - $2.1M',
         estimatedTime: '6-9 months'
@@ -208,7 +396,7 @@ const mockScenarioData: { [key: string]: ScenarioData } = {
         id: 'siege-crit-3',
         category: 'infrastructure',
         recommendation: 'Emergency Fuel Reserve Expansion',
-        impact: 'Backup generator fuel reserves exhausted 24 hours ahead of projected timeline. Actual consumption rate under full defensive posture exceeded planning assumptions by 35%. Current 48-hour fuel capacity inadequate. Minimum 120-hour reserve capacity required for extended siege scenarios.',
+        impact: 'Expand fuel storage capacity from 48-hour to minimum 120-hour reserve for extended siege scenarios.',
         priority: 'critical',
         estimatedCost: '$850K - $1.2M',
         estimatedTime: '4-6 months'
@@ -217,7 +405,7 @@ const mockScenarioData: { [key: string]: ScenarioData } = {
         id: 'siege-crit-4',
         category: 'equipment',
         recommendation: 'Power Management System Modernization',
-        impact: 'Automated load-shedding protocols failed to prioritize critical systems appropriately. Manual intervention required but communication delays caused cascade failures. Smart power management with AI-driven load optimization needed to prevent similar failures.',
+        impact: 'Deploy smart power management with AI-driven load optimization to prevent cascade failures.',
         priority: 'critical',
         estimatedCost: '$680K - $920K',
         estimatedTime: '5-7 months'
@@ -226,7 +414,7 @@ const mockScenarioData: { [key: string]: ScenarioData } = {
         id: 'siege-crit-5',
         category: 'personnel',
         recommendation: 'Extended Operations Training Protocol',
-        impact: 'Personnel performance degraded significantly after 60 hours of continuous operations. Fatigue management protocols proved inadequate. Critical decision-making errors observed in final 12 hours. Comprehensive extended-duration training program required with focus on high-stress endurance scenarios.',
+        impact: 'Develop comprehensive extended-duration training program with focus on high-stress endurance scenarios and fatigue management.',
         priority: 'high',
         estimatedCost: '$180K - $250K',
         estimatedTime: '3-4 months'
@@ -235,82 +423,151 @@ const mockScenarioData: { [key: string]: ScenarioData } = {
         id: 'siege-crit-6',
         category: 'protocol',
         recommendation: 'Emergency Evacuation Procedure Revision',
-        impact: 'Evacuation protocols executed under degraded life support conditions revealed critical gaps. Personnel accountability systems failed when primary power was lost. Evacuation completion time exceeded acceptable parameters by 40%. Complete protocol revision and drill program required.',
+        impact: 'Complete protocol revision addressing degraded conditions and personnel accountability backup systems.',
         priority: 'high',
         estimatedCost: '$120K - $180K',
         estimatedTime: '2-3 months'
       }
     ],
-    finalOutcome: 'SCENARIO FAILURE - Life support systems collapsed after 68 hours of continuous siege operations due to cascading power infrastructure failures. Primary power grid and backup generators exhausted fuel reserves 24 hours ahead of projections. Emergency evacuation initiated under degraded atmospheric conditions. 23 personnel required medical treatment for heat exhaustion and respiratory distress. No fatalities, but facility mission capability compromised. Critical infrastructure vulnerabilities identified requiring immediate remediation.'
+    finalOutcome: 'SCENARIO FAILURE - Life support systems collapsed after 68 hours of continuous siege operations due to cascading power infrastructure failures. Emergency evacuation initiated under degraded atmospheric conditions. Critical infrastructure vulnerabilities identified requiring immediate remediation.'
   },
-  '2': {
-    id: '2',
-    name: 'Coordinated Multi-Threat Response',
-    description: 'Complex scenario combining chemical, structural, and cyber threats',
-    status: 'completed',
-    startTime: '2025-01-06T14:20:00',
-    duration: '2h 30m',
-    threatEvents: [],
-    assessmentCheckpoints: [{
-      time: '0h',
-      timeValue: 0,
-      trigger: 'Active Response',
-      prediction: 'success',
-      confidence: 85,
-      situationSummary: 'Actively managing multiple threat vectors.',
-      keyChanges: ['Threats being monitored'],
-      recommendations: [],
-      relatedThreats: []
-    }],
-    strategicRecommendations: [
+  'run-1-2': {
+    runId: 'run-1-2',
+    scenarioName: 'Extended Duration Scenario',
+    scenarioDescription: 'Prolonged hostile force containment with resource management protocols',
+    startTime: '2025-01-10T14:00:00',
+    endTime: '2025-01-12T18:30:00',
+    duration: '52h 30m',
+    status: 'success',
+    assessmentCheckpoints: [
       {
-        id: 'perf-1',
-        category: 'infrastructure',
-        recommendation: 'HVAC System Performance Validation',
-        impact: 'The facility\'s HVAC isolation system performed flawlessly during the chemical threat, achieving complete zone containment within 45 seconds. Air filtration maintained 99.97% efficiency throughout the incident.',
-        priority: 'high',
-        estimatedCost: 'N/A - Operational',
-        estimatedTime: 'Validated'
+        time: '12h',
+        timeValue: 12,
+        trigger: 'First Reassessment - Systems Stable',
+        prediction: 'success',
+        confidence: 85,
+        situationSummary: 'All infrastructure systems operating within normal parameters. Resource consumption tracking projections. Structural integrity monitoring active.',
+        keyChanges: ['Automated monitoring systems engaged', 'Backup systems on standby', 'Resource consumption at expected levels'],
+        recommendations: [
+          {
+            id: 'rec-12h-1',
+            priority: 'medium',
+            action: 'Continue current monitoring protocols',
+            reason: 'All systems performing as expected',
+            applied: true,
+            effect: 'Maintained operational stability'
+          }
+        ],
+        relatedThreats: []
       },
       {
-        id: 'perf-2',
-        category: 'equipment',
-        recommendation: 'Chemical Detection Array Reliability',
-        impact: 'All 12 chemical sensors in Sector B responded within acceptable parameters (< 2 seconds). Zero false positives or missed detections. Equipment exceeds military specifications.',
-        priority: 'high',
-        estimatedCost: 'N/A - Operational',
-        estimatedTime: 'Validated'
-      },
-      {
-        id: 'perf-3',
-        category: 'personnel',
-        recommendation: 'Personnel Response Excellence',
-        impact: 'All facility personnel executed evacuation protocols perfectly. Complete zone evacuation achieved in 3 minutes 12 seconds, 18 seconds ahead of target. Zero injuries or exposure incidents.',
-        priority: 'high',
-        estimatedCost: 'N/A - Operational',
-        estimatedTime: 'Validated'
-      },
-      {
-        id: 'perf-4',
-        category: 'protocol',
-        recommendation: 'Emergency Protocol Effectiveness',
-        impact: 'Containment protocols executed with 100% accuracy. Communication systems maintained full operational capacity. Command and control structure responded optimally under pressure.',
-        priority: 'medium',
-        estimatedCost: 'N/A - Operational',
-        estimatedTime: 'Validated'
+        time: '36h',
+        timeValue: 36,
+        trigger: 'Mid-Point Assessment',
+        prediction: 'success',
+        confidence: 88,
+        situationSummary: 'Infrastructure systems maintaining stability. Minor structural stress indicators detected but within acceptable parameters. All defensive systems operational.',
+        keyChanges: ['Structural integrity at 98%', 'All life support systems nominal', 'Resource reserves at 65%'],
+        recommendations: [
+          {
+            id: 'rec-36h-1',
+            priority: 'low',
+            action: 'Schedule post-scenario structural inspection',
+            reason: 'Preventive maintenance for detected stress points',
+            applied: true,
+            effect: 'Maintenance scheduled for completion'
+          }
+        ],
+        relatedThreats: []
       }
     ],
-    finalOutcome: 'Scenario completed successfully with zero casualties. All facility systems performed within or above specifications. Infrastructure, equipment, and personnel response demonstrated exceptional readiness. No system failures or protocol deviations observed.'
+    outcomeSummaryPoints: [
+      {
+        title: 'System Reliability - 100% Uptime',
+        description: 'All infrastructure systems maintained operational status throughout the 52.5-hour duration. Zero system failures recorded. All defensive systems remained operational with 100% uptime.'
+      },
+      {
+        title: 'Structural Integrity Monitoring',
+        description: 'Structural integrity monitoring detected all stress indicators successfully. All stress points remained within acceptable parameters throughout the scenario. Structural integrity maintained at 98%.'
+      },
+      {
+        title: 'Resource Management - 15% Surplus',
+        description: 'Resource management protocols performed as designed with 15% reserves remaining at completion. Actual consumption tracking projections with 98.5% accuracy. Fuel reserves exceeded minimum requirements by 22%.'
+      },
+      {
+        title: 'Power Efficiency - 87%',
+        description: 'Power systems operated at 87% efficiency throughout the duration. Backup systems maintained ready status with zero activations required.'
+      },
+      {
+        title: 'Life Support Performance',
+        description: 'Life support systems maintained optimal atmospheric conditions. Air quality parameters remained in green zone for entire duration. Temperature control within ±0.5°C variance.'
+      },
+      {
+        title: 'Personnel Performance - Optimal',
+        description: 'Personnel performance remained at operational standards throughout. Zero fatigue-related incidents reported. Decision-making efficiency maintained above 95%.'
+      },
+      {
+        title: 'Safety Record - Zero Incidents',
+        description: 'No personnel injuries recorded. All safety protocols executed successfully. Zero security breaches or system anomalies detected.'
+      }
+    ],
+    strategicRecommendations: [
+      {
+        id: 'success-rec-1',
+        category: 'optimization',
+        recommendation: 'Temperature Adjustment Protocol',
+        impact: 'Increase air temperature from 22°C to 24°C to reduce compressor usage - increase generator lifetime by 5 hours.',
+        priority: 'high',
+        estimatedCost: '$5K - $10K',
+        estimatedTime: '2-4 weeks'
+      },
+      {
+        id: 'success-rec-2',
+        category: 'personnel',
+        recommendation: 'Zone Occupancy Restriction',
+        impact: 'Minimize personnel occupancy in Zone 1 to reduce resource consumption and extend operational capacity.',
+        priority: 'high',
+        estimatedCost: '$2K - $5K',
+        estimatedTime: '1-2 weeks'
+      },
+      {
+        id: 'success-rec-3',
+        category: 'environmental',
+        recommendation: 'Ventilation Optimization',
+        impact: 'Open room doors to optimize CO2 levels and improve air circulation without additional energy consumption.',
+        priority: 'medium',
+        estimatedCost: '$0',
+        estimatedTime: 'Immediate'
+      },
+      {
+        id: 'success-rec-4',
+        category: 'policy',
+        recommendation: 'Resource Rationing Policy',
+        impact: 'Enforce policy to rational use of water and food supply to extend duration capacity during prolonged scenarios.',
+        priority: 'high',
+        estimatedCost: '$15K - $25K',
+        estimatedTime: '1-2 months'
+      },
+      {
+        id: 'success-rec-5',
+        category: 'power',
+        recommendation: 'Non-Essential Lighting Shutdown',
+        impact: 'Switch off lights in non-critical areas - reduce fuel consumption of generator and reduce load to increase operational lifetime.',
+        priority: 'medium',
+        estimatedCost: '$0',
+        estimatedTime: 'Immediate'
+      }
+    ],
+    finalOutcome: 'SCENARIO SUCCESS - All infrastructure systems maintained operational status throughout the 52.5-hour duration. Resource management protocols performed as designed. All defensive systems operational. Mission objectives achieved successfully.'
   },
-  '3': {
-    id: '3',
-    name: 'Chemical Agent Attack Response',
-    description: 'Tactical response to chemical agent detection and containment',
-    status: 'completed',
+  'run-3-2': {
+    runId: 'run-3-2',
+    scenarioName: 'Chemical Threat Scenario',
+    scenarioDescription: 'Chlorine gas breach in HVAC system - Floor 2 Sector B',
     startTime: '2026-01-11T09:00:00',
     endTime: '2026-01-11T09:45:00',
-    duration: '45 minutes',
-    threatEvents: [],
+    duration: '45m',
+    status: 'success',
     assessmentCheckpoints: [
       {
         time: '0m',
@@ -392,105 +649,145 @@ const mockScenarioData: { [key: string]: ScenarioData } = {
         relatedThreats: []
       }
     ],
-    strategicRecommendations: [
+    outcomeSummaryPoints: [
       {
-        id: 'chem-perf-1',
-        category: 'infrastructure',
-        recommendation: 'HVAC Isolation System Performance',
-        impact: 'The bunker\'s HVAC isolation system successfully contained the chemical threat to Sector B within 45 seconds of detection. Zero cross-contamination to adjacent sectors. Air pressure differentials maintained at optimal levels throughout the incident.',
-        priority: 'high',
-        estimatedCost: 'N/A - Operational',
-        estimatedTime: 'Validated'
+        title: 'Chemical Detection - 1.8 Seconds',
+        description: 'All chemical sensors in Sector B triggered within 1.8 seconds of agent release. Detection accuracy confirmed at 100% with zero false readings. Equipment performance exceeds NATO STANAG 4701 specifications.'
       },
       {
-        id: 'chem-perf-2',
-        category: 'equipment',
-        recommendation: 'Chemical Detection Sensor Array Accuracy',
-        impact: 'All chemical sensors in Sector B triggered within 1.8 seconds of agent release. Detection accuracy confirmed at 100% with zero false readings. Equipment performance exceeds NATO STANAG 4701 specifications.',
-        priority: 'high',
-        estimatedCost: 'N/A - Operational',
-        estimatedTime: 'Validated'
+        title: 'Evacuation Time - 2 Minutes 58 Seconds',
+        description: 'All 47 personnel in affected zone evacuated within 2 minutes 58 seconds. Zero casualties, zero contamination exposure recorded. Personnel demonstrated exceptional discipline under chemical threat conditions.'
       },
       {
-        id: 'chem-perf-3',
-        category: 'personnel',
-        recommendation: 'Rapid Evacuation Protocol Execution',
-        impact: 'All 47 personnel in affected zone evacuated within 2 minutes 58 seconds. Zero casualties, zero contamination exposure. Personnel demonstrated exceptional discipline under chemical threat conditions.',
-        priority: 'high',
-        estimatedCost: 'N/A - Operational',
-        estimatedTime: 'Validated'
+        title: 'CBRN Team Deployment - 4 Minutes',
+        description: 'CBRN decontamination team deployed and ready within 4 minutes of initial detection. Equipment staging completed in optimal time. No treatment required due to successful containment and zero exposure incidents.'
       },
       {
-        id: 'chem-perf-4',
-        category: 'protocol',
-        recommendation: 'Chemical Response Protocol Effectiveness',
-        impact: 'All CBRNe protocols executed with 100% compliance. Communication channels remained operational. Command structure maintained full situational awareness throughout containment operations. Zero protocol deviations recorded.',
-        priority: 'medium',
-        estimatedCost: 'N/A - Operational',
-        estimatedTime: 'Validated'
+        title: 'Atmospheric Clearance - 45 Minutes',
+        description: 'Agent concentration reduced to safe levels within 45 minutes of initial detection. Complete atmospheric clearance confirmed across all facility zones. Zero trace contamination detected in adjacent sectors.'
+      },
+      {
+        title: 'Protocol Compliance - 100%',
+        description: 'All CBRNe protocols executed with 100% compliance. Communication channels remained operational throughout. Zero protocol deviations recorded. Command structure maintained full situational awareness.'
+      },
+      {
+        title: 'Decision Efficiency - 98.7%',
+        description: 'Command structure decision-making efficiency validated at 98.7%. Real-time threat assessment and response coordination performed within optimal parameters. Zero command delays recorded.'
       }
     ],
-    finalOutcome: 'Chemical threat successfully contained with zero casualties and zero contamination spread. All facility systems operated within specifications. HVAC isolation, detection equipment, and personnel response exceeded performance standards. Facility infrastructure validated for chemical threat scenarios. Mission-critical readiness confirmed.'
+    strategicRecommendations: [
+      {
+        id: 'chem-enhance-1',
+        category: 'training',
+        recommendation: 'Personnel Evacuation Time Improvement',
+        impact: 'Further training required for personnel to improve evacuation time from current 2 minutes 58 seconds to target 2 minutes or less.',
+        priority: 'high',
+        estimatedCost: '$45K - $75K',
+        estimatedTime: '1-2 months'
+      }
+    ],
+    finalOutcome: 'SCENARIO SUCCESS - Chemical threat successfully contained with zero casualties and zero contamination spread. All facility systems operated within specifications. HVAC isolation, detection equipment, and personnel response exceeded performance standards.'
   }
 };
 
 export function ScenarioDetailView({ scenarioId, language, onBack, onEmergencyModeChange, onSimulationStateChange, caseStatus }: ScenarioDetailViewProps) {
   const t = translations[language];
-  const scenario = mockScenarioData[scenarioId];
-  const [activeTab, setActiveTab] = useState<TabType>('summary');
-  const [selectedCheckpointIndex, setSelectedCheckpointIndex] = useState(0);
+  const scenarioData = mockScenarioData[scenarioId];
+  const [viewMode, setViewMode] = useState<ViewMode>('setup');
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+
+  // Debug log
+  console.log('ScenarioDetailView - scenarioId:', scenarioId, 'viewMode:', viewMode, 'caseStatus (not used):', caseStatus);
 
   // Automatically navigate back if scenario not found
   useEffect(() => {
-    if (!scenario) {
+    if (!scenarioData) {
       onBack();
     }
-  }, [scenario, onBack]);
+  }, [scenarioData, onBack]);
 
-  // Update emergency mode when simulation state changes
-  const handleSimulationStart = () => {
-    onEmergencyModeChange?.(true);
+  // Update emergency mode when simulation starts
+  const handleNewAttempt = () => {
+    console.log('New Attempt clicked! Setting emergency mode and simulation state...');
+    console.log('Scenario name:', scenarioData.setup.name);
+    
+    onEmergencyModeChange?.('emergency');
     onSimulationStateChange?.({
-      scenarioName: scenario.name,
+      drillName: scenarioData.setup.name,
+      scenarioId: scenarioId,
       isRunning: true,
       isPaused: false,
       currentTime: 0,
       speed: 1
     });
+    
+    console.log('Emergency mode and simulation state set!');
     // Navigate back will be handled by App.tsx
   };
 
-  if (!scenario) {
+  const handleViewReport = (runId: string) => {
+    setSelectedRunId(runId);
+    setViewMode('report');
+  };
+
+  const handleBackToSetup = () => {
+    setViewMode('setup');
+    setSelectedRunId(null);
+  };
+
+  if (!scenarioData) {
     return null;
   }
 
-  const selectedCheckpoint = scenario.assessmentCheckpoints[selectedCheckpointIndex];
-
-  const getPredictionColor = (prediction: string) => {
-    switch (prediction) {
-      case 'success': return 'text-green-600 bg-green-50 border-green-200';
-      case 'partial': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'failure': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
+  const getCaseName = (id: string) => {
+    const nameMap: { [key: string]: keyof typeof translations.en } = {
+      '1': 'case1Name',
+      '2': 'case2Name',
+      '3': 'case3Name',
+    };
+    const key = nameMap[id];
+    return key ? t[key] : scenarioData.setup.name;
   };
 
-  const getPredictionIcon = (prediction: string) => {
-    switch (prediction) {
-      case 'success': return CheckCircle2;
-      case 'partial': return AlertTriangle;
-      case 'failure': return XCircle;
+  const getCaseDescription = (id: string) => {
+    const descMap: { [key: string]: keyof typeof translations.en } = {
+      '1': 'case1Desc',
+      '2': 'case2Desc',
+      '3': 'case3Desc',
+    };
+    const key = descMap[id];
+    return key ? t[key] : scenarioData.setup.description;
+  };
+
+  const getThreatName = (type: string) => {
+    const nameMap: { [key: string]: keyof typeof translations.en } = {
+      'chemical': 'chemical',
+      'biological': 'biological',
+      'radiological': 'radiological',
+      'nuclear': 'nuclear',
+      'explosive': 'explosive',
+      'cyber': 'cyber',
+      'structuralFailure': 'structuralFailure',
+      'hostileForce': 'hostileForce',
+    };
+    
+    const key = nameMap[type];
+    return key ? t[key] : type;
+  };
+
+  const getCaseLocation = (caseId: string, threatIndex: number) => {
+    const locationKey = `case${caseId}Location${threatIndex + 1}` as keyof typeof translations.en;
+    return t[locationKey] || '';
+  };
+
+  const getThreatIcon = (type: string) => {
+    switch (type) {
+      case 'hostileForce': return Users;
+      case 'cyber': return Wifi;
+      case 'structuralFailure': return Building2;
+      case 'chemical': return Skull;
+      case 'explosive': return AlertTriangle;
       default: return AlertTriangle;
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'critical': return 'bg-red-100 text-red-700 border-red-300';
-      case 'high': return 'bg-orange-100 text-orange-700 border-orange-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case 'low': return 'bg-blue-100 text-blue-700 border-blue-300';
-      default: return 'bg-gray-100 text-gray-700 border-gray-300';
     }
   };
 
@@ -504,23 +801,12 @@ export function ScenarioDetailView({ scenarioId, language, onBack, onEmergencyMo
     }
   };
 
-  const getThreatIcon = (type: string) => {
-    switch (type) {
-      case 'hostileForce': return Users;
-      case 'cyber': return Wifi;
-      case 'structuralFailure': return Building2;
-      case 'chemical': return Skull;
-      default: return AlertTriangle;
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'infrastructure': return Building2;
-      case 'equipment': return Wrench;
-      case 'personnel': return Users;
-      case 'protocol': return ListChecks;
-      default: return TrendingUp;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success': return 'bg-green-100 text-green-700';
+      case 'failed': return 'bg-red-100 text-red-700';
+      case 'in-progress': return 'bg-blue-100 text-blue-700';
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -535,636 +821,617 @@ export function ScenarioDetailView({ scenarioId, language, onBack, onEmergencyMo
     });
   };
 
-  const PredictionIcon = getPredictionIcon(selectedCheckpoint.prediction);
+  // Setup View (default)
+  if (viewMode === 'setup') {
+    return (
+      <div className="h-full flex flex-col bg-gray-50">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-200 bg-white">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
+          >
+            <ArrowLeft className={`size-5 ${language === 'ar' ? 'rotate-180' : ''}`} />
+            <span>{t.backToCases}</span>
+          </button>
+
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+                {getCaseName(scenarioId)}
+              </h1>
+              <p className="text-gray-600">
+                {getCaseDescription(scenarioId)}
+              </p>
+            </div>
+            <button
+              onClick={handleNewAttempt}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
+            >
+              <Play className="size-5" />
+              <span>{language === 'ar' ? 'محاولة جديدة' : 'New Attempt'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-[1400px] mx-auto space-y-6">
+            {/* Scenario Setup */}
+            <div className="bg-white rounded-lg shadow border border-gray-200">
+              <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  {language === 'ar' ? 'إعداد السيناريو' : 'Scenario Setup'}
+                </h3>
+                <button
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  <Edit2 className="size-4" />
+                  <span>{language === 'ar' ? 'تعديل الإعدادات' : 'Edit Configuration'}</span>
+                </button>
+              </div>
+              <div className="p-6">
+                {/* Threat Timeline */}
+                <div className="space-y-4">
+                  {scenarioData.setup.threats.map((threat, index) => {
+                    const ThreatIcon = getThreatIcon(threat.type);
+                    return (
+                      <div key={threat.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center justify-center size-10 rounded bg-red-100 flex-shrink-0">
+                          <ThreatIcon className="size-5 text-red-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="font-semibold text-gray-900">{getThreatName(threat.type)}</span>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${getSeverityColor(threat.severity)}`}>
+                              {threat.severity.toUpperCase()}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              {language === 'ar' ? 'في' : 'at'} <span className="font-medium">{threat.time}</span>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                            <span className="font-medium">{language === 'en' ? 'Detector:' : 'الكاشف:'}</span>
+                            {scenarioId === '3' ? (
+                              <div className="flex items-center gap-1.5">
+                                {index === 0 && (
+                                  <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded">
+                                    C12
+                                  </span>
+                                )}
+                                {index === 1 && (
+                                  <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded">
+                                    C7
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span>{getCaseLocation(scenarioId, index) || threat.location}</span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-700">{threat.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Previous Runs Table */}
+            <div className="bg-white rounded-lg shadow border border-gray-200">
+              <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  {language === 'ar' ? 'التجارب السابقة' : 'Previous Attempts'}
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        {language === 'ar' ? 'رقم التجربة' : 'Attempt #'}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        {language === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        {language === 'ar' ? 'المدة' : 'Duration'}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        {language === 'ar' ? 'الحالة' : 'Status'}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        {language === 'ar' ? 'الإجراءات' : 'Actions'}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {scenarioData.runs.map((run) => (
+                      <tr key={run.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="font-medium text-gray-900">#{run.runNumber}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {formatDateTime(run.startTime)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {run.duration || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(run.status)}`}>
+                            {run.status === 'success' ? (language === 'ar' ? 'نجح' : 'Success') :
+                             run.status === 'failed' ? (language === 'ar' ? 'فشل' : 'Failed') :
+                             (language === 'ar' ? 'قيد التشغيل' : 'In Progress')}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {run.status === 'in-progress' ? (
+                            <button className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium">
+                              <Play className="size-4" />
+                              <span>{language === 'ar' ? 'استئناف' : 'Resume'}</span>
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleViewReport(run.id)}
+                              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              <Eye className="size-4" />
+                              <span>{language === 'ar' ? 'عرض الترير' : 'View Report'}</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Report View
+  const reportData = selectedRunId ? mockReportData[selectedRunId] : null;
+  if (!reportData) {
+    return null;
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'critical': return 'bg-red-100 text-red-700 border-red-300';
+      case 'high': return 'bg-orange-100 text-orange-700 border-orange-300';
+      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+      case 'low': return 'bg-blue-100 text-blue-700 border-blue-300';
+      default: return 'bg-gray-100 text-gray-700 border-gray-300';
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'infrastructure': return Building2;
+      case 'equipment': return Wrench;
+      case 'personnel': return Users;
+      case 'protocol': return ListChecks;
+      default: return TrendingUp;
+    }
+  };
 
   // Calculate statistics for summary
-  const totalRecommendations = scenario.assessmentCheckpoints.reduce(
+  const totalRecommendations = reportData.assessmentCheckpoints.reduce(
     (sum, cp) => sum + cp.recommendations.length,
     0
   );
-  const appliedRecommendations = scenario.assessmentCheckpoints.reduce(
+  const appliedRecommendations = reportData.assessmentCheckpoints.reduce(
     (sum, cp) => sum + cp.recommendations.filter(r => r.applied).length,
     0
   );
   const adoptionRate = Math.round((appliedRecommendations / totalRecommendations) * 100);
 
-  // Determine if case is currently active (running)
-  const isActiveCase = caseStatus === 'active';
-  const isCompletedCase = caseStatus === 'completed' || scenario.status === 'completed';
-
-  // Calculate elapsed time for active cases (hardcoded for demo)
-  const getElapsedTime = () => {
-    if (!isActiveCase) return scenario.duration;
-    
-    // For active chemical agent case (45 min total), show realistic in-progress time
-    if (scenario.id === '3') {
-      return '18 minutes';
-    }
-    
-    // For other active cases
-    return '2h 15m';
-  };
-
-  const elapsedTime = getElapsedTime();
-  
-  // Calculate progress percentage for active cases (hardcoded for demo)
-  const getProgressPercentage = () => {
-    if (!isActiveCase) return 100;
-    
-    // For chemical agent case: 18 minutes elapsed out of 45 total = 40%
-    if (scenario.id === '3') {
-      return 40;
-    }
-    
-    // For other active cases
-    return 65;
-  };
-
-  const progressPercentage = getProgressPercentage();
-
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className={`p-6 border-b ${isActiveCase ? 'border-orange-200 bg-gradient-to-r from-orange-50 to-red-50' : 'border-gray-200 bg-white'}`}>
+      <div className="p-6 border-b border-gray-200 bg-white">
         <button
-          onClick={onBack}
+          onClick={handleBackToSetup}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
         >
           <ArrowLeft className={`size-5 ${language === 'ar' ? 'rotate-180' : ''}`} />
-          <span>{t.backToCases}</span>
+          <span>{language === 'ar' ? 'العودة إلى الإعداد' : 'Back to Setup'}</span>
         </button>
 
         <div className="flex items-start justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-semibold text-gray-900 mb-2">
-              {language === 'ar' ? t.case1Name : scenario.name}
+          <div className="flex-1">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+              {getCaseName(scenarioId)}
             </h1>
-            <p className="text-gray-600 mb-4">
-              {language === 'ar' ? t.case1Desc : scenario.description}
+            <p className="text-sm text-gray-600">
+              {getCaseDescription(scenarioId)}
             </p>
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <Calendar className="size-4" />
-                <span>{formatDateTime(scenario.startTime)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="size-4" />
-                <span>{scenario.duration}</span>
-              </div>
-              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                // Use caseStatus if provided, otherwise fall back to scenario.status
-                (caseStatus === 'completed' || (!caseStatus && scenario.status === 'completed')) ? 'bg-green-100 text-green-700' :
-                (caseStatus === 'active' || (!caseStatus && scenario.status === 'active')) ? 'bg-blue-100 text-blue-700' :
-                (caseStatus === 'archived') ? 'bg-slate-100 text-slate-600' :
-                'bg-red-100 text-red-700'
-              }`}>
-                {/* Display status text based on caseStatus */}
-                {(caseStatus === 'completed' || (!caseStatus && scenario.status === 'completed')) ? t.completed :
-                 (caseStatus === 'active' || (!caseStatus && scenario.status === 'active')) ? t.active :
-                 (caseStatus === 'archived') ? t.archived :
-                 t.failed}
-              </div>
+          </div>
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <Calendar className="size-4" />
+              <span>{formatDateTime(reportData.startTime)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="size-4" />
+              <span>{reportData.duration}</span>
             </div>
           </div>
-          {/* Start Simulation Button - Only for non-completed and non-failed cases */}
-          {!isCompletedCase && scenario.status !== 'failed' && (
-            <button
-              onClick={() => handleSimulationStart()}
-              className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              <Play className="size-5" />
-              <span>{t.runSimulation || 'Run Simulation'}</span>
-            </button>
-          )}
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('summary')}
-            className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors relative ${
-              activeTab === 'summary'
-                ? 'text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <FileText className="size-4" />
-            <span>{t.summaryTab || 'Summary'}</span>
-            {activeTab === 'summary' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('details')}
-            className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors relative ${
-              activeTab === 'details'
-                ? 'text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <BarChart3 className="size-4" />
-            <span>{t.detailsTab || 'Details'}</span>
-            {activeTab === 'details' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-            )}
-          </button>
         </div>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === 'summary' ? (
-        // Summary Tab
-        <div className="flex-1 overflow-y-auto p-6">
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-[1400px] mx-auto space-y-6">
-            {isActiveCase ? (
-              // ACTIVE CASE VIEW - Live Monitoring
-              <>
-                {/* Active Status Header */}
-                <div className="bg-white rounded-lg shadow border-l-4 border-orange-600 p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-4">
-                      <div className="size-12 rounded bg-orange-100 flex items-center justify-center">
-                        <Activity className="size-6 text-orange-600" />
-                      </div>
-                      <div>
-                        <div className="text-sm text-orange-700 font-medium mb-1">ACTIVE RESPONSE</div>
-                        <h2 className="text-xl font-semibold text-gray-900 mb-2">Tactical Case In Progress</h2>
-                        <p className="text-sm text-gray-600">Real-time monitoring and response coordination</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-gray-600 mb-1">Elapsed Time</div>
-                      <div className="text-2xl font-semibold text-gray-900 font-mono">{elapsedTime}</div>
-                    </div>
+            {/* Key Statistics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`size-10 rounded flex items-center justify-center ${
+                    reportData.status === 'success' ? 'bg-green-100' : 'bg-red-100'
+                  }`}>
+                    {reportData.status === 'success' ? (
+                      <CheckCircle2 className="size-5 text-green-600" />
+                    ) : (
+                      <XCircle className="size-5 text-red-600" />
+                    )}
                   </div>
-                  
-                  {/* Progress Indicator */}
-                  <div className="bg-gray-100 rounded h-2 overflow-hidden">
-                    <div className="bg-orange-600 h-full" style={{width: `${progressPercentage}%`}} />
-                  </div>
-                  <div className="text-xs text-gray-600 mt-2">Response Protocol Completion: {progressPercentage}%</div>
+                  <span className="text-sm text-gray-600">{language === 'ar' ? 'الحالة النهائية' : 'Final Status'}</span>
                 </div>
-
-                {/* Threat Assessment */}
-                <div className="bg-white rounded-lg shadow border border-gray-200">
-                  <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Threat Assessment</h3>
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="size-10 rounded bg-red-100 flex items-center justify-center flex-shrink-0">
-                        <Skull className="size-5 text-red-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="text-sm font-semibold text-gray-900">Chemical Agent Detected</span>
-                          <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded">CRITICAL</span>
-                        </div>
-                        <div className="text-sm text-gray-600 mb-3">Location: Floor 2 - Sector B</div>
-                        <p className="text-sm text-gray-700">{selectedCheckpoint.situationSummary}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
-                      <div>
-                        <div className="text-xs text-gray-600 mb-1">Threat Classification</div>
-                        <div className="text-sm font-semibold text-gray-900">Chemical Agent</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-600 mb-1">AI Confidence Level</div>
-                        <div className="text-sm font-semibold text-gray-900">{selectedCheckpoint.confidence}%</div>
-                      </div>
-                    </div>
-                  </div>
+                <div className={`text-2xl font-bold ${
+                  reportData.status === 'success' ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {reportData.status === 'success' 
+                    ? (language === 'ar' ? 'نجح' : 'SUCCESS')
+                    : (language === 'ar' ? 'فشل' : 'FAILED')}
                 </div>
+              </div>
 
-                {/* Response Actions */}
-                <div className="bg-white rounded-lg shadow border border-gray-200">
-                  <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Response Actions Executed</h3>
+              <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="size-10 rounded bg-blue-100 flex items-center justify-center">
+                    <Brain className="size-5 text-blue-600" />
                   </div>
-                  <div className="p-6">
-                    <div className="space-y-3">
-                      {selectedCheckpoint.keyChanges.map((change, idx) => (
-                        <div key={idx} className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                          <CheckCircle2 className="size-5 text-green-600 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">{change}</div>
-                            <div className="text-xs text-gray-600 mt-1">Status: Completed</div>
+                  <span className="text-sm text-gray-600">{language === 'ar' ? 'توصيات الذكاء الاصطناعي' : 'AI Recommendations'}</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900">{totalRecommendations}</div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="size-10 rounded bg-green-100 flex items-center justify-center">
+                    <CheckCircle2 className="size-5 text-green-600" />
+                  </div>
+                  <span className="text-sm text-gray-600">{language === 'ar' ? 'إجراءات الاستجابة التلقائية للطوارئ' : 'Automated Response Actions'}</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900">{appliedRecommendations}</div>
+              </div>
+            </div>
+
+            {/* Actions Taken Section */}
+            <div className="bg-white rounded-lg shadow border border-gray-200">
+              <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  {language === 'ar' ? 'الإجراءات المتخذة' : 'Actions Taken'}
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        System / Action
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Status Change
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Impact / Result
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Time Since Detection
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                  {/* GTV System */}
+                    <tr className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <Wind className="size-5 text-green-600" />
                           </div>
-                          <div className="text-xs text-gray-500">Active</div>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm">GTV System</div>
+                            <div className="text-xs text-gray-500">HVAC Zone Control</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="size-2 rounded-full bg-green-500"></div>
+                          <span className="text-sm font-semibold text-green-700">ACTIVATED</span>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">Standby → Full Operation</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 font-medium mb-1">100% Containment Achieved</div>
+                        <div className="text-xs text-gray-600">Complete HVAC zone isolation and contamination containment</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="size-4 text-gray-500" />
+                          <span className="text-sm font-semibold text-gray-900">45 seconds</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">After threat detection</div>
+                      </td>
+                    </tr>
+
+                  {/* Fresh Air Intake */}
+                    <tr className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                            <Airplay className="size-5 text-red-600" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm">Fresh Air Intake</div>
+                            <div className="text-xs text-gray-500">External Air Supply</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="size-2 rounded-full bg-red-500"></div>
+                          <span className="text-sm font-semibold text-red-700">SHUT DOWN</span>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">Active → Emergency Closure</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 font-medium mb-1">Zero External Exposure</div>
+                        <div className="text-xs text-gray-600">Prevented contaminated external air infiltration to all zones</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="size-4 text-gray-500" />
+                          <span className="text-sm font-semibold text-gray-900">52 seconds</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">After threat detection</div>
+                      </td>
+                    </tr>
+
+                  {/* External Water Supply */}
+                    <tr className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                            <CloudRain className="size-5 text-red-600" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm">External Water Supply</div>
+                            <div className="text-xs text-gray-500">Municipal Water Connection</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="size-2 rounded-full bg-red-500"></div>
+                          <span className="text-sm font-semibold text-red-700">ISOLATED</span>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">Normal Flow → Isolated</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 font-medium mb-1">Water Supply Protected</div>
+                        <div className="text-xs text-gray-600">Secured internal water reserves from external contamination</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="size-4 text-gray-500" />
+                          <span className="text-sm font-semibold text-gray-900">1 min 8 sec</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">After threat detection</div>
+                      </td>
+                    </tr>
+
+                  {/* Filtration System */}
+                    <tr className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <Filter className="size-5 text-green-600" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm">HEPA Filtration System</div>
+                            <div className="text-xs text-gray-500">Air Quality Control</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="size-2 rounded-full bg-green-500"></div>
+                          <span className="text-sm font-semibold text-green-700">ACTIVATED</span>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">Standby → Maximum Capacity</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 font-medium mb-1">99.97% Air Quality Maintained</div>
+                        <div className="text-xs text-gray-600">HEPA filters operating at maximum efficiency across all zones</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="size-4 text-gray-500" />
+                          <span className="text-sm font-semibold text-gray-900">1 min 15 sec</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">After threat detection</div>
+                      </td>
+                    </tr>
+
+                  {/* CO2 Removal */}
+                    <tr className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <FlaskConical className="size-5 text-green-600" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm">CO₂ Removal System</div>
+                            <div className="text-xs text-gray-500">Chemical Scrubbers</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="size-2 rounded-full bg-green-500"></div>
+                          <span className="text-sm font-semibold text-green-700">ACTIVATED</span>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">Passive → Active Scrubbing</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 font-medium mb-1">CO₂ at Safe Levels (450 ppm)</div>
+                        <div className="text-xs text-gray-600">Scrubbers operational, maintaining safe atmospheric composition</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="size-4 text-gray-500" />
+                          <span className="text-sm font-semibold text-gray-900">1 min 22 sec</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">After threat detection</div>
+                      </td>
+                    </tr>
+
+                  {/* O2 Supply System */}
+                    <tr className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <Radio className="size-5 text-green-600" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm">O₂ Supply System</div>
+                            <div className="text-xs text-gray-500">Emergency Oxygen Distribution</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="size-2 rounded-full bg-green-500"></div>
+                          <span className="text-sm font-semibold text-green-700">ACTIVATED</span>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">Reserve → Active Distribution</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 font-medium mb-1">Oxygen Level at 21.5%</div>
+                        <div className="text-xs text-gray-600">Emergency oxygen distribution to all zones maintaining safe levels</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="size-4 text-gray-500" />
+                          <span className="text-sm font-semibold text-gray-900">1 min 30 sec</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">After threat detection</div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Scenario Outcome Summary */}
+            <div className={`bg-white rounded-lg shadow-sm border-l-4 p-6 ${
+              reportData.status === 'success' ? 'border-green-600' : 'border-red-600'
+            }`}>
+              <div className="flex items-start gap-4">
+                <div className={`size-12 rounded flex items-center justify-center flex-shrink-0 ${
+                  reportData.status === 'success' ? 'bg-green-100' : 'bg-red-100'
+                }`}>
+                  {reportData.status === 'success' ? (
+                    <CheckCircle2 className="size-6 text-green-600" />
+                  ) : (
+                    <XCircle className="size-6 text-red-600" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                    {language === 'ar' ? 'النتيجة النهائية' : 'Final Outcome Summary'}
+                  </h2>
+                  <p className="text-gray-700 leading-relaxed text-sm mb-4">{reportData.finalOutcome}</p>
+                  
+                  {reportData.outcomeSummaryPoints && reportData.outcomeSummaryPoints.length > 0 && (
+                    <div className="mt-6 space-y-4">
+                      {reportData.outcomeSummaryPoints.map((point, index) => (
+                        <div key={index} className="border-l-2 border-gray-300 pl-4">
+                          <h4 className="font-semibold text-gray-900 text-sm mb-1">{point.title}</h4>
+                          <p className="text-gray-600 text-sm leading-relaxed">{point.description}</p>
                         </div>
                       ))}
                     </div>
-                  </div>
+                  )}
                 </div>
-
-                {/* AI Analysis */}
-                <div className="bg-white rounded-lg shadow border border-gray-200">
-                  <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">AI Predictive Analysis</h3>
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="size-10 rounded bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                        <Brain className="size-5 text-indigo-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="text-sm font-semibold text-gray-900">Successful Containment Predicted</span>
-                          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">HIGH CONFIDENCE</span>
-                        </div>
-                        <p className="text-sm text-gray-700">{scenario.finalOutcome}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3 mt-4 pt-4 border-t border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Prediction Confidence</span>
-                        <span className="text-sm font-semibold text-gray-900">{selectedCheckpoint.confidence}%</span>
-                      </div>
-                      <div className="bg-gray-100 rounded h-2 overflow-hidden">
-                        <div className="bg-indigo-600 h-full" style={{width: `${selectedCheckpoint.confidence}%`}} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* System Status */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white rounded-lg shadow border border-gray-200 p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <Shield className="size-6 text-blue-600" />
-                      <div className="size-2 bg-green-500 rounded-full" />
-                    </div>
-                    <div className="text-xs text-gray-600 mb-1">Containment Systems</div>
-                    <div className="text-lg font-semibold text-gray-900">Operational</div>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg shadow border border-gray-200 p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <Users className="size-6 text-green-600" />
-                      <div className="size-2 bg-green-500 rounded-full" />
-                    </div>
-                    <div className="text-xs text-gray-600 mb-1">Personnel Status</div>
-                    <div className="text-lg font-semibold text-gray-900">All Safe</div>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg shadow border border-gray-200 p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <Brain className="size-6 text-indigo-600" />
-                      <div className="size-2 bg-blue-500 rounded-full" />
-                    </div>
-                    <div className="text-xs text-gray-600 mb-1">AI Monitoring</div>
-                    <div className="text-lg font-semibold text-gray-900">Active</div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              // COMPLETED CASE VIEW - Historical Data
-              <>
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className={`rounded-lg p-4 border ${
-                scenario.status === 'failed' 
-                  ? 'bg-gradient-to-br from-red-50 to-rose-50 border-red-200'
-                  : 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200'
-              }`}>
-                <div className={`text-sm mb-1 ${
-                  scenario.status === 'failed' ? 'text-red-700' : 'text-green-700'
-                }`}>{t.scenarioOutcome || 'Scenario Outcome'}</div>
-                <div className={`text-2xl font-bold ${
-                  scenario.status === 'failed' ? 'text-red-900' : 'text-green-900'
-                }`}>{scenario.status === 'failed' ? 'Failure' : 'Success'}</div>
-                <div className={`text-xs mt-1 ${
-                  scenario.status === 'failed' ? 'text-red-600' : 'text-green-600'
-                }`}>{scenario.status === 'failed' ? '23 injuries' : 'Zero casualties'}</div>
               </div>
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-                <div className="text-sm text-blue-700 mb-1">{t.aiRecommendations || 'AI Recommendations'}</div>
-                <div className="text-2xl font-bold text-blue-900">{totalRecommendations}</div>
-                <div className="text-xs text-blue-600 mt-1">{appliedRecommendations} applied ({adoptionRate}%)</div>
-              </div>
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
-                <div className="text-sm text-purple-700 mb-1">{t.reassessments || 'Reassessments'}</div>
-                <div className="text-2xl font-bold text-purple-900">{scenario.assessmentCheckpoints.length}</div>
-                <div className="text-xs text-purple-600 mt-1">Over {scenario.duration}</div>
-              </div>
-              <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-lg p-4 border border-orange-200">
-                <div className="text-sm text-orange-700 mb-1">{t.threatsDetected || 'Threats Detected'}</div>
-                <div className="text-2xl font-bold text-orange-900">{scenario.threatEvents.length}</div>
-                <div className="text-xs text-orange-600 mt-1">All neutralized</div>
-              </div>
-            </div>
-
-            {/* Final Outcome */}
-            <div className={`rounded-xl shadow-sm p-6 ${
-              scenario.status === 'failed'
-                ? 'bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-300'
-                : 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300'
-            }`}>
-              <div className="flex items-center gap-3 mb-4">
-                {scenario.status === 'failed' ? (
-                  <XCircle className="size-7 text-red-600" />
-                ) : (
-                  <Shield className="size-7 text-green-600" />
-                )}
-                <h2 className="text-xl font-semibold text-gray-900">{t.finalOutcome}</h2>
-              </div>
-              <p className="text-sm text-gray-700 leading-relaxed">{scenario.finalOutcome}</p>
             </div>
 
             {/* Strategic Recommendations */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                {scenario.status === 'failed' ? (
-                  <AlertTriangle className="size-6 text-red-600" />
-                ) : (
-                  <TrendingUp className="size-6 text-emerald-600" />
-                )}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    {scenario.status === 'failed' ? 'Critical Remediation Required' : t.strategicRecommendations}
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    {scenario.status === 'failed' 
-                      ? 'Infrastructure failures identified - immediate action required'
-                      : t.strategicRecommendationsSubtitle
-                    }
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {scenario.strategicRecommendations.map((rec) => {
-                  const CategoryIcon = getCategoryIcon(rec.category);
-                  return (
-                    <div
-                      key={rec.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all"
-                    >
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="flex items-center justify-center size-10 rounded-lg bg-blue-50">
-                          <CategoryIcon className="size-5 text-blue-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <div className="text-xs text-gray-600 uppercase tracking-wide">
-                              {rec.category === 'infrastructure' ? t.infrastructure :
-                               rec.category === 'equipment' ? t.equipment :
-                               rec.category === 'personnel' ? t.personnel :
-                               t.protocol}
-                            </div>
-                            <div className={`px-2 py-1 rounded text-xs font-medium border ${getPriorityColor(rec.priority)}`}>
-                              {rec.priority === 'critical' ? t.critical :
-                               rec.priority === 'high' ? t.high :
-                               rec.priority === 'medium' ? t.medium :
-                               t.low}
-                            </div>
-                          </div>
-                          <h3 className="font-semibold text-gray-900 mb-2 text-sm">{rec.recommendation}</h3>
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-700 mb-3">{rec.impact}</p>
-                      <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
-                        <div>
-                          <div className="text-xs text-gray-600 mb-1">{t.estimatedCost}</div>
-                          <div className="font-medium text-gray-900 text-xs">{rec.estimatedCost}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-600 mb-1">{t.estimatedTime}</div>
-                          <div className="font-medium text-gray-900 text-xs">{rec.estimatedTime}</div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </>
-            )}
-          </div>
-        </div>
-      ) : (
-        // Details Tab
-        <div className="flex-1 flex overflow-hidden">
-          {/* Timeline Sidebar */}
-          <div className={`w-80 border-${language === 'ar' ? 'l' : 'r'} border-gray-200 bg-gray-50 p-6 overflow-y-auto`}>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Activity className="size-5 text-blue-600" />
-              {t.scenarioTimeline}
-            </h2>
-
-            {/* Vertical Timeline */}
-            <div className="relative">
-              {/* Timeline Line */}
-              <div className={`absolute top-0 ${language === 'ar' ? 'right-[23px]' : 'left-[23px]'} bottom-0 w-0.5 bg-gray-300`} />
-
-              {/* Timeline Items */}
-              <div className="space-y-6">
-                {scenario.assessmentCheckpoints.map((checkpoint, index) => {
-                  const isSelected = index === selectedCheckpointIndex;
-                  const PIcon = getPredictionIcon(checkpoint.prediction);
-
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedCheckpointIndex(index)}
-                      className={`relative flex gap-3 w-full text-left ${language === 'ar' ? 'flex-row-reverse' : ''}`}
-                    >
-                      {/* Time Marker */}
-                      <div className="flex flex-col items-center">
-                        <div className={`flex items-center justify-center size-12 rounded-full border-2 transition-all ${
-                          isSelected
-                            ? 'bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-600 shadow-lg scale-110'
-                            : 'bg-white border-gray-300 hover:border-indigo-400'
-                        } z-10`}>
-                          {isSelected ? (
-                            <Brain className="size-6 text-white" />
-                          ) : (
-                            <Clock className="size-5 text-gray-600" />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Checkpoint Info */}
-                      <div className="flex-1 pb-4">
-                        <div className={`px-3 py-1.5 rounded-lg transition-all ${
-                          isSelected
-                            ? 'bg-indigo-100 border-2 border-indigo-300'
-                            : 'bg-white border border-gray-200 hover:border-indigo-300'
-                        }`}>
-                          <div className="font-semibold text-gray-900 text-sm mb-1">
-                            {checkpoint.time}
-                          </div>
-                          <div className="text-xs text-gray-600 line-clamp-2 mb-2">
-                            {checkpoint.trigger}
-                          </div>
-                          <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
-                            isSelected ? 'font-semibold' : ''
-                          } ${getPredictionColor(checkpoint.prediction)}`}>
-                            <PIcon className="size-3" />
-                            <span>{checkpoint.confidence}%</span>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content Area */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-[1200px] mx-auto space-y-6">
-              {/* Related Threats */}
-              {selectedCheckpoint.relatedThreats.length > 0 && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <AlertTriangle className="size-5 text-red-600" />
-                    {t.threatDetected}
-                  </h3>
-                  <div className="space-y-3">
-                    {selectedCheckpoint.relatedThreats.map((threat) => {
-                      const Icon = getThreatIcon(threat.type);
-                      return (
-                        <div key={threat.id} className="bg-red-50 rounded-lg p-4 border-2 border-red-200">
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <div className="flex items-center gap-3">
-                              <Icon className="size-6 text-red-600" />
-                              <div>
-                                <div className="font-semibold text-gray-900">
-                                  {threat.type === 'hostileForce' ? t.hostileForce :
-                                   threat.type === 'cyber' ? t.cyber :
-                                   threat.type === 'structuralFailure' ? t.structuralFailure :
-                                   threat.type}
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                  <MapPin className="size-3" />
-                                  <span>{threat.location}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className={`px-2 py-1 rounded text-xs font-medium ${getSeverityColor(threat.severity)}`}>
-                              {threat.severity === 'critical' ? t.critical :
-                               threat.severity === 'high' ? t.high :
-                               threat.severity === 'medium' ? t.medium :
-                               t.low}
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-700">{threat.description}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Selected Checkpoint Details */}
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 border-2 border-indigo-200">
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center size-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
-                    <Brain className="size-7 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-700 mb-2">
-                      <Zap className="size-4" />
-                      <span>{selectedCheckpoint.time} - {t.aiReassessment}</span>
-                    </div>
-                    <h2 className="text-xl font-semibold text-gray-900">{selectedCheckpoint.trigger}</h2>
-                  </div>
-                </div>
-
-                {/* Prediction Badge */}
-                <div className={`inline-flex items-center gap-3 px-5 py-3 rounded-lg border-2 mb-4 ${getPredictionColor(selectedCheckpoint.prediction)}`}>
-                  <PredictionIcon className="size-6" />
-                  <div>
-                    <div className="font-semibold text-lg">
-                      {selectedCheckpoint.prediction === 'success' ? t.predictionSuccess :
-                       selectedCheckpoint.prediction === 'partial' ? t.predictionPartial :
-                       t.predictionFailure}
-                    </div>
-                    <div className="text-sm opacity-80">
-                      {t.confidence}: {selectedCheckpoint.confidence}%
-                    </div>
-                  </div>
-                </div>
-
-                {/* Situation Summary */}
-                <div className="bg-white rounded-lg p-4 mb-4 border border-indigo-200">
-                  <div className="text-sm font-semibold text-indigo-700 mb-2">{t.situationSummary}</div>
-                  <p className="text-sm text-gray-700">{selectedCheckpoint.situationSummary}</p>
-                </div>
-
-                {/* Key Changes */}
-                <div className="bg-white rounded-lg p-4 border border-indigo-200">
-                  <div className="text-sm font-semibold text-indigo-700 mb-3">{t.keyChanges}</div>
-                  <ul className="space-y-2">
-                    {selectedCheckpoint.keyChanges.map((change, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                        <ChevronRight className={`size-4 mt-0.5 text-indigo-600 flex-shrink-0 ${language === 'ar' ? 'rotate-180' : ''}`} />
-                        <span>{change}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* AI Recommendations */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <ListChecks className="size-5 text-purple-600" />
-                  {t.aiRecommendations}
+            <div className="bg-white rounded-lg shadow border border-gray-200">
+              <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  {language === 'ar' ? 'التوصيات الاستراتيجية' : 'Strategic Recommendations'}
                 </h3>
-                <div className="space-y-3">
-                  {selectedCheckpoint.recommendations.map((rec) => (
-                    <div
-                      key={rec.id}
-                      className={`rounded-lg p-4 border-2 ${
-                        rec.applied
-                          ? 'border-green-300 bg-green-50'
-                          : 'border-gray-300 bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`mt-0.5 ${rec.applied ? 'text-green-600' : 'text-gray-400'}`}>
-                          {rec.applied ? (
-                            <CheckCircle2 className="size-6" />
-                          ) : (
-                            <XCircle className="size-6" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <div className="font-semibold text-gray-900">{rec.action}</div>
-                            <div className={`px-2 py-1 rounded text-xs font-medium border ${getPriorityColor(rec.priority)}`}>
-                              {rec.priority === 'critical' ? t.critical :
-                               rec.priority === 'high' ? t.high :
-                               t.medium}
-                            </div>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {reportData.strategicRecommendations.map((rec) => {
+                    const CategoryIcon = getCategoryIcon(rec.category);
+                    return (
+                      <div key={rec.id} className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-colors">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className={`size-10 rounded flex items-center justify-center flex-shrink-0 ${
+                            rec.priority === 'critical' ? 'bg-red-100' : 
+                            rec.priority === 'high' ? 'bg-orange-100' : 'bg-blue-100'
+                          }`}>
+                            <CategoryIcon className={`size-5 ${
+                              rec.priority === 'critical' ? 'text-red-600' : 
+                              rec.priority === 'high' ? 'text-orange-600' : 'text-blue-600'
+                            }`} />
                           </div>
-                          <p className="text-sm text-gray-600 mb-3">{rec.reason}</p>
-                          {rec.applied && rec.effect && (
-                            <div className="mt-3 p-3 bg-white rounded-lg border border-green-200">
-                              <div className="text-xs font-semibold text-green-700 mb-1 flex items-center gap-1">
-                                <Zap className="size-3" />
-                                {t.effectOfAction}:
-                              </div>
-                              <p className="text-sm text-gray-700">{rec.effect}</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`px-2 py-0.5 rounded text-xs font-bold ${getPriorityColor(rec.priority)}`}>
+                                {rec.priority.toUpperCase()}
+                              </span>
+                              <span className="text-xs text-gray-600 capitalize">{rec.category}</span>
                             </div>
-                          )}
+                            <h4 className="font-bold text-gray-900 text-sm mb-2">{rec.recommendation}</h4>
+                          </div>
+                        </div>
+                        
+                        {/* Key Impact Points */}
+                        <div className="mb-3 pl-13">
+                          <p className="text-xs text-gray-700 leading-relaxed line-clamp-3">{rec.impact}</p>
+                        </div>
+
+                        {/* Cost and Time */}
+                        <div className="flex items-center gap-4 text-xs pl-13">
+                          <div className="flex items-center gap-1.5">
+                            <Activity className="size-3.5 text-gray-500" />
+                            <span className="font-medium text-gray-700">{rec.estimatedCost}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="size-3.5 text-gray-500" />
+                            <span className="font-medium text-gray-700">{rec.estimatedTime}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
           </div>
         </div>
-      )}
     </div>
   );
 }

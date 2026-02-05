@@ -20,13 +20,13 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
 
   // Incidents trend data - 7 days view
   const incidentsTrendData = [
-    { date: 'Jan 30', ruleMatched: 3, conflict: 2, undefined: 1 },
-    { date: 'Jan 31', ruleMatched: 5, conflict: 1, undefined: 2 },
-    { date: 'Feb 1', ruleMatched: 2, conflict: 3, undefined: 1 },
-    { date: 'Feb 2', ruleMatched: 4, conflict: 2, undefined: 2 },
-    { date: 'Feb 3', ruleMatched: 6, conflict: 1, undefined: 1 },
-    { date: 'Feb 4', ruleMatched: 3, conflict: 2, undefined: 3 },
-    { date: 'Feb 5', ruleMatched: 5, conflict: 3, undefined: 2 },
+    { date: 'Jan 30', co2Level: 480 },
+    { date: 'Jan 31', co2Level: 520 },
+    { date: 'Feb 1', co2Level: 550 },
+    { date: 'Feb 2', co2Level: 610 },
+    { date: 'Feb 3', co2Level: 680 },
+    { date: 'Feb 4', co2Level: 750 },
+    { date: 'Feb 5', co2Level: 820 },
   ];
 
   // Threat Classification Data
@@ -57,6 +57,12 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
   const criticalCount = incidents.filter(i => i.severity === 'critical').length;
   const ruleResolvedCount = incidents.filter(i => i.matchedRule).length;
 
+  // CO2 specific metrics
+  const currentCO2 = 820; // ppm
+  const normalThreshold = 600; // ppm
+  const warningThreshold = 800; // ppm
+  const avgCO2 = 630; // ppm
+
   return (
     <div className="flex flex-col h-full">
       <Filters
@@ -84,33 +90,33 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
             <StatCard
               icon={Activity}
-              label={t.totalIncidents}
-              value={incidents.length}
-              color="blue"
+              label={language === 'en' ? 'Current CO₂ Level' : 'مستوى ثاني أكسيد الكربون الحالي'}
+              value={`${currentCO2} ppm`}
+              color="orange"
             />
             <StatCard
               icon={AlertTriangle}
-              label={language === 'en' ? 'Active Incidents' : 'حوادث نشطة'}
-              value={activeCount}
-              color="red"
-            />
-            <StatCard
-              icon={CheckCircle2}
-              label={language === 'en' ? 'Resolved Today' : 'تم حلها اليوم'}
-              value={resolvedCount}
+              label={language === 'en' ? 'Normal Threshold' : 'العتبة الطبيعية'}
+              value={`${normalThreshold} ppm`}
               color="green"
             />
             <StatCard
               icon={AlertCircle}
-              label={language === 'en' ? 'Critical' : 'حرج'}
-              value={criticalCount}
-              color="orange"
+              label={language === 'en' ? 'Warning Threshold' : 'عتبة التحذير'}
+              value={`${warningThreshold} ppm`}
+              color="red"
+            />
+            <StatCard
+              icon={CheckCircle2}
+              label={language === 'en' ? '7-Day Average' : 'متوسط 7 أيام'}
+              value={`${avgCO2} ppm`}
+              color="blue"
             />
             <StatCard
               icon={Brain}
-              label={language === 'en' ? 'AI-Assisted Resolution' : 'حل بمساعدة الذكاء الاصطناعي'}
-              value={ruleResolvedCount}
-              color="purple"
+              label={language === 'en' ? 'Status' : 'الحالة'}
+              value={currentCO2 > warningThreshold ? (language === 'en' ? 'WARNING' : 'تحذير') : (language === 'en' ? 'NORMAL' : 'طبيعي')}
+              color={currentCO2 > warningThreshold ? 'red' : 'green'}
             />
           </div>
 
@@ -120,10 +126,10 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-red-50 rounded-lg">
-                    <AlertTriangle className="size-5 text-red-600" />
+                  <div className="p-2 bg-orange-50 rounded-lg">
+                    <Activity className="size-5 text-orange-600" />
                   </div>
-                  <h3 className="font-semibold text-gray-900">{t.incidentsCountTrend}</h3>
+                  <h3 className="font-semibold text-gray-900">{language === 'en' ? 'CO₂ Level Trend (7 Days)' : 'اتجاه مستوى ثاني أكسيد الكربون (7 أيام)'}</h3>
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={300}>
@@ -137,6 +143,7 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
                   <YAxis 
                     stroke="#9ca3af"
                     style={{ fontSize: '12px' }}
+                    domain={[400, 900]}
                   />
                   <Tooltip 
                     contentStyle={{ 
@@ -145,14 +152,15 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                     }}
+                    formatter={(value: any) => [`${value} ppm`, 'CO₂ Level']}
                   />
                   <Line 
                     type="monotone" 
-                    dataKey={(data: any) => data.ruleMatched + data.conflict + data.undefined}
-                    stroke="#3b82f6" 
+                    dataKey="co2Level"
+                    stroke="#f97316" 
                     strokeWidth={3}
-                    name={t.totalIncidents}
-                    dot={{ r: 5, fill: '#3b82f6' }}
+                    name="CO₂ Level (ppm)"
+                    dot={{ r: 5, fill: '#f97316' }}
                     activeDot={{ r: 7 }}
                   />
                 </LineChart>
@@ -160,15 +168,15 @@ export function IncidentsDashboard({ onIncidentClick, onNavigateToSummary, onNav
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">{t.totalInPeriod}</span>
-                    <span className="font-bold text-blue-600">
-                      {incidentsTrendData.reduce((sum: number, item: any) => sum + item.ruleMatched + item.conflict + item.undefined, 0)}
+                    <span className="text-gray-600">{language === 'en' ? 'Peak Level' : 'الذروة'}</span>
+                    <span className="font-bold text-orange-600">
+                      {Math.max(...incidentsTrendData.map((item: any) => item.co2Level))} ppm
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">{t.averagePerDay}</span>
-                    <span className="font-bold text-blue-600">
-                      {(incidentsTrendData.reduce((sum: number, item: any) => sum + item.ruleMatched + item.conflict + item.undefined, 0) / incidentsTrendData.length).toFixed(1)}
+                    <span className="text-gray-600">{language === 'en' ? '7-Day Average' : 'متوسط 7 أيام'}</span>
+                    <span className="font-bold text-orange-600">
+                      {(incidentsTrendData.reduce((sum: number, item: any) => sum + item.co2Level, 0) / incidentsTrendData.length).toFixed(0)} ppm
                     </span>
                   </div>
                 </div>
