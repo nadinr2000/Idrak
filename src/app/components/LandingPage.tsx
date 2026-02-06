@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { KSAMapLandingPage } from './KSAMapLandingPage';
 import idrakLogo from '@/assets/IdrakLogo.png';
-// import promoImage from '@/assets/ksamap.png';
 
 interface LandingPageProps {
   language: Language;

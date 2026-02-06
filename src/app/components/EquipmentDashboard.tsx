@@ -132,7 +132,7 @@ export function EquipmentDashboard({ onEquipmentClick, onNavigateToSummary, onNa
         />
         <StatCard
           icon={CheckCircle2}
-          label={language === 'en' ? 'Operational' : 'تشغيلي'}
+          label={language === 'en' ? 'Operational' : '<|im_start|> تشغيلي'}
           value={stats.operational}
           color="green"
         />
@@ -220,9 +220,6 @@ export function EquipmentDashboard({ onEquipmentClick, onNavigateToSummary, onNa
                   {language === 'en' ? 'Equipment' : 'المعدات'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {language === 'en' ? 'Location' : 'الموقع'}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {language === 'en' ? 'Status' : 'الحالة'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -258,10 +255,6 @@ export function EquipmentDashboard({ onEquipmentClick, onNavigateToSummary, onNa
                           <div className="text-xs text-gray-500">{equipment.model}</div>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{equipment.floor}</div>
-                      <div className="text-xs text-gray-500">{equipment.room}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusColor}`}>

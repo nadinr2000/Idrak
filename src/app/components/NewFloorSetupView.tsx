@@ -548,10 +548,7 @@ export function NewFloorSetupView({ language = 'en', planId = null, onBack = () 
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">
-                      {selectedDeviceData 
-                        ? `Selected: ${selectedDeviceData.name} - Click and drag to move, or click Remove button`
-                        : 'Drag devices from the library to place them on the floor plan'
-                      }
+                      Drag devices from the library to place them on the floor plan
                     </p>
                   </div>
                   
@@ -584,6 +581,96 @@ export function NewFloorSetupView({ language = 'en', planId = null, onBack = () 
               </div>
             )}
           </div>
+
+          {/* Right Panel - Device Info */}
+          {selectedDeviceData && (
+            <div className="w-80 bg-white border-l-2 border-gray-200 flex flex-col overflow-y-auto">
+              {/* Header */}
+              <div className="p-4 border-b-2 border-purple-200 bg-purple-50">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                    Device Details
+                  </h3>
+                  <button
+                    onClick={() => setSelectedDevice(null)}
+                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <X className="size-5" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className={`${selectedDeviceData.deviceType.color} text-white p-2.5 rounded-lg`}>
+                    <selectedDeviceData.deviceType.icon className="size-6" />
+                  </div>
+                  <div>
+                    <p className="text-base font-bold text-gray-900">{selectedDeviceData.name}</p>
+                    <p className="text-xs text-gray-600 capitalize">{selectedDeviceData.deviceType.category}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Device Information */}
+              <div className="p-4 space-y-4">
+                {/* Device Type */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                    Device Type
+                  </label>
+                  <p className="text-sm text-gray-900 font-medium">{selectedDeviceData.deviceType.name}</p>
+                </div>
+
+                {/* Position */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                    Position
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-gray-50 border border-gray-200 rounded px-3 py-2">
+                      <p className="text-xs text-gray-600 mb-0.5">X Coordinate</p>
+                      <p className="text-sm font-semibold text-gray-900">{Math.round(selectedDeviceData.position.x)}</p>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded px-3 py-2">
+                      <p className="text-xs text-gray-600 mb-0.5">Y Coordinate</p>
+                      <p className="text-sm font-semibold text-gray-900">{Math.round(selectedDeviceData.position.y)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Device ID */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                    Device ID
+                  </label>
+                  <p className="text-xs text-gray-600 font-mono bg-gray-50 border border-gray-200 rounded px-3 py-2 break-all">
+                    {selectedDeviceData.id}
+                  </p>
+                </div>
+
+                {/* Category Info */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                    Category
+                  </label>
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-lg px-3 py-2">
+                    <p className="text-sm font-semibold text-blue-900 capitalize">
+                      {selectedDeviceData.deviceType.category}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="mt-auto p-4 border-t-2 border-gray-200 bg-gray-50">
+                <button
+                  onClick={() => handleDeviceRemove(selectedDeviceData.id)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+                >
+                  <X className="size-4" />
+                  Remove Device
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </DndProvider>

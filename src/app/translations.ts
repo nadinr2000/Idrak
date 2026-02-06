@@ -30,7 +30,7 @@ export const translations = {
     stressTests: 'Stress Tests',
     configuration: 'Configuration',
     automation: 'Automation Rules',
-    alarms: 'Alarms',
+    alarms: 'Notifications',
     tacticalThreatDrills: 'Situation Simulations',
     layoutTests: 'Device Configuration Testing',
     
@@ -41,7 +41,7 @@ export const translations = {
     tacticalThreatDrillsDesc: 'Simulate emergency situations',
     layoutTestsDesc: 'Test floor systems after adding or removing devices',
     thresholdsDesc: 'Set sensor limits',
-    alarmsDesc: 'Configure alarm triggers',
+    alarmsDesc: 'Configure notification triggers',
     
     // View Toggle
     dashboard: 'Dashboard',
@@ -463,7 +463,7 @@ export const translations = {
     stressTests: 'اختبارات الضغط',
     configuration: 'التكوين',
     automation: 'قواعد الأتمتة',
-    alarms: 'الإنذارات',
+    alarms: 'الإشعارات',
     tacticalThreatDrills: 'محاكاة المواقف',
     layoutTests: 'اختبار تكوين الأجهزة',
     

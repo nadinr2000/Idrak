@@ -135,20 +135,13 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
   
-  // Persist viewMode in localStorage to maintain state across demo mode changes
-  const [viewMode, setViewMode] = useState<'dashboard' | 'floorplan'>(() => {
-    const saved = localStorage.getItem('idrak-floorplan-viewmode');
-    return (saved === 'dashboard' || saved === 'floorplan') ? saved : 'floorplan';
-  });
-
-  // Save viewMode to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('idrak-floorplan-viewmode', viewMode);
-  }, [viewMode]);
+  // Each tab maintains its own viewMode independently (not persisted across tabs)
+  const [viewMode, setViewMode] = useState<'dashboard' | 'floorplan'>('floorplan');
 
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const currentHoverElementRef = useRef<HTMLElement | null>(null);
+  const prevEmergencyModeRef = useRef<false | 'incident' | 'emergency'>(emergencyMode);
 
   // Helper functions for sensor hover events
   const handleSensorHover = (e: React.MouseEvent, sensor: { id: string; name: string; status: string; value: string; type: string }) => {
@@ -177,6 +170,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
         if (isWarningOrThreatSensor && emergencyMode === false) {
           console.log('Skipping restore of warning/threat sensor in normal mode');
           localStorage.removeItem('clickedSensor');
+          setSelectedSensor(null);
           return;
         }
         
@@ -297,8 +291,12 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
   // Auto-open incident warning panel in dashboard view during active incident mode
   useEffect(() => {
-    if (emergencyMode === 'incident' && viewMode === 'dashboard') {
-      // Create a warning sensor for CO2 level increase
+    const prevMode = prevEmergencyModeRef.current;
+    const isTransitioningToIncident = emergencyMode === 'incident' && prevMode !== 'incident';
+    const isTransitioningToEmergency = emergencyMode === 'emergency' && prevMode !== 'emergency';
+    
+    if (isTransitioningToIncident && viewMode === 'dashboard') {
+      // Create a warning sensor for CO2 level increase - only on transition
       const warningSensor: Sensor = {
         id: 'warning-incident-001',
         name: 'CO₂ Level Warning',
@@ -322,48 +320,21 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
       // Don't open the side panel in incident mode, we'll show a static card instead
       // setIsRightPanelCollapsed(false);
       localStorage.setItem('clickedSensor', JSON.stringify(warningSensor));
-    } else if (emergencyMode === 'emergency' && viewMode === 'dashboard') {
-      // Create a critical threat sensor for emergency mode
-      const threatSensor: Sensor = {
-        id: 'threat-emergency-001',
-        name: 'Detected Threat Info',
-        type: 'chemical',
-        subType: 'C',
-        status: 'critical',
-        value: 'CHEMICAL AGENT DETECTED',
-        x: 73,
-        y: 50,
-        lastUpdate: new Date().toLocaleString('en-US', { 
-          year: 'numeric', 
-          month: '2-digit', 
-          day: '2-digit', 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          second: '2-digit', 
-          hour12: false 
-        })
-      };
-      setSelectedSensor(threatSensor);
-      setIsRightPanelCollapsed(false);
-      localStorage.setItem('clickedSensor', JSON.stringify(threatSensor));
-    } else if (emergencyMode === false) {
-      // Clear any active alerts whenever in normal mode, regardless of view
-      const clickedSensor = localStorage.getItem('clickedSensor');
-      if (clickedSensor) {
-        try {
-          const sensor = JSON.parse(clickedSensor);
-          const isWarningOrThreatSensor = sensor.id === 'warning-incident-001' || sensor.id === 'threat-emergency-001';
-          if (isWarningOrThreatSensor) {
-            setSelectedSensor(null);
-            setSelectedIncident(null);
-            localStorage.removeItem('clickedSensor');
-          }
-        } catch (e) {
-          // Invalid sensor data, clear it
-          localStorage.removeItem('clickedSensor');
-        }
-      }
+    } else if (isTransitioningToEmergency) {
+      // Clear any selected sensor when entering emergency mode
+      setSelectedSensor(null);
+      setSelectedIncident(null);
+      localStorage.removeItem('clickedSensor');
+    } else if (emergencyMode === false && prevMode !== false) {
+      // When returning to normal mode, clear everything and close the panel
+      setSelectedSensor(null);
+      setSelectedIncident(null);
+      setIsRightPanelCollapsed(true);
+      localStorage.removeItem('clickedSensor');
     }
+    
+    // Update the ref for next comparison
+    prevEmergencyModeRef.current = emergencyMode;
   }, [emergencyMode, viewMode]);
 
   // Initialize panel width
@@ -399,20 +370,37 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
     };
   }, [isRightPanelCollapsed, viewMode]);
 
-  // Listen for sensor clicks from other tabs
+  // Listen for sensor clicks and demo mode changes from other tabs
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'clickedSensor' && e.newValue) {
-        try {
-          const sensor = JSON.parse(e.newValue);
-          console.log('Sensor click detected from another tab:', sensor);
-          setSelectedSensor(sensor);
+      if (e.key === 'clickedSensor') {
+        if (e.newValue) {
+          try {
+            const sensor = JSON.parse(e.newValue);
+            console.log('Sensor click detected from another tab:', sensor);
+            setSelectedSensor(sensor);
+            setSelectedIncident(null);
+            setIsRightPanelCollapsed(false);
+            // If in dashboard view, stay in dashboard view
+            // If in floor plan view, stay in floor plan view
+          } catch (error) {
+            console.error('Error parsing sensor from localStorage:', error);
+          }
+        } else {
+          // clickedSensor was removed/cleared from another tab
+          setSelectedSensor(null);
           setSelectedIncident(null);
-          setIsRightPanelCollapsed(false);
-          // If in dashboard view, stay in dashboard view
-          // If in floor plan view, stay in floor plan view
-        } catch (error) {
-          console.error('Error parsing sensor from localStorage:', error);
+          setIsRightPanelCollapsed(true);
+        }
+      } else if (e.key === 'demoMode') {
+        // Demo mode changed in another tab
+        const newMode = e.newValue;
+        if (newMode === 'false' || newMode === null) {
+          // Switched to normal mode - clear everything
+          setSelectedSensor(null);
+          setSelectedIncident(null);
+          setIsRightPanelCollapsed(true);
+          localStorage.removeItem('clickedSensor');
         }
       }
       // ViewMode sync removed - each tab maintains its own view independently
@@ -626,7 +614,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
         {viewMode === 'dashboard' && (
           <div className="flex gap-0">
             {/* Left Panel - Dashboard Content */}
-            <div className={`px-6 pb-4 transition-all duration-300 ${emergencyMode === 'emergency' ? 'w-full' : (selectedSensor && emergencyMode === 'incident' ? 'w-[70%]' : 'w-full')}`}>
+            <div className={`px-6 pb-4 transition-all duration-300 ${selectedSensor ? 'w-[70%]' : 'w-full'}`}>
             
             {emergencyMode === 'emergency' ? (
               <>
@@ -1863,8 +1851,8 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
             )}
           </div>
 
-          {/* Right Panel - Warning Card for Active Alarm mode ONLY */}
-          {selectedSensor && emergencyMode === 'incident' && (
+          {/* Right Panel - Sensor Info for all modes */}
+          {selectedSensor && (
             <div className="w-[30%] transition-all duration-300 border-l-2 border-gray-300 bg-gray-50 overflow-y-auto px-6 pb-4 pt-4">
               {emergencyMode === 'incident' ? (
                 /* Warning Card for Active Alarm Mode */
