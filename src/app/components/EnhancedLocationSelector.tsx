@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Building2, MapPin, Layers, Activity, X, Info, CheckCircle } from 'lucide-react';
 import { Language, translations } from '../translations';
-import floorPlanImage from 'figma:asset/34666554759c5e69511808d799c27ec98a1ed980.png';
+//import floorPlanImage from 'figma:asset/34666554759c5e69511808d799c27ec98a1ed980.png';
 import { allFloorPlanSensors, FloorPlanSensor } from './EnhancedLocationSelectorSensorData';
+import floorPlanImage from '@/assets/NewBG2.png';
 
 // Use a placeholder for the floor plan image
 const floorPlanImagePlaceholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwMCIgaGVpZ2h0PSI4MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMDAiIGhlaWdodD0iODAwIiBmaWxsPSIjZjhmYWZjIi8+PC9zdmc+';

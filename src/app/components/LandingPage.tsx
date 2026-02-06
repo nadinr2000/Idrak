@@ -11,7 +11,7 @@ interface LandingPageProps {
   onEnter: () => void;
 }
 
-const features = [
+const features = [ 
   {
     icon: Activity,
     titleEn: 'Real-Time Monitoring',
