@@ -43,7 +43,7 @@ export function DemoControlBar({ language, emergencyMode, onToggleEmergency }: D
               }`}
             >
               <div className={`size-2 rounded-full ${emergencyMode === false ? 'bg-white' : 'bg-green-500'}`}></div>
-              {language === 'en' ? 'Normal State' : 'yttuli'}
+              {language === 'en' ? 'Normal State' : 'حالة عادية'}
             </button>
             <button
               onClick={() => onToggleEmergency('incident')}

@@ -1,9 +1,156 @@
 import { useState, useEffect } from 'react';
-import { Building2, MapPin, Layers, Activity, X, Info } from 'lucide-react';
+import { Building2, MapPin, Layers, Activity, X, Info, CheckCircle } from 'lucide-react';
 import { Language, translations } from '../translations';
+import floorPlanImage from 'figma:asset/34666554759c5e69511808d799c27ec98a1ed980.png';
+import { allFloorPlanSensors, FloorPlanSensor } from './EnhancedLocationSelectorSensorData';
 
 // Use a placeholder for the floor plan image
-const floorPlanImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwMCIgaGVpZ2h0PSI4MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMDAiIGhlaWdodD0iODAwIiBmaWxsPSIjZjhmYWZjIi8+PC9zdmc+';
+const floorPlanImagePlaceholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwMCIgaGVpZ2h0PSI4MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMDAiIGhlaWdodD0iODAwIiBmaWxsPSIjZjhmYWZjIi8+PC9zdmc+';
+
+// Legend Component
+function SensorLegend({ language }: { language: Language }) {
+  const legendItems = [
+    { symbol: 'DP', label: language === 'ar' ? 'الضغط التفاضلي' : 'Differential Pressure', color: '#139B48', shape: 'circle' },
+    { symbol: 'R', label: language === 'ar' ? 'كواشف إشعاعية' : 'Radiological Detectors', color: '#139B48', shape: 'triangle' },
+    { symbol: 'B', label: language === 'ar' ? 'كواشف بيولوجية' : 'Biological Detectors', color: '#139B48', shape: 'triangle' },
+    { symbol: 'C', label: language === 'ar' ? 'كواشف كيميائية' : 'Chemical Detectors', color: '#139B48', shape: 'triangle' },
+    { symbol: 'CO₂', label: language === 'ar' ? 'مستشعرات CO₂' : 'CO₂ Sensors', color: '#139B48', shape: 'circle' },
+    { symbol: 'CO', label: language === 'ar' ? 'مستشعرات CO' : 'CO Sensors', color: '#139B48', shape: 'circle' },
+    { symbol: 'O₂', label: language === 'ar' ? 'مستشعرات O₂' : 'O₂ Sensors', color: '#139B48', shape: 'circle' },
+    { symbol: 'T', label: language === 'ar' ? 'مستشعرات الحرارة' : 'Temperature Sensors', color: '#139B48', shape: 'circle' },
+    { symbol: 'H', label: language === 'ar' ? 'مستشعرات الرطوبة' : 'Humidity Sensors', color: '#139B48', shape: 'circle' },
+    { symbol: 'W', label: language === 'ar' ? 'مستشعرات مستوى الماء' : 'Water Level Sensors', color: '#139B48', shape: 'circle' },
+    { symbol: 'AF', label: language === 'ar' ? 'مستشعرات تدفق الهواء' : 'Airflow Sensors', color: '#139B48', shape: 'circle' },
+    { symbol: 'F', label: language === 'ar' ? 'مستشعرات الفلتر' : 'Filter Sensors', color: '#139B48', shape: 'circle' },
+    { symbol: 'GTV', label: language === 'ar' ? 'صمامات محكمة الغاز' : 'Gastight Valve Sensors', color: '#16a34a', shape: 'rectangle' },
+    { symbol: 'Door', label: language === 'ar' ? 'حالة الباب' : 'Door Status', color: '#16a34a', shape: 'rectangle' },
+  ];
+
+  const renderShape = (item: typeof legendItems[0]) => {
+    const baseClasses = "flex items-center justify-center text-[6px] font-bold text-white border border-black/20";
+    
+    if (item.shape === 'circle') {
+      return (
+        <div 
+          className={`w-3.5 h-3.5 rounded-full ${baseClasses} flex-shrink-0`}
+          style={{ backgroundColor: item.color }}
+        >
+          <span className="text-[5px]">{item.symbol}</span>
+        </div>
+      );
+    } else if (item.shape === 'triangle') {
+      return (
+        <div className="w-3.5 h-3.5 relative flex items-center justify-center flex-shrink-0">
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 16 16" fill="none">
+            <path 
+              d="M8 2 L14 14 L2 14 Z" 
+              fill={item.color} 
+              stroke="black" 
+              strokeWidth="0.5"
+              strokeOpacity="0.2"
+            />
+          </svg>
+          <span className="relative z-10 text-[5px] font-bold text-white mt-0.5">{item.symbol}</span>
+        </div>
+      );
+    } else {
+      // rectangle
+      return (
+        <div 
+          className={`w-5 h-2.5 rounded-sm ${baseClasses} flex-shrink-0`}
+          style={{ backgroundColor: item.color }}
+        >
+          <span className="text-[5px]">{item.symbol}</span>
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div className="rounded-lg border-2 border-gray-300 bg-white p-3">
+      <h3 className="text-[10px] font-bold text-gray-700 mb-2 uppercase tracking-wide">
+        {language === 'ar' ? 'وسيلة الإيضاح' : 'Legend'}
+      </h3>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+        {legendItems.map((item, index) => (
+          <div key={index} className="flex items-center gap-1.5">
+            {renderShape(item)}
+            <span className="text-[9px] text-gray-700 leading-tight">
+              {item.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Sensor Marker Component
+const SensorMarker = ({ 
+  displayInfo,
+  isSelected,
+  isHovered,
+  onClick,
+  onMouseEnter,
+  onMouseLeave
+}: { 
+  displayInfo: { subType: string; shape: 'circle' | 'triangle' | 'rectangle'; label: string; color: string };
+  isSelected: boolean;
+  isHovered: boolean;
+  onClick: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+}) => {
+  const bgColor = isSelected ? '#dc2626' : isHovered ? '#f97316' : displayInfo.color;
+  const baseClasses = "border border-black/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-all";
+  
+  if (displayInfo.shape === 'circle') {
+    return (
+      <div 
+        className={`w-2.5 h-2.5 rounded-full ${baseClasses}`}
+        style={{ backgroundColor: bgColor }}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onClick={onClick}
+      >
+        <span className="text-white text-[5px] font-bold leading-none">{displayInfo.label}</span>
+      </div>
+    );
+  } else if (displayInfo.shape === 'triangle') {
+    return (
+      <div 
+        className="w-3 h-3 relative flex items-center justify-center cursor-pointer hover:opacity-80 transition-all"
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onClick={onClick}
+      >
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 16 16" fill="none">
+          <path 
+            d="M8 2 L14 14 L2 14 Z" 
+            fill={bgColor}
+            stroke="black" 
+            strokeWidth="0.5"
+            strokeOpacity="0.2"
+          />
+        </svg>
+        <span className="relative z-10 text-[6px] font-bold text-white mt-0.5">{displayInfo.label}</span>
+      </div>
+    );
+  } else {
+    // rectangle (Door and GTV)
+    return (
+      <div 
+        className={`w-3.5 h-1.5 rounded-sm ${baseClasses}`}
+        style={{ backgroundColor: bgColor }}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onClick={onClick}
+      >
+        <span className="text-[5px] text-white font-bold leading-none">{displayInfo.label}</span>
+      </div>
+    );
+  }
+};
 
 interface Sensor {
   id: string;
@@ -315,7 +462,7 @@ const conceptualFloors: ConceptualFloor[] = [
 ];
 
 export function EnhancedLocationSelector({ language, onSelect, onClose, emergencyMode, initialMode }: EnhancedLocationSelectorProps) {
-  const [selectedFloor, setSelectedFloor] = useState(2);
+  const [selectedFloor, setSelectedFloor] = useState(1);
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null);
   const [hoveredSensor, setHoveredSensor] = useState<string | null>(null);
   const [mode, setMode] = useState<'real' | 'conceptual'>(initialMode || 'real');
@@ -383,11 +530,6 @@ export function EnhancedLocationSelector({ language, onSelect, onClose, emergenc
             <h2 className="text-xl font-bold text-gray-900">
               {language === 'ar' ? 'اختر موقع الجهاز' : 'Select Device Location'}
             </h2>
-            <p className="text-xs text-gray-600 mt-0.5">
-              {language === 'ar' 
-                ? 'اختر من الطوابق الحقيقية أو المخططات المفاهيمية' 
-                : 'Choose from real facility floors or conceptual floor plans'}
-            </p>
           </div>
           <button
             onClick={onClose}
@@ -439,7 +581,7 @@ export function EnhancedLocationSelector({ language, onSelect, onClose, emergenc
                 <>
                   <Building2 className="size-5 text-blue-600" />
                   <span className="font-bold text-sm text-gray-900">
-                    {language === 'ar' ? 'الطوابق الحقيقية' : 'Facility Floors Mode'}
+                    {language === 'ar' ? 'الطوابق الحقيقية' : 'Actual Facility Mode'}
                   </span>
                   <span className="ml-2 px-2 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full">
                     {language === 'ar' ? 'محدد' : 'Selected'}
@@ -464,49 +606,10 @@ export function EnhancedLocationSelector({ language, onSelect, onClose, emergenc
         <div className="flex-1 overflow-y-auto p-4">
           {mode === 'real' ? (
             <div className="space-y-4">
-              {/* Floor Tabs */}
-              <div className="flex gap-2">
-                {floorsAvailable.map(floor => (
-                  <button
-                    key={floor}
-                    onClick={() => {
-                      setSelectedFloor(floor);
-                      setSelectedRoom(null);
-                      setSelectedSensor(null);
-                    }}
-                    className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${
-                      selectedFloor === floor
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:border-blue-400'
-                    }`}
-                  >
-                    {language === 'ar' ? `الطابق ${floor}` : `Floor ${floor}`}
-                  </button>
-                ))}
-              </div>
-
               {/* Floor Plan Visualization */}
               <div className="grid grid-cols-2 gap-4">
                 {/* LEFT: Floor Plan */}
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs font-semibold text-gray-700">
-                      {language === 'ar' ? `مخطط الطابق ${selectedFloor}` : `Floor ${selectedFloor} Layout`}
-                    </h3>
-                    {hasDetailedLayout && (
-                      <div className="flex items-center gap-2 text-[10px] text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <div className="size-2 rounded-full bg-blue-600 border border-white" />
-                          <span>{language === 'ar' ? 'جهاز' : 'Device'}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <div className="size-2 rounded-full bg-red-600 border border-white" />
-                          <span>{language === 'ar' ? 'محدد' : 'Selected'}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
                   {!hasDetailedLayout ? (
                     // Show message for floors without detailed layout
                     <div className="w-full h-[400px] border border-gray-300 rounded-lg bg-white flex items-center justify-center">
@@ -528,137 +631,118 @@ export function EnhancedLocationSelector({ language, onSelect, onClose, emergenc
                       </div>
                     </div>
                   ) : (
-                    <svg viewBox="0 0 920 570" className="w-full h-[400px] border border-gray-300 rounded-lg bg-white">
-                      {/* Background */}
-                      <rect x="0" y="0" width="920" height="570" fill="#f8fafc" />
+                    <div className="w-full h-[400px] border border-gray-300 rounded-lg bg-white overflow-hidden relative">
+                      {/* Floor Plan Image */}
+                      <img 
+                        src={floorPlanImage}
+                        alt="Floor Plan"
+                        className="w-full h-full object-contain"
+                      />
                       
-                      {currentFloorRooms.map(room => {
-                        const isSelected = selectedRoom?.id === room.id;
-                        const isCorridor = room.name.includes('Corridor') || room.name.includes('Hallway');
-                        
-                        return (
-                          <g
-                            key={room.id}
-                            onMouseEnter={() => setHoveredRoom(room.id)}
-                            onMouseLeave={() => setHoveredRoom(null)}
-                            onClick={() => !isCorridor && handleRoomClick(room)}
-                          >
-                            <rect
-                              x={room.x}
-                              y={room.y}
-                              width={room.width}
-                              height={room.height}
-                              fill={isCorridor ? '#E5E7EB' : isSelected ? '#BFDBFE' : hoveredRoom === room.id ? '#DBEAFE' : '#FFFFFF'}
-                              stroke={isCorridor ? '#9CA3AF' : isSelected ? '#2563EB' : hoveredRoom === room.id ? '#3B82F6' : '#D1D5DB'}
-                              strokeWidth={isSelected ? '3' : '2'}
-                              className={isCorridor ? '' : 'cursor-pointer transition-all'}
-                            />
-                            <text
-                              x={room.x + room.width / 2}
-                              y={room.y + room.height / 2}
-                              textAnchor="middle"
-                              className="text-xs font-medium fill-gray-700 pointer-events-none select-none"
-                              fontSize="11"
-                            >
-                              {room.name}
-                            </text>
+                      {/* Sensor Overlays */}
+                      <div className="absolute inset-0" style={{ pointerEvents: 'none' }}>
+                        {(() => {
+                          // Group sensors by position
+                          const sensorGroups = new Map<string, FloorPlanSensor[]>();
+                          allFloorPlanSensors.forEach(sensor => {
+                            const key = `${sensor.left}-${sensor.top}`;
+                            if (!sensorGroups.has(key)) {
+                              sensorGroups.set(key, []);
+                            }
+                            sensorGroups.get(key)!.push(sensor);
+                          });
+                          
+                          return Array.from(sensorGroups.entries()).map(([posKey, sensors]) => {
+                            const firstSensor = sensors[0];
+                            const isTriangleGroup = firstSensor.shape === 'triangle';
+                            const isCircleGroup = firstSensor.shape === 'circle' && sensors.length > 1;
                             
-                            {!isCorridor && room.sensors.map(sensor => {
-                              const sensorX = room.x + (room.width * sensor.x / 100);
-                              const sensorY = room.y + (room.height * sensor.y / 100);
-                              const isHovered = hoveredSensor === sensor.id;
-                              const isSensorSelected = selectedSensor?.sensor.id === sensor.id;
-                              
-                              return (
-                                <g
-                                  key={sensor.id}
-                                  onMouseEnter={() => setHoveredSensor(sensor.id)}
-                                  onMouseLeave={() => setHoveredSensor(null)}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSensorClick(sensor, room);
-                                  }}
-                                  className="cursor-pointer"
-                                >
-                                  <circle
-                                    cx={sensorX}
-                                    cy={sensorY}
-                                    r={isSensorSelected ? 6 : isHovered ? 5 : 4}
-                                    fill={isSensorSelected ? '#DC2626' : isHovered ? '#EF4444' : '#3B82F6'}
-                                    stroke="white"
-                                    strokeWidth="2"
-                                    className="transition-all"
-                                  />
-                                </g>
-                              );
-                            })}
-                          </g>
-                        );
-                      })}
-                    </svg>
+                            return (
+                              <div
+                                key={posKey}
+                                className={`absolute flex items-center ${isTriangleGroup ? '-space-x-1' : isCircleGroup ? 'gap-0' : ''}`}
+                                style={{ 
+                                  left: firstSensor.left, 
+                                  top: firstSensor.top,
+                                  transform: 'translate(-50%, -50%)',
+                                  pointerEvents: 'auto'
+                                }}
+                              >
+                                {sensors.map((sensor) => {
+                                  const isHovered = hoveredSensor === sensor.id;
+                                  const isSensorSelected = selectedSensor?.sensor.id === sensor.id;
+                                  
+                                  return (
+                                    <div
+                                      key={sensor.id}
+                                      onMouseEnter={() => setHoveredSensor(sensor.id)}
+                                      onMouseLeave={() => setHoveredSensor(null)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSensorClick({ 
+                                          id: sensor.id, 
+                                          type: sensor.subType, 
+                                          x: 0, 
+                                          y: 0 
+                                        }, { 
+                                          id: 'floor-plan', 
+                                          name: sensor.name, 
+                                          floor: 2, 
+                                          x: 0, 
+                                          y: 0, 
+                                          width: 0, 
+                                          height: 0, 
+                                          sensors: [] 
+                                        });
+                                      }}
+                                    >
+                                      <SensorMarker
+                                        displayInfo={{
+                                          subType: sensor.subType,
+                                          shape: sensor.shape,
+                                          label: sensor.label,
+                                          color: sensor.color
+                                        }}
+                                        isSelected={isSensorSelected}
+                                        isHovered={isHovered}
+                                        onClick={() => handleSensorClick({ 
+                                          id: sensor.id, 
+                                          type: sensor.subType, 
+                                          x: 0, 
+                                          y: 0 
+                                        }, { 
+                                          id: 'floor-plan', 
+                                          name: sensor.name, 
+                                          floor: 2, 
+                                          x: 0, 
+                                          y: 0, 
+                                          width: 0, 
+                                          height: 0, 
+                                          sensors: [] 
+                                        })}
+                                        onMouseEnter={() => setHoveredSensor(sensor.id)}
+                                        onMouseLeave={() => setHoveredSensor(null)}
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {/* RIGHT: Details Cards Side by Side */}
+                {/* RIGHT: Device Details Card Only */}
                 {hasDetailedLayout && (
                   <div className="space-y-4">
-                    {/* Room Details Card */}
-                    <div className="bg-white border-2 border-gray-300 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <MapPin className="size-5 text-gray-600" />
-                        <div>
-                          <div className="text-xs text-gray-600">{language === 'ar' ? 'غرفة' : 'Room'}</div>
-                          <div className="font-bold text-gray-900 text-sm">
-                            {selectedRoom ? selectedRoom.name : (language === 'ar' ? 'لم يتم تحديد' : 'Not selected')}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {selectedRoom && (
-                        <div>
-                          <div className="text-xs text-gray-600 mb-2">
-                            {language === 'ar' ? 'الأجهزة في هذه الغرفة' : 'Devices in this room'}:
-                          </div>
-                          {selectedRoom.sensors.length > 0 ? (
-                            <div className="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
-                              {selectedRoom.sensors.map(sensor => (
-                                <button
-                                  key={sensor.id}
-                                  onClick={() => handleSensorClick(sensor, selectedRoom)}
-                                  className="w-full text-left px-3 py-2 text-xs bg-gray-50 hover:bg-blue-50 hover:border-blue-400 border border-gray-200 rounded-lg transition-colors flex items-center gap-2"
-                                >
-                                  <Activity className="size-3.5 text-blue-600 flex-shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-semibold text-gray-900 truncate">{sensor.id}</div>
-                                    <div className="text-[10px] text-gray-500">{sensor.type}</div>
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-gray-500 italic">
-                              {language === 'ar' ? 'لا توجد أجهزة' : 'No devices'}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      
-                      {!selectedRoom && (
-                        <div className="text-center py-4">
-                          <MapPin className="size-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-xs text-gray-500">
-                            {language === 'ar' ? 'انقر على غرفة في المخطط' : 'Click on a room in the floor plan'}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
+                    {/* Legend */}
+                    <SensorLegend language={language} />
+                    
                     {/* Device Details Card */}
-                    <div className={`rounded-lg p-4 border-2 ${
-                      selectedSensor 
-                        ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-300' 
-                        : 'bg-white border-gray-300'
-                    }`}>
+                    <div className={`rounded-lg p-4 border-2 ${selectedSensor ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-300' : 'bg-white border-gray-300'}`}>
                       <div className="flex items-center gap-2 mb-3">
                         <Activity className={`size-5 ${selectedSensor ? 'text-blue-600' : 'text-gray-600'}`} />
                         <div>
@@ -742,14 +826,9 @@ export function EnhancedLocationSelector({ language, onSelect, onClose, emergenc
                   {/* LEFT: Floor Plan */}
                   <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                     <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <h3 className="text-xs font-semibold text-gray-700">
-                          {language === 'ar' ? `مخطط الطابق ${conceptualPlanFloor}` : `Floor ${conceptualPlanFloor} Layout`}
-                        </h3>
-                        <p className="text-[10px] text-indigo-600 font-medium mt-0.5">
-                          {selectedPlan.name}
-                        </p>
-                      </div>
+                      <p className="text-[10px] text-indigo-600 font-medium">
+                        {selectedPlan.name}
+                      </p>
                       {conceptualHasDetailedLayout && (
                         <div className="flex items-center gap-2 text-[10px] text-gray-600">
                           <div className="flex items-center gap-1">
@@ -785,137 +864,118 @@ export function EnhancedLocationSelector({ language, onSelect, onClose, emergenc
                         </div>
                       </div>
                     ) : (
-                      <svg viewBox="0 0 920 570" className="w-full h-[400px] border border-gray-300 rounded-lg bg-white">
-                        {/* Background */}
-                        <rect x="0" y="0" width="920" height="570" fill="#f8fafc" />
+                      <div className="w-full h-[400px] border border-gray-300 rounded-lg bg-white overflow-hidden relative">
+                        {/* Floor Plan Image */}
+                        <img 
+                          src={floorPlanImage}
+                          alt="Floor Plan"
+                          className="w-full h-full object-contain"
+                        />
                         
-                        {conceptualPlanRooms.map(room => {
-                          const isSelected = selectedRoom?.id === room.id;
-                          const isCorridor = room.name.includes('Corridor') || room.name.includes('Hallway');
-                          
-                          return (
-                            <g
-                              key={room.id}
-                              onMouseEnter={() => setHoveredRoom(room.id)}
-                              onMouseLeave={() => setHoveredRoom(null)}
-                              onClick={() => !isCorridor && handleRoomClick(room)}
-                            >
-                              <rect
-                                x={room.x}
-                                y={room.y}
-                                width={room.width}
-                                height={room.height}
-                                fill={isCorridor ? '#E5E7EB' : isSelected ? '#BFDBFE' : hoveredRoom === room.id ? '#DBEAFE' : '#FFFFFF'}
-                                stroke={isCorridor ? '#9CA3AF' : isSelected ? '#2563EB' : hoveredRoom === room.id ? '#3B82F6' : '#D1D5DB'}
-                                strokeWidth={isSelected ? '3' : '2'}
-                                className={isCorridor ? '' : 'cursor-pointer transition-all'}
-                              />
-                              <text
-                                x={room.x + room.width / 2}
-                                y={room.y + room.height / 2}
-                                textAnchor="middle"
-                                className="text-xs font-medium fill-gray-700 pointer-events-none select-none"
-                                fontSize="11"
-                              >
-                                {room.name}
-                              </text>
+                        {/* Sensor Overlays */}
+                        <div className="absolute inset-0" style={{ pointerEvents: 'none' }}>
+                          {(() => {
+                            // Group sensors by position
+                            const sensorGroups = new Map<string, FloorPlanSensor[]>();
+                            allFloorPlanSensors.forEach(sensor => {
+                              const key = `${sensor.left}-${sensor.top}`;
+                              if (!sensorGroups.has(key)) {
+                                sensorGroups.set(key, []);
+                              }
+                              sensorGroups.get(key)!.push(sensor);
+                            });
+                            
+                            return Array.from(sensorGroups.entries()).map(([posKey, sensors]) => {
+                              const firstSensor = sensors[0];
+                              const isTriangleGroup = firstSensor.shape === 'triangle';
+                              const isCircleGroup = firstSensor.shape === 'circle' && sensors.length > 1;
                               
-                              {!isCorridor && room.sensors.map(sensor => {
-                                const sensorX = room.x + (room.width * sensor.x / 100);
-                                const sensorY = room.y + (room.height * sensor.y / 100);
-                                const isHovered = hoveredSensor === sensor.id;
-                                const isSensorSelected = selectedSensor?.sensor.id === sensor.id;
-                                
-                                return (
-                                  <g
-                                    key={sensor.id}
-                                    onMouseEnter={() => setHoveredSensor(sensor.id)}
-                                    onMouseLeave={() => setHoveredSensor(null)}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSensorClick(sensor, room);
-                                    }}
-                                    className="cursor-pointer"
-                                  >
-                                    <circle
-                                      cx={sensorX}
-                                      cy={sensorY}
-                                      r={isSensorSelected ? 6 : isHovered ? 5 : 4}
-                                      fill={isSensorSelected ? '#DC2626' : isHovered ? '#EF4444' : '#3B82F6'}
-                                      stroke="white"
-                                      strokeWidth="2"
-                                      className="transition-all"
-                                    />
-                                  </g>
-                                );
-                              })}
-                            </g>
-                          );
-                        })}
-                      </svg>
+                              return (
+                                <div
+                                  key={posKey}
+                                  className={`absolute flex items-center ${isTriangleGroup ? '-space-x-1' : isCircleGroup ? 'gap-0' : ''}`}
+                                  style={{ 
+                                    left: firstSensor.left, 
+                                    top: firstSensor.top,
+                                    transform: 'translate(-50%, -50%)',
+                                    pointerEvents: 'auto'
+                                  }}
+                                >
+                                  {sensors.map((sensor) => {
+                                    const isHovered = hoveredSensor === sensor.id;
+                                    const isSensorSelected = selectedSensor?.sensor.id === sensor.id;
+                                    
+                                    return (
+                                      <div
+                                        key={sensor.id}
+                                        onMouseEnter={() => setHoveredSensor(sensor.id)}
+                                        onMouseLeave={() => setHoveredSensor(null)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleSensorClick({ 
+                                            id: sensor.id, 
+                                            type: sensor.subType, 
+                                            x: 0, 
+                                            y: 0 
+                                          }, { 
+                                            id: 'floor-plan', 
+                                            name: sensor.name, 
+                                            floor: 2, 
+                                            x: 0, 
+                                            y: 0, 
+                                            width: 0, 
+                                            height: 0, 
+                                            sensors: [] 
+                                          });
+                                        }}
+                                      >
+                                        <SensorMarker
+                                          displayInfo={{
+                                            subType: sensor.subType,
+                                            shape: sensor.shape,
+                                            label: sensor.label,
+                                            color: sensor.color
+                                          }}
+                                          isSelected={isSensorSelected}
+                                          isHovered={isHovered}
+                                          onClick={() => handleSensorClick({ 
+                                            id: sensor.id, 
+                                            type: sensor.subType, 
+                                            x: 0, 
+                                            y: 0 
+                                          }, { 
+                                            id: 'floor-plan', 
+                                            name: sensor.name, 
+                                            floor: 2, 
+                                            x: 0, 
+                                            y: 0, 
+                                            width: 0, 
+                                            height: 0, 
+                                            sensors: [] 
+                                          })}
+                                          onMouseEnter={() => setHoveredSensor(sensor.id)}
+                                          onMouseLeave={() => setHoveredSensor(null)}
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </div>
                     )}
                   </div>
 
-                  {/* RIGHT: Details Cards (same as Real Floors) */}
+                  {/* RIGHT: Device Details Card Only */}
                   {conceptualHasDetailedLayout && (
                     <div className="space-y-4">
-                      {/* Room Details Card */}
-                      <div className="bg-white border-2 border-gray-300 rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <MapPin className="size-5 text-gray-600" />
-                          <div>
-                            <div className="text-xs text-gray-600">{language === 'ar' ? 'غرفة' : 'Room'}</div>
-                            <div className="font-bold text-gray-900 text-sm">
-                              {selectedRoom ? selectedRoom.name : (language === 'ar' ? 'لم يتم تحديد' : 'Not selected')}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {selectedRoom && (
-                          <div>
-                            <div className="text-xs text-gray-600 mb-2">
-                              {language === 'ar' ? 'الأجهزة في هذه الغرفة' : 'Devices in this room'}:
-                            </div>
-                            {selectedRoom.sensors.length > 0 ? (
-                              <div className="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
-                                {selectedRoom.sensors.map(sensor => (
-                                  <button
-                                    key={sensor.id}
-                                    onClick={() => handleSensorClick(sensor, selectedRoom)}
-                                    className="w-full text-left px-3 py-2 text-xs bg-gray-50 hover:bg-blue-50 hover:border-blue-400 border border-gray-200 rounded-lg transition-colors flex items-center gap-2"
-                                  >
-                                    <Activity className="size-3.5 text-blue-600 flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="font-semibold text-gray-900 truncate">{sensor.id}</div>
-                                      <div className="text-[10px] text-gray-500">{sensor.type}</div>
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-xs text-gray-500 italic">
-                                {language === 'ar' ? 'لا توجد أجهزة' : 'No devices'}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                        
-                        {!selectedRoom && (
-                          <div className="text-center py-4">
-                            <MapPin className="size-8 text-gray-400 mx-auto mb-2" />
-                            <p className="text-xs text-gray-500">
-                              {language === 'ar' ? 'انقر على غرفة في المخطط' : 'Click on a room in the floor plan'}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
+                      {/* Legend */}
+                      <SensorLegend language={language} />
+                      
                       {/* Device Details Card */}
-                      <div className={`rounded-lg p-4 border-2 ${
-                        selectedSensor 
-                          ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-300' 
-                          : 'bg-white border-gray-300'
-                      }`}>
+                      <div className={`rounded-lg p-4 border-2 ${selectedSensor ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-300' : 'bg-white border-gray-300'}`}>
                         <div className="flex items-center gap-2 mb-3">
                           <Activity className={`size-5 ${selectedSensor ? 'text-indigo-600' : 'text-gray-600'}`} />
                           <div>

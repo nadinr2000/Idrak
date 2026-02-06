@@ -687,6 +687,224 @@ const mockReportData: { [runId: string]: ReportData } = {
       }
     ],
     finalOutcome: 'SCENARIO SUCCESS - Chemical threat successfully contained with zero casualties and zero contamination spread. All facility systems operated within specifications. HVAC isolation, detection equipment, and personnel response exceeded performance standards.'
+  },
+  'run-3-1': {
+    runId: 'run-3-1',
+    scenarioName: 'Chemical Threat Scenario',
+    scenarioDescription: 'Chlorine gas breach in HVAC system - Floor 2 Sector B',
+    startTime: '2025-11-18T14:00:00',
+    endTime: '2025-11-18T15:30:00',
+    duration: '1h 30m',
+    status: 'failed',
+    assessmentCheckpoints: [
+      {
+        time: '5m',
+        timeValue: 5,
+        trigger: 'Initial Chemical Detection',
+        prediction: 'success',
+        confidence: 92,
+        situationSummary: 'Chlorine gas detected by Chemical Detector C12 in Floor 2 Sector B. Automatic HVAC isolation protocols initiated.',
+        keyChanges: ['Chemical detection confirmed', 'HVAC system isolation initiated', 'Personnel alert system activated'],
+        recommendations: [
+          {
+            id: 'chem-f-rec-1',
+            priority: 'critical',
+            action: 'Immediately isolate HVAC zone for Sector B',
+            reason: 'Prevent contamination spread to adjacent sectors',
+            applied: false,
+            effect: 'HVAC isolation delayed by 8 minutes - critical protocol failure'
+          },
+          {
+            id: 'chem-f-rec-2',
+            priority: 'critical',
+            action: 'Evacuate all personnel from Sector B immediately',
+            reason: 'Chlorine exposure risk exceeds safe thresholds',
+            applied: true,
+            effect: 'Evacuation initiated but delayed due to communication failures'
+          },
+          {
+            id: 'chem-f-rec-3',
+            priority: 'high',
+            action: 'Deploy emergency response team with NBC equipment',
+            reason: 'Contain chemical source and prevent further release',
+            applied: true,
+            effect: 'Response team deployed but equipment access delayed'
+          }
+        ],
+        relatedThreats: []
+      },
+      {
+        time: '15m',
+        timeValue: 15,
+        trigger: 'Secondary Leak Detection',
+        prediction: 'partial',
+        confidence: 68,
+        situationSummary: 'Secondary chemical leak detected at Chemical Detector C7. HVAC isolation incomplete. Gas spreading to adjacent zones through ventilation system.',
+        keyChanges: ['Secondary contamination detected', 'HVAC isolation failure confirmed', '12 personnel reporting exposure symptoms', 'Emergency medical response activated'],
+        recommendations: [
+          {
+            id: 'chem-f-rec-4',
+            priority: 'critical',
+            action: 'Override HVAC control system and manually shut all air handlers',
+            reason: 'Automated isolation has failed - manual intervention required immediately',
+            applied: true,
+            effect: 'Manual shutdown successful after 12 minutes total delay'
+          },
+          {
+            id: 'chem-f-rec-5',
+            priority: 'critical',
+            action: 'Deploy medical teams to staging area for contaminated personnel',
+            reason: '12 personnel showing chlorine exposure symptoms - immediate treatment required',
+            applied: true,
+            effect: 'Medical treatment initiated for all affected personnel'
+          },
+          {
+            id: 'chem-f-rec-6',
+            priority: 'high',
+            action: 'Seal all doors between Sector B and adjacent areas',
+            reason: 'Prevent personnel movement through contaminated zones',
+            applied: true,
+            effect: 'Physical barriers established successfully'
+          },
+          {
+            id: 'chem-f-rec-7',
+            priority: 'high',
+            action: 'Activate backup ventilation in unaffected sectors',
+            reason: 'Maintain air quality in safe zones while HVAC offline',
+            applied: false,
+            effect: 'Backup ventilation not activated - air quality degraded in safe zones'
+          }
+        ],
+        relatedThreats: []
+      },
+      {
+        time: '45m',
+        timeValue: 45,
+        trigger: 'Containment Assessment',
+        prediction: 'failed',
+        confidence: 45,
+        situationSummary: 'Chemical threat partially contained. All HVAC systems manually shut down. 12 personnel undergoing medical treatment for chlorine exposure. Source leak isolated but decontamination required before normal operations can resume.',
+        keyChanges: ['HVAC fully offline', 'Chemical source isolated', 'Decontamination teams deployed', 'All affected personnel receiving medical care'],
+        recommendations: [
+          {
+            id: 'chem-f-rec-8',
+            priority: 'critical',
+            action: 'Initiate full decontamination protocol for Sector B',
+            reason: 'Chlorine residue presents ongoing exposure risk',
+            applied: true,
+            effect: 'Decontamination in progress - estimated 4-6 hours for completion'
+          },
+          {
+            id: 'chem-f-rec-9',
+            priority: 'high',
+            action: 'Conduct air quality monitoring in all adjacent sectors',
+            reason: 'Verify no contamination spread beyond identified zones',
+            applied: true,
+            effect: 'Air quality monitoring ongoing - trace contamination detected in 2 adjacent zones'
+          },
+          {
+            id: 'chem-f-rec-10',
+            priority: 'high',
+            action: 'Review HVAC automation failure and implement emergency manual override procedures',
+            reason: 'Critical system failure allowed contamination spread',
+            applied: true,
+            effect: 'System failure investigation initiated - preliminary findings indicate sensor malfunction'
+          },
+          {
+            id: 'chem-f-rec-11',
+            priority: 'medium',
+            action: 'Prepare incident report documenting response failures and lessons learned',
+            reason: 'Critical analysis required for protocol improvements',
+            applied: true,
+            effect: 'Comprehensive incident report documenting automation failure and response delays'
+          }
+        ],
+        relatedThreats: []
+      }
+    ],
+    outcomeSummaryPoints: [
+      {
+        title: 'HVAC Automation Failure - Critical',
+        description: 'HVAC isolation system failed to respond to automatic triggers. 8-minute delay in zone isolation allowed chemical contamination to spread from primary detection point to adjacent sectors. Manual override required to achieve full containment.'
+      },
+      {
+        title: 'Personnel Exposure - 12 Casualties',
+        description: '12 personnel exposed to chlorine gas requiring immediate medical treatment. All personnel stabilized and receiving ongoing care. Exposure levels ranged from minor to moderate - no life-threatening injuries but extended recovery required.'
+      },
+      {
+        title: 'Contamination Spread - Multiple Zones',
+        description: 'Chemical contamination spread beyond initial detection zone to 2 adjacent sectors before containment achieved. Trace contamination detected in ventilation systems requiring comprehensive decontamination protocols.'
+      },
+      {
+        title: 'Response Time Delays',
+        description: 'Communication system delays contributed to slower personnel evacuation. Emergency response team deployment delayed by equipment access issues. Manual intervention required 12 minutes longer than acceptable response parameters.'
+      },
+      {
+        title: 'Decontamination Requirements',
+        description: 'Full facility decontamination required before normal operations can resume. Estimated 4-6 hours for Sector B decontamination. Additional air quality monitoring required in adjacent zones for 24-48 hours.'
+      },
+      {
+        title: 'System Vulnerabilities Identified',
+        description: 'Critical vulnerabilities identified in HVAC automation system. Sensor malfunction prevented proper isolation response. Backup ventilation systems not activated automatically. Manual override procedures proved effective but response time exceeded acceptable parameters.'
+      }
+    ],
+    strategicRecommendations: [
+      {
+        id: 'failed-rec-1',
+        category: 'maintenance',
+        recommendation: 'HVAC Sensor System Audit and Replacement',
+        impact: 'Complete audit of all HVAC isolation sensors and replacement of malfunctioning units. Install redundant sensor systems with automatic failover to prevent single-point failures.',
+        priority: 'critical',
+        estimatedCost: '$50K - $100K',
+        estimatedTime: '2-3 weeks'
+      },
+      {
+        id: 'failed-rec-2',
+        category: 'training',
+        recommendation: 'Emergency Manual Override Procedures Training',
+        impact: 'Implement comprehensive training program for manual HVAC override procedures. Ensure all personnel can execute manual isolation within 2 minutes of automation failure detection.',
+        priority: 'critical',
+        estimatedCost: '$10K - $20K',
+        estimatedTime: '1-2 weeks'
+      },
+      {
+        id: 'failed-rec-3',
+        category: 'equipment',
+        recommendation: 'Enhanced Chemical Detection Network',
+        impact: 'Install additional chemical detectors in ventilation transition zones to provide earlier warning of contamination spread. Integrate with HVAC control system for faster response.',
+        priority: 'high',
+        estimatedCost: '$30K - $50K',
+        estimatedTime: '3-4 weeks'
+      },
+      {
+        id: 'failed-rec-4',
+        category: 'optimization',
+        recommendation: 'Automated Backup Ventilation Activation',
+        impact: 'Configure backup ventilation systems to activate automatically when primary HVAC is shut down. Maintain air quality in unaffected zones during emergency isolation procedures.',
+        priority: 'high',
+        estimatedCost: '$15K - $25K',
+        estimatedTime: '2-3 weeks'
+      },
+      {
+        id: 'failed-rec-5',
+        category: 'maintenance',
+        recommendation: 'Emergency Communication System Upgrade',
+        impact: 'Upgrade emergency communication systems to ensure zero-delay personnel alerts. Implement redundant communication channels for critical emergency notifications.',
+        priority: 'high',
+        estimatedCost: '$20K - $40K',
+        estimatedTime: '3-4 weeks'
+      },
+      {
+        id: 'failed-rec-6',
+        category: 'equipment',
+        recommendation: 'NBC Equipment Storage Accessibility',
+        impact: 'Relocate NBC emergency response equipment to ensure immediate access points in all sectors. Eliminate equipment access delays that contributed to extended response time.',
+        priority: 'medium',
+        estimatedCost: '$5K - $10K',
+        estimatedTime: '1-2 weeks'
+      }
+    ],
+    finalOutcome: 'SCENARIO FAILED - Chemical threat containment delayed due to HVAC automation failure. 12 personnel required medical treatment for chlorine exposure. Contamination spread to adjacent sectors before manual intervention successful. Decontamination required. Critical system failures identified requiring immediate remediation before facility can return to normal operations.'
   }
 };
 

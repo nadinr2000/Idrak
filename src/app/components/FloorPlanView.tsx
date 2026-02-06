@@ -9,22 +9,24 @@ import floorPlanImage from '@/assets/NewBG2.png';
 import { GaugeWidget } from './GaugeWidget';
 
 // Legend Component
-function FloorPlanLegend({ emergencyMode }: { emergencyMode: false | 'incident' | 'emergency' }) {
+function FloorPlanLegend({ emergencyMode, language }: { emergencyMode: false | 'incident' | 'emergency'; language: Language }) {
+  const t = translations[language];
+  
   const legendItems = [
-    { symbol: 'DP', label: 'Differential Pressure', color: '#139B48', shape: 'circle' },
-    { symbol: 'R', label: 'Radiological Detectors', color: '#139B48', shape: 'triangle' },
-    { symbol: 'B', label: 'Biological Detectors', color: '#139B48', shape: 'triangle' },
-    { symbol: 'C', label: 'Chemical Detectors', color: '#139B48', shape: 'triangle' },
-    { symbol: 'CO₂', label: 'CO₂ Sensors', color: '#139B48', shape: 'circle' },
-    { symbol: 'CO', label: 'CO Sensors', color: '#139B48', shape: 'circle' },
-    { symbol: 'O₂', label: 'O₂ Sensors', color: '#139B48', shape: 'circle' },
-    { symbol: 'T', label: 'Temperature Sensors', color: '#139B48', shape: 'circle' },
-    { symbol: 'H', label: 'Humidity Sensors', color: '#139B48', shape: 'circle' },
-    { symbol: 'W', label: 'Water Level Sensors', color: '#139B48', shape: 'circle' },
-    { symbol: 'AF', label: 'Airflow Sensors', color: '#139B48', shape: 'circle' },
-    { symbol: 'F', label: 'Filter Sensors', color: '#139B48', shape: 'circle' },
-    { symbol: 'GTV', label: 'Gastight Valve Sensors', color: '#139B48', shape: 'rectangle' },
-    { symbol: 'Door', label: 'Door Status', color: '#16a34a', shape: 'rectangle' },
+    { symbol: 'DP', label: t.differentialPressure, color: '#139B48', shape: 'circle' },
+    { symbol: 'R', label: t.radiologicalDetectors, color: '#139B48', shape: 'triangle' },
+    { symbol: 'B', label: t.biologicalDetectors, color: '#139B48', shape: 'triangle' },
+    { symbol: 'C', label: t.chemicalDetectors, color: '#139B48', shape: 'triangle' },
+    { symbol: 'CO₂', label: t.co2Sensors, color: '#139B48', shape: 'circle' },
+    { symbol: 'CO', label: t.coSensors, color: '#139B48', shape: 'circle' },
+    { symbol: 'O₂', label: t.o2Sensors, color: '#139B48', shape: 'circle' },
+    { symbol: 'T', label: t.temperatureSensors, color: '#139B48', shape: 'circle' },
+    { symbol: 'H', label: t.humiditySensors, color: '#139B48', shape: 'circle' },
+    { symbol: 'W', label: t.waterLevelSensors, color: '#139B48', shape: 'circle' },
+    { symbol: 'AF', label: t.airflowSensors, color: '#139B48', shape: 'circle' },
+    { symbol: 'F', label: t.filterSensors, color: '#139B48', shape: 'circle' },
+    { symbol: 'GTV', label: t.gastightValveSensors, color: '#139B48', shape: 'rectangle' },
+    { symbol: 'Door', label: t.doorStatus, color: '#16a34a', shape: 'rectangle' },
   ];
 
   const renderShape = (item: typeof legendItems[0]) => {
@@ -73,8 +75,8 @@ function FloorPlanLegend({ emergencyMode }: { emergencyMode: false | 'incident' 
         <table className="w-full border-collapse bg-white">
           <thead className="sticky top-0 z-10 bg-gray-100">
             <tr className="border-b-2 border-gray-300">
-              <th className="py-1.5 px-2 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">Symbol</th>
-              <th className="py-1.5 px-2 text-left text-[10px] font-bold text-gray-700">Sensor Type</th>
+              <th className="py-1.5 px-2 text-right text-[10px] font-bold text-gray-700 border-r border-gray-300">{t.legendSymbol}</th>
+              <th className="py-1.5 px-2 text-right text-[10px] font-bold text-gray-700">{t.legendSensorType}</th>
             </tr>
           </thead>
           <tbody>
@@ -622,14 +624,14 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
             <div className="grid grid-cols-2 gap-4 mb-6">
               {/* Chemical Threat Detected Card */}
               <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
-                <h3 className="text-sm font-bold text-red-600 mb-3">Chemical Threat Detected</h3>
+                <h3 className="text-sm font-bold text-red-600 mb-3">{t.chemicalThreatDetected}</h3>
                 <div className="space-y-2">
                   <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Threat Type:</span>
-                    <span className="text-[10px] text-gray-900 font-semibold">Chemical Agent C3 Detection</span>
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">{t.threatTypeLabel}:</span>
+                    <span className="text-[10px] text-gray-900 font-semibold">{t.chemicalAgentC3Detection}</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Detector:</span>
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">{t.detectorLabel}:</span>
                     <div className="flex items-center gap-1.5">
                       {scenarioId ? (
                         <>
@@ -644,33 +646,33 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Detection Time:</span>
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">{t.detectionTimeLabel}:</span>
                     <span className="text-[10px] text-gray-900">02/03/2026 14:47:23</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Severity:</span>
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">{t.severityLabel}:</span>
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-red-600 text-white border border-red-700">
-                      CRITICAL
+                      {t.critical.toUpperCase()}
                     </span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Source:</span>
-                    <span className="text-[10px] text-gray-900">External Contamination - Unknown Origin</span>
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">{t.sourceLabel}:</span>
+                    <span className="text-[10px] text-gray-900">{t.externalContaminationUnknownOrigin}</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Affected Zones:</span>
-                    <span className="text-[10px] text-gray-900 font-semibold">A-2, A-3, B-1 (3 total)</span>
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">{t.affectedZonesLabel}:</span>
+                    <span className="text-[10px] text-gray-900 font-semibold">A-2, A-3, B-1 (3 {t.total})</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">Personnel at Risk:</span>
-                    <span className="text-[10px] text-gray-900 font-semibold">12 occupants</span>
+                    <span className="text-[10px] font-bold text-gray-700 w-24 flex-shrink-0">{t.personnelAtRiskLabel}:</span>
+                    <span className="text-[10px] text-gray-900 font-semibold">12 {t.occupants}</span>
                   </div>
                 </div>
               </div>
 
               {/* Automated Emergency Response Status */}
               <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
-                <h3 className="text-sm font-bold text-gray-900 mb-3">Automated Emergency Response Status</h3>
+                <h3 className="text-sm font-bold text-gray-900 mb-3">{t.automatedEmergencyResponseStatus}</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {/* GTV System */}
                   <div className="flex items-center gap-2">
@@ -678,10 +680,10 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       <Wind className="size-4 text-green-600" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-[10px] text-gray-600 mb-0.5">GTV System</div>
+                      <div className="text-[10px] text-gray-600 mb-0.5">{t.gtvSystem}</div>
                       <div className="flex items-center gap-1.5">
                         <div className="size-1.5 rounded-full bg-green-500"></div>
-                        <span className="text-xs font-semibold text-gray-900">ON</span>
+                        <span className="text-xs font-semibold text-gray-900">{t.on}</span>
                       </div>
                     </div>
                   </div>
@@ -692,10 +694,10 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       <Airplay className="size-4 text-red-600" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-[10px] text-gray-600 mb-0.5">Fresh Air Intake</div>
+                      <div className="text-[10px] text-gray-600 mb-0.5">{t.freshAirIntake}</div>
                       <div className="flex items-center gap-1.5">
                         <div className="size-1.5 rounded-full bg-red-500"></div>
-                        <span className="text-xs font-semibold text-gray-900">OFF</span>
+                        <span className="text-xs font-semibold text-gray-900">{t.off}</span>
                       </div>
                     </div>
                   </div>
@@ -706,10 +708,10 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       <CloudRain className="size-4 text-red-600" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-[10px] text-gray-600 mb-0.5">External Water</div>
+                      <div className="text-[10px] text-gray-600 mb-0.5">{t.externalWater}</div>
                       <div className="flex items-center gap-1.5">
                         <div className="size-1.5 rounded-full bg-red-500"></div>
-                        <span className="text-xs font-semibold text-gray-900">OFF</span>
+                        <span className="text-xs font-semibold text-gray-900">{t.off}</span>
                       </div>
                     </div>
                   </div>
@@ -720,10 +722,10 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       <Filter className="size-4 text-green-600" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-[10px] text-gray-600 mb-0.5">Filtration System</div>
+                      <div className="text-[10px] text-gray-600 mb-0.5">{t.filtrationSystem}</div>
                       <div className="flex items-center gap-1.5">
                         <div className="size-1.5 rounded-full bg-green-500"></div>
-                        <span className="text-xs font-semibold text-gray-900">ON</span>
+                        <span className="text-xs font-semibold text-gray-900">{t.on}</span>
                       </div>
                     </div>
                   </div>
@@ -734,10 +736,10 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       <FlaskConical className="size-4 text-green-600" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-[10px] text-gray-600 mb-0.5">CO₂ Removal</div>
+                      <div className="text-[10px] text-gray-600 mb-0.5">{t.co2Removal}</div>
                       <div className="flex items-center gap-1.5">
                         <div className="size-1.5 rounded-full bg-green-500"></div>
-                        <span className="text-xs font-semibold text-gray-900">ON</span>
+                        <span className="text-xs font-semibold text-gray-900">{t.on}</span>
                       </div>
                     </div>
                   </div>
@@ -748,10 +750,10 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                       <Radio className="size-4 text-green-600" />
                     </div>
                     <div className="flex-1">
-                      <div className="text-[10px] text-gray-600 mb-0.5">O₂ Supply System</div>
+                      <div className="text-[10px] text-gray-600 mb-0.5">{t.o2SupplySystem}</div>
                       <div className="flex items-center gap-1.5">
                         <div className="size-1.5 rounded-full bg-green-500"></div>
-                        <span className="text-xs font-semibold text-gray-900">ON</span>
+                        <span className="text-xs font-semibold text-gray-900">{t.on}</span>
                       </div>
                     </div>
                     </div>
@@ -760,26 +762,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               </div>
 
             {/* AI Assessment and Predictions - Title Outside */}
-            <h3 className="text-sm font-bold text-gray-900 mb-3">AI Assessment and Predictions</h3>
+            <h3 className="text-sm font-bold text-gray-900 mb-3">{t.aiAssessmentAndPredictions}</h3>
 
             {/* Three Separate Graphs */}
             <div className="grid grid-cols-3 gap-4 mb-6">
               {/* CO2 Graph */}
               <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
                 <div className="flex items-center gap-4 mb-3">
-                  <h3 className="text-sm font-bold text-gray-900">CO₂ Level</h3>
+                  <h3 className="text-sm font-bold text-gray-900">{t.co2Level}</h3>
                   <div className="flex items-center gap-3 text-xs">
                     <div className="flex items-center gap-1.5">
                       <div className="w-6 h-0.5 bg-blue-600"></div>
-                      <span className="text-gray-600">Actual</span>
+                      <span className="text-gray-600">{t.actual_label}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-6 h-0.5 border-t-2 border-dashed border-purple-600"></div>
-                      <span className="text-gray-600">AI Predicted</span>
+                      <span className="text-gray-600">{t.aiPredicted}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-6 h-0.5 bg-orange-500"></div>
-                      <span className="text-gray-600">Warning (800)</span>
+                      <span className="text-gray-600">{t.warningThreshold} (800)</span>
                     </div>
                   </div>
                 </div>
@@ -890,19 +892,19 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               {/* O2 Graph */}
               <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
                 <div className="flex items-center gap-4 mb-3">
-                  <h3 className="text-sm font-bold text-gray-900">O₂ Level</h3>
+                  <h3 className="text-sm font-bold text-gray-900">{t.o2Level}</h3>
                   <div className="flex items-center gap-3 text-xs">
                     <div className="flex items-center gap-1.5">
                       <div className="w-6 h-0.5 bg-blue-600"></div>
-                      <span className="text-gray-600">Actual</span>
+                      <span className="text-gray-600">{t.actual_label}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-6 h-0.5 border-t-2 border-dashed border-purple-600"></div>
-                      <span className="text-gray-600">AI Predicted</span>
+                      <span className="text-gray-600">{t.aiPredicted}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-6 h-0.5 bg-orange-500"></div>
-                      <span className="text-gray-600">Critical (19.5%)</span>
+                      <span className="text-gray-600">{t.criticalThreshold} (19.5%)</span>
                     </div>
                   </div>
                 </div>
@@ -1014,19 +1016,19 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
               {/* Water Level Graph */}
               <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
                 <div className="flex items-center gap-4 mb-3">
-                  <h3 className="text-sm font-bold text-gray-900">Water Level</h3>
+                  <h3 className="text-sm font-bold text-gray-900">{t.waterLevel_label}</h3>
                   <div className="flex items-center gap-3 text-xs">
                     <div className="flex items-center gap-1.5">
                       <div className="w-6 h-0.5 bg-blue-600"></div>
-                      <span className="text-gray-600">Actual</span>
+                      <span className="text-gray-600">{t.actual_label}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-6 h-0.5 border-t-2 border-dashed border-purple-600"></div>
-                      <span className="text-gray-600">AI Predicted</span>
+                      <span className="text-gray-600">{t.aiPredicted}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-6 h-0.5 bg-orange-500"></div>
-                      <span className="text-gray-600">Low (20%)</span>
+                      <span className="text-gray-600">{t.low} (20%)</span>
                     </div>
                   </div>
                 </div>
@@ -1444,9 +1446,9 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                             <span className="text-white text-[8px] font-bold">AI</span>
                           </div>
                           <div className="flex-1">
-                            <div className="text-[8px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">PREDICTION</div>
+                            <div className="text-[8px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">{t.aiPrediction}</div>
                             <p className="text-[10px] text-gray-900 font-semibold">
-                              All environmental metrics will remain stable over next 6 hours
+                              {t.allEnvironmentalMetricsStable}
                             </p>
                           </div>
                         </div>
@@ -1464,36 +1466,36 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                 <div className="grid grid-cols-4 gap-4 mb-6">
                   {/* Temperature Tile */}
                   <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
-                    <div className="text-[10px] text-gray-600 mb-1">Temperature</div>
+                    <div className="text-[10px] text-gray-600 mb-1">{t.temperature}</div>
                     <div className="text-2xl font-bold text-gray-900">22.5°C</div>
-                    <div className="text-[10px] text-green-600 mt-1">Normal</div>
+                    <div className="text-[10px] text-green-600 mt-1">{t.normal}</div>
                   </div>
 
                   {/* Air Quality Tile */}
                   <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
-                    <div className="text-[10px] text-gray-600 mb-1">Air Quality</div>
+                    <div className="text-[10px] text-gray-600 mb-1">{t.airQuality}</div>
                     <div className="text-2xl font-bold text-gray-900">420 ppm</div>
-                    <div className="text-[10px] text-green-600 mt-1">Excellent</div>
+                    <div className="text-[10px] text-green-600 mt-1">{t.excellent}</div>
                   </div>
 
                   {/* Humidity Tile */}
                   <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
-                    <div className="text-[10px] text-gray-600 mb-1">Humidity</div>
+                    <div className="text-[10px] text-gray-600 mb-1">{t.humidity}</div>
                     <div className="text-2xl font-bold text-gray-900">45%</div>
-                    <div className="text-[10px] text-green-600 mt-1">Optimal</div>
+                    <div className="text-[10px] text-green-600 mt-1">{t.optimal}</div>
                   </div>
 
                   {/* Water Level Tile */}
                   <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm">
-                    <div className="text-[10px] text-gray-600 mb-1">Water Level</div>
+                    <div className="text-[10px] text-gray-600 mb-1">{t.waterLevel}</div>
                     <div className="text-2xl font-bold text-gray-900">88%</div>
-                    <div className="text-[10px] text-green-600 mt-1">Full</div>
+                    <div className="text-[10px] text-green-600 mt-1">{t.full}</div>
                   </div>
                 </div>
 
                 {/* Environmental Trends Graph + AI Prediction */}
                 <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm mb-6">
-                  <h3 className="text-sm font-bold text-gray-900 mb-4">Environmental Trends (Last 6h) + AI Prediction (Next 6h)</h3>
+                  <h3 className="text-sm font-bold text-gray-900 mb-4">{t.environmentalTrends}</h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart
                       data={[
@@ -1617,21 +1619,21 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
             {emergencyMode !== 'emergency' && (
             <div className="bg-white rounded-lg border-2 border-gray-300 p-4 shadow-sm mt-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-gray-900">Recent Auto-Resolved Alerts</h3>
-                <span className="text-[10px] text-gray-500 font-semibold">Last 24 Hours</span>
+                <h3 className="text-sm font-bold text-gray-900">{t.recentAutoResolvedAlerts}</h3>
+                <span className="text-[10px] text-gray-500 font-semibold">{t.last24Hours}</span>
               </div>
               
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b-2 border-gray-300 bg-gray-50">
-                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">Timestamp</th>
-                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">Alert Type</th>
-                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">Location/Sensor</th>
-                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">Severity</th>
-                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">Auto-Resolution Rule</th>
-                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">Resolution Time</th>
-                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700">Status</th>
+                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">{t.timestamp}</th>
+                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">{t.alertType}</th>
+                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">{t.locationSensor}</th>
+                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">{t.severity}</th>
+                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">{t.autoResolutionRule}</th>
+                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700 border-r border-gray-300">{t.resolutionTime}</th>
+                      <th className="py-2 px-3 text-left text-[10px] font-bold text-gray-700">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1653,26 +1655,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         02/01/2026 14:23:15
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-semibold">
-                        High CO₂ Level
+                        {t.highCo2Level}
                       </td>
                       <td className="py-2 px-3 text-[10px] text-blue-600 border-r border-gray-300 font-semibold hover:underline">
-                        Zone B / Sensor CO2-12
+                        {t.zoneBSensorCO2}
                       </td>
                       <td className="py-2 px-3 border-r border-gray-300">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-yellow-100 text-yellow-800 border border-yellow-300">
-                          MEDIUM
+                          {t.medium.toUpperCase()}
                         </span>
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300">
-                        <div className="font-semibold text-blue-600">HVAC Auto-Boost Rule</div>
-                        <div className="text-[9px] text-gray-500 mt-0.5">Increased ventilation rate by 25%</div>
+                        <div className="font-semibold text-blue-600">{t.hvacAutoBoostRule}</div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">{t.hvacAutoBoostRuleDesc}</div>
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-medium">
                         3m 42s
                       </td>
                       <td className="py-2 px-3">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-800 border border-green-300">
-                          ✓ RESOLVED
+                          ✓ {t.resolved}
                         </span>
                       </td>
                     </tr>
@@ -1695,26 +1697,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         02/01/2026 13:45:08
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-semibold">
-                        Temperature Spike
+                        {t.temperatureSpike}
                       </td>
                       <td className="py-2 px-3 text-[10px] text-blue-600 border-r border-gray-300 font-semibold hover:underline">
-                        Server Room / Sensor T-08
+                        {t.serverRoomSensorT}
                       </td>
                       <td className="py-2 px-3 border-r border-gray-300">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-yellow-100 text-yellow-800 border border-yellow-300">
-                          MEDIUM
+                          {t.medium.toUpperCase()}
                         </span>
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300">
-                        <div className="font-semibold text-blue-600">Thermal Control Protocol</div>
-                        <div className="text-[9px] text-gray-500 mt-0.5">Activated backup cooling system</div>
+                        <div className="font-semibold text-blue-600">{t.thermalControlProtocol}</div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">{t.thermalControlProtocolDesc}</div>
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-medium">
                         1m 18s
                       </td>
                       <td className="py-2 px-3">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-800 border border-green-300">
-                          ✓ RESOLVED
+                          ✓ {t.resolved}
                         </span>
                       </td>
                     </tr>
@@ -1737,26 +1739,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         02/01/2026 12:17:33
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-semibold">
-                        Pressure Differential Low
+                        {t.pressureDifferentialLow}
                       </td>
                       <td className="py-2 px-3 text-[10px] text-blue-600 border-r border-gray-300 font-semibold hover:underline">
-                        Corridor 3 / Sensor DP-15
+                        {t.corridor3SensorDP}
                       </td>
                       <td className="py-2 px-3 border-r border-gray-300">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
-                          LOW
+                          {t.low.toUpperCase()}
                         </span>
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300">
-                        <div className="font-semibold text-blue-600">Pressure Stabilization AI</div>
-                        <div className="text-[9px] text-gray-500 mt-0.5">Adjusted airflow to maintain +5Pa differential</div>
+                        <div className="font-semibold text-blue-600">{t.pressureStabilizationAI}</div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">{t.pressureStabilizationAIDesc}</div>
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-medium">
                         45s
                       </td>
                       <td className="py-2 px-3">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-800 border border-green-300">
-                          ✓ RESOLVED
+                          ✓ {t.resolved}
                         </span>
                       </td>
                     </tr>
@@ -1779,26 +1781,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         02/01/2026 11:02:44
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-semibold">
-                        Humidity Out of Range
+                        {t.humidityOutOfRange}
                       </td>
                       <td className="py-2 px-3 text-[10px] text-blue-600 border-r border-gray-300 font-semibold hover:underline">
-                        Storage Area / Sensor H-21
+                        {t.storageAreaSensorH}
                       </td>
                       <td className="py-2 px-3 border-r border-gray-300">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
-                          LOW
+                          {t.low.toUpperCase()}
                         </span>
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300">
-                        <div className="font-semibold text-blue-600">Climate Control Automation</div>
-                        <div className="text-[9px] text-gray-500 mt-0.5">Activated dehumidification cycle</div>
+                        <div className="font-semibold text-blue-600">{t.climateControlAutomation}</div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">{t.climateControlAutomationDesc}</div>
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-medium">
                         8m 15s
                       </td>
                       <td className="py-2 px-3">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-800 border border-green-300">
-                          ✓ RESOLVED
+                          ✓ {t.resolved}
                         </span>
                       </td>
                     </tr>
@@ -1821,26 +1823,26 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
                         02/01/2026 09:38:21
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-semibold">
-                        Filter Pressure Warning
+                        {t.filterPressureWarning}
                       </td>
                       <td className="py-2 px-3 text-[10px] text-blue-600 border-r border-gray-300 font-semibold hover:underline">
-                        HVAC Unit 2 / Sensor F-04
+                        {t.hvacUnit2SensorF}
                       </td>
                       <td className="py-2 px-3 border-r border-gray-300">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-yellow-100 text-yellow-800 border border-yellow-300">
-                          MEDIUM
+                          {t.medium.toUpperCase()}
                         </span>
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300">
-                        <div className="font-semibold text-blue-600">Predictive Maintenance AI</div>
-                        <div className="text-[9px] text-gray-500 mt-0.5">Scheduled filter replacement, bypassed to Unit 3</div>
+                        <div className="font-semibold text-blue-600">{t.predictiveMaintenanceAI}</div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">{t.predictiveMaintenanceAIDesc}</div>
                       </td>
                       <td className="py-2 px-3 text-[10px] text-gray-900 border-r border-gray-300 font-medium">
                         2m 03s
                       </td>
                       <td className="py-2 px-3">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-800 border border-green-300">
-                          ✓ RESOLVED
+                          ✓ {t.resolved}
                         </span>
                       </td>
                     </tr>
@@ -1989,7 +1991,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
             >
               {/* Legend - Top Left Overlay */}
               <div className="absolute top-4 left-6 z-10">
-                <FloorPlanLegend emergencyMode={emergencyMode} />
+                <FloorPlanLegend emergencyMode={emergencyMode} language={language} />
               </div>
 
               {/* Zoom Controls - Top Right */}
@@ -2034,7 +2036,7 @@ export function FloorPlanView({ floorId, onRoomClick, onIncidentClick, onBack, e
 
               {/* Live Status Gauges - Below Zoom Controls */}
               <div className="absolute top-20 right-8 z-10 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border border-gray-300 w-[240px] mt-4">
-                <h4 className="text-xs font-bold text-gray-800 mb-3 text-center border-b border-gray-300 pb-1.5">Live Status</h4>
+                <h4 className="text-xs font-bold text-gray-800 mb-3 text-center border-b border-gray-300 pb-1.5">{t.liveStatus}</h4>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <GaugeWidget 
